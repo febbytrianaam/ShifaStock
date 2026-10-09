@@ -93,10 +93,10 @@
         </a>
 
         <!-- 3. Kosong / Menipis -->
-        <a href="{{ route('shortages.index') }}" class="card card-interactive p-4 group block {{ $stats['shortages'] > 0 ? 'bg-rose-50/20' : '' }}">
+        <a href="{{ route('shortages.index') }}" class="card card-interactive p-4 group block {{ $stats['shortages'] > 0 ? 'attention-critical' : '' }}">
             <div class="flex items-start justify-between">
                 <div>
-                    <span class="inline-flex items-center rounded-md {{ $stats['shortages'] > 0 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-slate-100 text-slate-600' }} px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                    <span class="inline-flex items-center rounded-md {{ $stats['shortages'] > 0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : 'bg-slate-100 text-slate-600' }} px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                         {{ $stats['shortages'] > 0 ? 'Perlu Restock' : 'Status Aman' }}
                     </span>
                     <h3 class="mt-2 text-xs font-semibold text-slate-500">Kosong / Menipis</h3>
@@ -115,10 +115,10 @@
         </a>
 
         <!-- 4. Batch Mendekati ED -->
-        <a href="{{ route('preview.expiry') }}" class="card card-interactive p-4 group block">
+        <a href="{{ route('preview.expiry') }}" class="card card-interactive p-4 group block {{ $stats['expiring'] > 0 ? 'attention-warning' : '' }}">
             <div class="flex items-start justify-between">
                 <div>
-                    <span class="inline-flex items-center rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800">Kedaluwarsa</span>
+                    <span class="inline-flex items-center rounded-md {{ $stats['expiring'] > 0 ? 'attention-badge-warning bg-amber-100 border border-amber-300' : 'bg-amber-50 border border-amber-200' }} px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800">Kedaluwarsa</span>
                     <h3 class="mt-2 text-xs font-semibold text-slate-500">Batch Mendekati ED</h3>
                 </div>
                 <span class="grid h-8 w-8 place-items-center rounded-lg bg-amber-50 text-amber-700 group-hover:bg-amber-100 transition-colors">
@@ -167,13 +167,13 @@
 
             <div class="flex-1 space-y-2.5 overflow-y-auto max-h-[340px] pr-1">
                 @forelse($shortages as $row)
-                    <a href="{{ $isDemoDashboard ? route('shortages.index') : route('nightly.show', $row->nightly_check_id) }}" class="group flex items-center justify-between gap-3 rounded-lg border border-slate-200 {{ $row->quantity === 0 ? 'bg-rose-50/40 hover:bg-rose-50/80' : 'bg-amber-50/40 hover:bg-amber-50/80' }} p-3 transition-all">
+                    <a href="{{ $isDemoDashboard ? route('shortages.index') : route('nightly.show', $row->nightly_check_id) }}" class="group flex items-center justify-between gap-3 rounded-lg border {{ $row->quantity === 0 ? 'attention-critical hover:bg-rose-50/90' : 'attention-warning hover:bg-amber-50/90' }} p-3 transition-all">
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2">
                                 @if($row->quantity === 0)
-                                    <span class="inline-flex items-center rounded-md bg-rose-100 text-rose-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Kosong</span>
+                                    <span class="attention-badge-critical inline-flex items-center rounded-md border border-rose-300 bg-rose-100 text-rose-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Kosong</span>
                                 @else
-                                    <span class="inline-flex items-center rounded-md bg-amber-100 text-amber-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Menipis</span>
+                                    <span class="attention-badge-warning inline-flex items-center rounded-md border border-amber-300 bg-amber-100 text-amber-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Menipis</span>
                                 @endif
                                 <p class="truncate text-sm font-bold text-slate-900 tracking-tight group-hover:text-[#3277B2] transition-colors">{{ $row->name }}</p>
                             </div>

@@ -1,17 +1,17 @@
 <x-layouts.app title="Kekurangan & Permintaan">
     <div class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div class="card p-4">
+        <div class="card p-4 {{ $summary['total'] > 0 ? 'attention-warning' : '' }}">
             <span class="inline-flex rounded-md bg-[#edf5fb] border border-[#d6e8f6] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#266194]">Perlu Tindak Lanjut</span>
             <p class="mt-2 text-xl font-bold tabular-nums text-[#3277B2]">{{ number_format($summary['total'], 0, ',', '.') }}</p>
             <p class="mt-1 text-xs text-slate-400 font-normal">Obat kosong atau menipis</p>
         </div>
-        <div class="card p-4">
-            <span class="inline-flex rounded-md bg-rose-50 border border-rose-200 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-rose-700">Stok Kosong</span>
+        <div class="card p-4 {{ $summary['empty'] > 0 ? 'attention-critical' : '' }}">
+            <span class="inline-flex rounded-md {{ $summary['empty'] > 0 ? 'attention-badge-critical bg-rose-100 border border-rose-300 text-rose-800' : 'bg-rose-50 border border-rose-200 text-rose-700' }} px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider">Stok Kosong</span>
             <p class="mt-2 text-xl font-bold tabular-nums text-rose-600">{{ number_format($summary['empty'], 0, ',', '.') }}</p>
             <p class="mt-1 text-xs text-slate-400 font-normal">Fisik 0 pada pemeriksaan</p>
         </div>
-        <div class="card p-4">
-            <span class="inline-flex rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-800">Stok Menipis</span>
+        <div class="card p-4 {{ $summary['low'] > 0 ? 'attention-warning' : '' }}">
+            <span class="inline-flex rounded-md {{ $summary['low'] > 0 ? 'attention-badge-warning bg-amber-100 border border-amber-300' : 'bg-amber-50 border border-amber-200' }} px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-800">Stok Menipis</span>
             <p class="mt-2 text-xl font-bold tabular-nums text-amber-700">{{ number_format($summary['low'], 0, ',', '.') }}</p>
             <p class="mt-1 text-xs text-slate-400 font-normal">Di bawah ambang batas</p>
         </div>
@@ -63,7 +63,7 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse($rows as $row)
-                        <tr class="hover:bg-slate-50/70 transition-colors">
+                        <tr class="{{ $row->quantity===0 ? 'attention-critical' : 'attention-warning' }} hover:bg-slate-50/70 transition-colors">
                             <td class="p-4">
                                 <b class="font-bold text-slate-900 tracking-tight">{{ $row->name }}</b><br>
                                 <span class="inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500 mt-0.5">{{ $row->code }}</span>
@@ -72,7 +72,7 @@
                             <td class="p-4 text-xs font-medium text-slate-600 tabular-nums">{{ $row->date }}</td>
                             <td class="p-4 font-bold tabular-nums text-slate-900">{{ $row->quantity }} {{ $row->unit }}</td>
                             <td class="p-4">
-                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $row->quantity===0 ? 'bg-rose-100 text-rose-800 border border-rose-300' : 'bg-amber-100 text-amber-800 border border-amber-300' }}">
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $row->quantity===0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : 'attention-badge-warning bg-amber-100 text-amber-800 border border-amber-300' }}">
                                     {{ $row->quantity===0 ? 'Kosong' : 'Menipis' }}
                                 </span>
                             </td>

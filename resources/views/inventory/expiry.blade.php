@@ -1,14 +1,14 @@
 <x-layouts.app title="Monitoring Kedaluwarsa">
     <div class="mb-5 grid gap-3 sm:grid-cols-3">
         <!-- Kedaluwarsa -->
-        <div class="card p-4">
-            <span class="inline-flex rounded-md bg-rose-50 border border-rose-200 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-rose-700">Kedaluwarsa</span>
+        <div class="card p-4 {{ $counts['expired'] > 0 ? 'attention-critical' : '' }}">
+            <span class="inline-flex rounded-md {{ $counts['expired'] > 0 ? 'attention-badge-critical bg-rose-100 border border-rose-300 text-rose-800' : 'bg-rose-50 border border-rose-200 text-rose-700' }} px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider">Kedaluwarsa</span>
             <p class="mt-2 text-xl font-bold tabular-nums text-rose-600">{{ $counts['expired'] }}</p>
             <p class="mt-1 text-xs text-slate-400 font-normal">Sudah melewati tanggal batas</p>
         </div>
         <!-- Dalam 3 Bulan -->
-        <div class="card p-4">
-            <span class="inline-flex rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-800">Dalam 3 Bulan</span>
+        <div class="card p-4 {{ $counts['near'] > 0 ? 'attention-warning' : '' }}">
+            <span class="inline-flex rounded-md {{ $counts['near'] > 0 ? 'attention-badge-warning bg-amber-100 border border-amber-300' : 'bg-amber-50 border border-amber-200' }} px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-800">Dalam 3 Bulan</span>
             <p class="mt-2 text-xl font-bold tabular-nums text-amber-700">{{ $counts['near'] }}</p>
             <p class="mt-1 text-xs text-slate-400 font-normal">Perlu prioritas penggunaan (FEFO)</p>
         </div>
@@ -42,7 +42,7 @@
                                 ->sortBy(fn($balance) => $balance->location?->name)
                                 ->values();
                         @endphp
-                        <tr class="hover:bg-slate-50/70 transition-colors">
+                        <tr class="{{ $days<0 ? 'attention-critical' : ($days<=90 ? 'attention-warning' : '') }} hover:bg-slate-50/70 transition-colors">
                             <td class="p-4">
                                 <b class="font-bold text-slate-900 tracking-tight">{{ $batch->medicine->name }}</b><br>
                                 <span class="inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500 mt-0.5">{{ $batch->medicine->code }}</span>
@@ -66,7 +66,7 @@
                                 {{ number_format((float)$batch->medicine->balances->sum('quantity'),0,',','.') }} {{ $batch->medicine->unit?->name }} <span class="text-xs font-normal text-slate-400">(total obat)</span>
                             </td>
                             <td class="p-4 text-right">
-                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $days<0 ? 'bg-rose-100 text-rose-800 border border-rose-300' : ($days<=90 ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-[#edf5fb] text-[#266194] border border-[#b2d4ee]') }}">
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $days<0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : ($days<=90 ? 'attention-badge-warning bg-amber-100 text-amber-800 border border-amber-300' : 'bg-[#edf5fb] text-[#266194] border border-[#b2d4ee]') }}">
                                     {{ $days<0 ? 'Kedaluwarsa' : ($days<=90 ? $days.' hari lagi' : 'Aman') }}
                                 </span>
                             </td>
