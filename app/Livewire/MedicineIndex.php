@@ -62,7 +62,7 @@ class MedicineIndex extends Component
 
     public function mount(): void
     {
-        Gate::authorize('view-inventory');
+        Gate::authorize('view-medicines');
     }
 
     public function updatedSearch(): void
@@ -275,7 +275,7 @@ class MedicineIndex extends Component
 
     public function render()
     {
-        Gate::authorize('view-inventory');
+        Gate::authorize('view-medicines');
 
         $counts = Medicine::selectRaw('COUNT(*) as total')
             ->selectRaw("COALESCE(SUM(CASE WHEN verification_status = 'terverifikasi' THEN 1 ELSE 0 END), 0) as verified")

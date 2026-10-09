@@ -15,25 +15,26 @@
 @php
     $navigationGroups = [
         ['label' => 'MENU UTAMA', 'inventory' => false, 'items' => [
-            ['dashboard', '▦', 'Dashboard', null, null],
+            ['dashboard', '▦', 'Dashboard', null, 'view-dashboard'],
         ]],
-        ['label' => 'ADMINISTRASI', 'can' => 'manage-users', 'items' => [
-            ['admin.users.index', '◉', 'Pengguna', null, null],
+        ['label' => 'ADMINISTRASI', 'inventory' => false, 'anyCan' => ['manage-users', 'view-audit-logs'], 'items' => [
+            ['admin.users.index', '◉', 'Pengguna', null, 'manage-users'],
+            ['admin.audit-logs.index', '◌', 'Audit Log', null, 'view-audit-logs'],
         ]],
-        ['label' => 'DATA & PERGERAKAN', 'inventory' => true, 'items' => [
-            ['medicines.index', '▤', 'Data Obat', null, null],
-            ['preview.receipts', '↓', 'Penerimaan Obat', null, null],
-            ['preview.transfers', '⇄', 'Transfer Gudang–Apotek', null, null],
+        ['label' => 'DATA & PERGERAKAN', 'inventory' => false, 'anyCan' => ['view-medicines', 'view-receipts', 'view-transfers'], 'items' => [
+            ['medicines.index', '▤', 'Data Obat', null, 'view-medicines'],
+            ['preview.receipts', '↓', 'Penerimaan Obat', null, 'view-receipts'],
+            ['preview.transfers', '⇄', 'Transfer Gudang–Apotek', null, 'view-transfers'],
         ]],
-        ['label' => 'PEMERIKSAAN STOK', 'inventory' => true, 'items' => [
-            ['preview.nightly', '✓', 'Pemeriksaan Harian', null, null],
-            ['preview.opname', '◫', 'Stock Opname Periodik', null, null],
-            ['nightly.history', '▧', 'Riwayat Pemeriksaan', null, null],
+        ['label' => 'PEMERIKSAAN STOK', 'inventory' => false, 'anyCan' => ['view-nightly-checks', 'view-opname', 'view-nightly-history'], 'items' => [
+            ['preview.nightly', '✓', 'Pemeriksaan Harian', null, 'view-nightly-checks'],
+            ['preview.opname', '◫', 'Stock Opname Periodik', null, 'view-opname'],
+            ['nightly.history', '▧', 'Riwayat Pemeriksaan', null, 'view-nightly-history'],
         ]],
-        ['label' => 'TINDAK LANJ', 'inventory' => true, 'items' => [
-            ['shortages.index', '!', 'Kekurangan & Permintaan', null, null],
-            ['preview.expiry', '◷', 'Monitoring Kedaluwarsa', null, null],
-            ['preview.reports', '▥', 'Laporan', null, null],
+        ['label' => 'TINDAK LANJ', 'inventory' => false, 'anyCan' => ['view-shortages', 'view-expiry', 'view-reports'], 'items' => [
+            ['shortages.index', '!', 'Kekurangan & Permintaan', null, 'view-shortages'],
+            ['preview.expiry', '◷', 'Monitoring Kedaluwarsa', null, 'view-expiry'],
+            ['preview.reports', '▥', 'Laporan', null, 'view-reports'],
         ]],
     ];
     $currentPageLabel = $title ?? 'Dashboard';
@@ -64,7 +65,7 @@
         </a>
         <nav aria-label="Menu utama">
             @foreach($navigationGroups as $group)
-                @if((!($group['inventory'] ?? false) || auth()->user()->can('view-inventory')) && (!isset($group['can']) || auth()->user()->can($group['can'])))
+                @if((!($group['inventory'] ?? false) || auth()->user()->can('view-inventory')) && (!isset($group['can']) || auth()->user()->can($group['can'])) && (!isset($group['anyCan']) || collect($group['anyCan'])->contains(fn ($ability) => auth()->user()->can($ability))))
                     <p class="mb-2 mt-5 text-[10px] font-bold uppercase tracking-wider text-slate-400 first:mt-0">{{ $group['label'] }}</p>
                     <div class="space-y-1">
                         @foreach($group['items'] as [$route, $icon, $label, $badge, $can])

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\AuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
@@ -28,12 +29,17 @@ class SessionController extends Controller
         }
         RateLimiter::clear($key);
         $request->session()->regenerate();
+        AuditLogger::record('auth.login', 'Login berhasil.', null, [
+            'username' => $data['username'],
+        ], $request);
 
         return redirect()->intended(route('dashboard'));
     }
 
     public function destroy(Request $request)
     {
+        $actor = $request->user();
+        AuditLogger::record('auth.logout', 'Logout dari sistem.', null, [], $request, $actor);
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

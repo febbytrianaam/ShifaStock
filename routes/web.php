@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PrototypeController;
 use App\Http\Controllers\SessionController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\NightlyCheckController;
@@ -15,28 +16,34 @@ Route::middleware('guest')->group(function () {
 });
 Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/logout', [SessionController::class, 'destroy'])->name('logout');
-    Route::get('/dashboard', [PrototypeController::class, 'dashboard'])->name('dashboard');
-    Route::get('/obat', MedicineIndex::class)->middleware('can:view-inventory')->name('medicines.index');
+    Route::get('/dashboard', [PrototypeController::class, 'dashboard'])->middleware('can:view-dashboard')->name('dashboard');
+    Route::get('/obat', MedicineIndex::class)->middleware('can:view-medicines')->name('medicines.index');
+    Route::post('admin/pengguna/hak-akses', [UserController::class, 'updatePermissions'])
+        ->middleware('can:manage-permissions')
+        ->name('admin.users.permissions.update');
+    Route::get('admin/audit-log', [AuditLogController::class, 'index'])
+        ->middleware('can:view-audit-logs')
+        ->name('admin.audit-logs.index');
     Route::resource('admin/pengguna', UserController::class)
         ->except('show')
         ->middleware('can:manage-users')
         ->names('admin.users');
 
-    Route::middleware('can:view-inventory')->group(function () {
-        Route::get('/obat-masuk', [InventoryController::class, 'receipts'])->name('preview.receipts');
-        Route::post('/obat-masuk', [InventoryController::class, 'storeReceipt'])->middleware('can:operate-inventory')->name('receipts.store');
-        Route::get('/transfer', [InventoryController::class, 'transfers'])->name('preview.transfers');
-        Route::post('/transfer', [InventoryController::class, 'storeTransfer'])->middleware('can:operate-inventory')->name('transfers.store');
-        Route::get('/stock-opname', [InventoryController::class, 'opname'])->name('preview.opname');
-        Route::get('/kedaluwarsa', [InventoryController::class, 'expiry'])->name('preview.expiry');
-        Route::get('/laporan', [InventoryController::class, 'reports'])->name('preview.reports');
-        Route::get('/riwayat-stok', [NightlyCheckController::class, 'history'])->name('nightly.history');
-        Route::get('/kekurangan-permintaan', [NightlyCheckController::class, 'shortages'])->name('shortages.index');
-        Route::get('/pengecekan-malam', [NightlyCheckController::class, 'index'])->name('preview.nightly');
-        Route::post('/pengecekan-malam', [NightlyCheckController::class, 'store'])->middleware('can:operate-inventory')->name('nightly.store');
-        Route::get('/pengecekan-malam/{id}', [NightlyCheckController::class, 'show'])->whereNumber('id')->name('nightly.show');
-        Route::post('/pengecekan-malam/{id}', [NightlyCheckController::class, 'save'])->middleware('can:operate-inventory')->whereNumber('id')->name('nightly.save');
-        Route::delete('/pengecekan-malam/{id}', [NightlyCheckController::class, 'destroy'])->middleware('can:operate-inventory')->whereNumber('id')->name('nightly.destroy');
-        Route::post('/pengecekan-malam/{id}/review', [NightlyCheckController::class, 'review'])->middleware('can:finalize-opname')->whereNumber('id')->name('nightly.review');
+    Route::group([], function () {
+        Route::get('/obat-masuk', [InventoryController::class, 'receipts'])->middleware('can:view-receipts')->name('preview.receipts');
+        Route::post('/obat-masuk', [InventoryController::class, 'storeReceipt'])->middleware(['can:view-receipts', 'can:operate-inventory'])->name('receipts.store');
+        Route::get('/transfer', [InventoryController::class, 'transfers'])->middleware('can:view-transfers')->name('preview.transfers');
+        Route::post('/transfer', [InventoryController::class, 'storeTransfer'])->middleware(['can:view-transfers', 'can:operate-inventory'])->name('transfers.store');
+        Route::get('/stock-opname', [InventoryController::class, 'opname'])->middleware('can:view-opname')->name('preview.opname');
+        Route::get('/kedaluwarsa', [InventoryController::class, 'expiry'])->middleware('can:view-expiry')->name('preview.expiry');
+        Route::get('/laporan', [InventoryController::class, 'reports'])->middleware('can:view-reports')->name('preview.reports');
+        Route::get('/riwayat-stok', [NightlyCheckController::class, 'history'])->middleware('can:view-nightly-history')->name('nightly.history');
+        Route::get('/kekurangan-permintaan', [NightlyCheckController::class, 'shortages'])->middleware('can:view-shortages')->name('shortages.index');
+        Route::get('/pengecekan-malam', [NightlyCheckController::class, 'index'])->middleware('can:view-nightly-checks')->name('preview.nightly');
+        Route::post('/pengecekan-malam', [NightlyCheckController::class, 'store'])->middleware(['can:view-nightly-checks', 'can:operate-inventory'])->name('nightly.store');
+        Route::get('/pengecekan-malam/{id}', [NightlyCheckController::class, 'show'])->middleware('can:view-nightly-checks')->whereNumber('id')->name('nightly.show');
+        Route::post('/pengecekan-malam/{id}', [NightlyCheckController::class, 'save'])->middleware(['can:view-nightly-checks', 'can:operate-inventory'])->whereNumber('id')->name('nightly.save');
+        Route::delete('/pengecekan-malam/{id}', [NightlyCheckController::class, 'destroy'])->middleware(['can:view-nightly-checks', 'can:operate-inventory'])->whereNumber('id')->name('nightly.destroy');
+        Route::post('/pengecekan-malam/{id}/review', [NightlyCheckController::class, 'review'])->middleware(['can:view-nightly-checks', 'can:finalize-opname'])->whereNumber('id')->name('nightly.review');
     });
 });
