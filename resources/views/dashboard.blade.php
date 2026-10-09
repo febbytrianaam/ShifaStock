@@ -1,20 +1,36 @@
 <x-layouts.app title="Dashboard">
+@php
+    $isDemoDashboard = ($dashboardMode ?? 'demo') === 'demo';
+@endphp
 @can('view-inventory')
     <div class="mb-5 border-b border-slate-200 pb-4">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-                <span class="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold uppercase text-slate-500">
-                    {{ auth()->user()->role->label() }}
-                </span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold uppercase text-slate-500">
+                        {{ auth()->user()->role->label() }}
+                    </span>
+                    <span class="rounded-md {{ $isDemoDashboard ? 'border border-amber-200 bg-amber-50 text-amber-800' : 'border border-emerald-200 bg-emerald-50 text-emerald-700' }} px-2 py-0.5 text-[11px] font-semibold uppercase">
+                        {{ $isDemoDashboard ? 'Mode Demo' : 'Data Real' }}
+                    </span>
+                </div>
                 <h1 class="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">
                     Selamat Datang, {{ auth()->user()->username ?? 'Petugas Farmasi' }}
                 </h1>
                 <p class="mt-1 max-w-3xl text-sm leading-relaxed text-slate-500">
-                    Ringkasan persediaan dari saldo operasional dan pemeriksaan fisik yang disetujui.
+                    {{ $isDemoDashboard ? 'Ringkasan demo untuk kebutuhan presentasi dan simulasi alur klinik.' : 'Ringkasan persediaan dari saldo operasional dan pemeriksaan fisik yang disetujui.' }}
                 </p>
             </div>
 
             <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <div class="inline-flex rounded-lg border border-slate-200 bg-white p-1 text-xs font-bold shadow-xs">
+                    <a href="{{ route('dashboard', ['data' => 'demo']) }}" class="rounded-md px-3 py-1.5 transition {{ $isDemoDashboard ? 'bg-[#3277B2] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' }}">
+                        Demo
+                    </a>
+                    <a href="{{ route('dashboard', ['data' => 'real']) }}" class="rounded-md px-3 py-1.5 transition {{ ! $isDemoDashboard ? 'bg-[#3277B2] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' }}">
+                        Data real
+                    </a>
+                </div>
                 @can('manage-medicines')
                 <a href="{{ route('medicines.index') }}?tambah=1" class="btn">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
@@ -151,7 +167,7 @@
 
             <div class="flex-1 space-y-2.5 overflow-y-auto max-h-[340px] pr-1">
                 @forelse($shortages as $row)
-                    <a href="{{ route('nightly.show', $row->nightly_check_id) }}" class="group flex items-center justify-between gap-3 rounded-lg border border-slate-200 {{ $row->quantity === 0 ? 'bg-rose-50/40 hover:bg-rose-50/80' : 'bg-amber-50/40 hover:bg-amber-50/80' }} p-3 transition-all">
+                    <a href="{{ $isDemoDashboard ? route('shortages.index') : route('nightly.show', $row->nightly_check_id) }}" class="group flex items-center justify-between gap-3 rounded-lg border border-slate-200 {{ $row->quantity === 0 ? 'bg-rose-50/40 hover:bg-rose-50/80' : 'bg-amber-50/40 hover:bg-amber-50/80' }} p-3 transition-all">
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2">
                                 @if($row->quantity === 0)
@@ -288,21 +304,37 @@
     <div class="mb-5 border-b border-slate-200 pb-4">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-                <span class="inline-flex items-center gap-1.5 rounded-md border border-brand-100 bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-700">
-                    <span class="h-1.5 w-1.5 rounded-full bg-brand-600"></span>
-                    Portal Administrator
-                </span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 rounded-md border border-brand-100 bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-700">
+                        <span class="h-1.5 w-1.5 rounded-full bg-brand-600"></span>
+                        Portal Administrator
+                    </span>
+                    <span class="rounded-md {{ $isDemoDashboard ? 'border border-amber-200 bg-amber-50 text-amber-800' : 'border border-emerald-200 bg-emerald-50 text-emerald-700' }} px-2 py-0.5 text-[11px] font-semibold uppercase">
+                        {{ $isDemoDashboard ? 'Mode Demo' : 'Data Real' }}
+                    </span>
+                </div>
                 <h1 class="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">Manajemen Akses & Konfigurasi Sistem</h1>
-                <p class="mt-1 text-sm font-normal leading-relaxed text-slate-500">Kelola akses pengguna dan referensi sistem Klinik Shifa Medika.</p>
+                <p class="mt-1 text-sm font-normal leading-relaxed text-slate-500">
+                    {{ $isDemoDashboard ? 'Ringkasan demo untuk menggambarkan kondisi akun sistem.' : 'Kelola akses pengguna dan referensi sistem Klinik Shifa Medika.' }}
+                </p>
+            </div>
+
+            <div class="inline-flex rounded-lg border border-slate-200 bg-white p-1 text-xs font-bold shadow-xs">
+                <a href="{{ route('dashboard', ['data' => 'demo']) }}" class="rounded-md px-3 py-1.5 transition {{ $isDemoDashboard ? 'bg-[#3277B2] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' }}">
+                    Demo
+                </a>
+                <a href="{{ route('dashboard', ['data' => 'real']) }}" class="rounded-md px-3 py-1.5 transition {{ ! $isDemoDashboard ? 'bg-[#3277B2] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' }}">
+                    Data real
+                </a>
             </div>
         </div>
     </div>
 
     <div class="grid gap-3 sm:grid-cols-3">
         @foreach([
-            ['Pengguna Terdaftar', \App\Models\User::count(), 'Akun individu', 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', '#3277B2', '#edf5fb', '#d6e8f6', 'border-t-[#3277B2]', 'bg-[#3277B2] text-white'],
-            ['Akun Aktif', \App\Models\User::where('is_active', true)->count(), 'Dapat mengakses sistem', 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z', '#2a759e', '#f0f7fb', '#d2e7f3', 'border-t-[#2a759e]', 'bg-[#2a759e] text-white'],
-            ['Role Sistem', 4, 'Admin, petugas, kepala, guest', 'M9 12.75L11.25 15 15 9.75m-2.164-2.078a3 3 0 01.07-4.242 3 3 0 014.243.07m-4.243 4.172l4.243 4.243m0-8.486a3 3 0 014.242 4.243 3 3 0 01-4.242 4.243', '#5a6b82', '#f1f5f9', '#e2e8f0', 'border-t-slate-500', 'bg-slate-600 text-white'],
+            ['Pengguna Terdaftar', $adminStats['users'], 'Akun individu', 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', '#3277B2', '#edf5fb', '#d6e8f6', 'border-t-[#3277B2]', 'bg-[#3277B2] text-white'],
+            ['Akun Aktif', $adminStats['active_users'], 'Dapat mengakses sistem', 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z', '#2a759e', '#f0f7fb', '#d2e7f3', 'border-t-[#2a759e]', 'bg-[#2a759e] text-white'],
+            ['Role Sistem', $adminStats['roles'], 'Admin, petugas, kepala, guest', 'M9 12.75L11.25 15 15 9.75m-2.164-2.078a3 3 0 01.07-4.242 3 3 0 014.243.07m-4.243 4.172l4.243 4.243m0-8.486a3 3 0 014.242 4.243 3 3 0 01-4.242 4.243', '#5a6b82', '#f1f5f9', '#e2e8f0', 'border-t-slate-500', 'bg-slate-600 text-white'],
         ] as [$label, $value, $hint, $svgPath, $textColor, $bgColor, $borderColor, $topBorder, $iconStyle])
             <div class="card card-interactive p-4">
                 <div class="flex items-center justify-between">

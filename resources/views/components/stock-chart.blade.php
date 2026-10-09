@@ -30,8 +30,8 @@
 
     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
         <div class="rounded-lg border border-slate-200 bg-slate-50/70 p-3">
-            <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#1f628d]">
-                <span class="h-2 w-2 rounded-full bg-[#5ba4d6]"></span>
+            <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
                 Penerimaan
             </div>
             <p class="mt-1 text-xl font-extrabold tracking-tight tabular-nums text-slate-900">{{ $totalReceipts }} <span class="text-xs font-medium text-slate-500 tracking-normal">transaksi</span></p>
