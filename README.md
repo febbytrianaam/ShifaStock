@@ -35,14 +35,14 @@ ShifaStock adalah aplikasi monitoring persediaan obat untuk Klinik Shifa Medika.
 
 ## 👤 Role Default
 
-| Role | Username Demo | Password | Keterangan |
-| --- | --- | --- | --- |
-| Administrator | `admin` | `123` | CRUD pengguna, hak akses, audit log |
-| Petugas Farmasi | `petugas` | `123` | Operasional stok |
-| Kepala Apoteker | `kepala` | `123` | Master obat dan finalisasi pemeriksaan |
-| Guest | `guest` | `123` | View-only |
+| Role | Username Demo | Keterangan |
+| --- | --- | --- |
+| Administrator | `admin` | CRUD pengguna, hak akses, audit log |
+| Petugas Farmasi | `petugas` | Operasional stok |
+| Kepala Apoteker | `kepala` | Master obat dan finalisasi pemeriksaan |
+| Guest | `guest` | View-only |
 
-Akun demo dibuat melalui `LocalDemoSeeder` dan hanya untuk environment lokal.
+Akun demo dibuat melalui `LocalDemoSeeder` dan hanya untuk environment lokal. Password demo tidak ditampilkan di dokumentasi; set sendiri melalui `LOCAL_DEMO_PASSWORD` di `.env` atau input tersembunyi saat seeder dijalankan.
 
 ## 🚀 Instalasi Lokal
 
@@ -77,6 +77,14 @@ DB_DATABASE=shifa_medika
 DB_USERNAME=root
 DB_PASSWORD=
 ```
+
+Untuk membuat akun demo lokal, tambahkan password demo di `.env`:
+
+```env
+LOCAL_DEMO_PASSWORD=
+```
+
+Isi nilainya secara lokal saja dan jangan commit file `.env`.
 
 Jalankan migration dan seeder:
 

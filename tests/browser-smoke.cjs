@@ -10,9 +10,12 @@ const { chromium } = require('playwright');
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
 
+    const testPassword = process.env.SHIFA_TEST_PASSWORD;
+    if (!testPassword) throw new Error('Set SHIFA_TEST_PASSWORD before running browser smoke checks.');
+
     await page.goto('http://127.0.0.1:8000/login');
     await page.getByLabel('Username', { exact: true }).fill('kepala');
-    await page.getByLabel('Password', { exact: true }).fill('123');
+    await page.getByLabel('Password', { exact: true }).fill(testPassword);
     await Promise.all([
         page.waitForURL('**/dashboard'),
         page.getByRole('button', { name: 'Masuk', exact: true }).click(),
