@@ -1,4 +1,9 @@
 <x-layouts.app title="Kekurangan & Permintaan">
+    <x-page-tabs :links="[
+        ['route' => 'shortages.index', 'label' => 'Kekurangan Stok', 'can' => 'view-shortages'],
+        ['route' => 'preview.expiry', 'label' => 'Kedaluwarsa', 'can' => 'view-expiry'],
+    ]" />
+
     <div class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div class="card p-4 {{ $summary['total'] > 0 ? 'attention-warning' : '' }}">
             <span class="inline-flex rounded-md bg-[#edf5fb] border border-[#d6e8f6] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#266194]">Perlu Tindak Lanjut</span>

@@ -1,4 +1,10 @@
 <x-layouts.app title="Riwayat Pemeriksaan">
+    <x-page-tabs :links="[
+        ['route' => 'preview.nightly', 'label' => 'Harian', 'can' => 'view-nightly-checks', 'active' => ['preview.nightly', 'nightly.show']],
+        ['route' => 'preview.opname', 'label' => 'Opname Periodik', 'can' => 'view-opname'],
+        ['route' => 'nightly.history', 'label' => 'Riwayat', 'can' => 'view-nightly-history'],
+    ]" />
+
     @if($errors->any())
         <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">
             {{ $errors->first() }}

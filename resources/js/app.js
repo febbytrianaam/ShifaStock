@@ -104,6 +104,7 @@ function initialize() {
     }
     filterNightlyRows();
     initBalanceSearch();
+    initSearchableSelects();
 }
 
 function initBalanceSearch() {
@@ -115,6 +116,173 @@ function initBalanceSearch() {
         document.querySelectorAll('[data-balance-row]').forEach((row) => {
             const text = row.textContent.toLowerCase();
             row.hidden = query.length > 0 && !text.includes(query);
+        });
+    });
+}
+
+function initSearchableSelects(root = document) {
+    root.querySelectorAll('select[data-searchable-select]:not([data-searchable-ready])').forEach((select) => {
+        select.dataset.searchableReady = '1';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'searchable-select';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'field searchable-select-input text-xs';
+        input.autocomplete = 'off';
+        input.placeholder = select.dataset.searchPlaceholder || 'Cari data...';
+        input.setAttribute('role', 'combobox');
+        input.setAttribute('aria-expanded', 'false');
+        const clearButton = document.createElement('button');
+        clearButton.type = 'button';
+        clearButton.className = 'searchable-select-clear';
+        clearButton.textContent = 'x';
+        clearButton.setAttribute('aria-label', 'Bersihkan pilihan');
+        clearButton.hidden = true;
+        const menu = document.createElement('div');
+        menu.className = 'searchable-select-menu';
+        menu.hidden = true;
+        menu.setAttribute('role', 'listbox');
+        select.classList.add('searchable-native');
+        select.after(wrapper);
+        wrapper.append(select, input, clearButton, menu);
+
+        const dependencies = () => (select.dataset.dependsOn || '')
+            .split(',')
+            .map((selector) => selector.trim())
+            .filter(Boolean)
+            .map((selector) => document.querySelector(selector))
+            .filter(Boolean);
+        const dependencyValues = () => dependencies().map((dependency) => dependency.value || '');
+        const selectedOption = () => select.options[select.selectedIndex];
+        const optionDependencyValues = (option) => {
+            if (option.dataset.dependsValues) return option.dataset.dependsValues.split('|');
+            return option.dataset.dependsValue ? [option.dataset.dependsValue] : [];
+        };
+        const optionMatchesDependency = (option) => {
+            const values = dependencyValues();
+            return optionDependencyValues(option).every((dependsValue, index) => !dependsValue || !values[index] || dependsValue === values[index]);
+        };
+        const syncInput = () => {
+            const option = selectedOption();
+            input.value = option?.value ? option.textContent.trim() : '';
+            syncClearButton();
+        };
+        const syncClearButton = () => {
+            clearButton.hidden = !input.value && !select.value;
+        };
+        const options = () => [...select.options].filter((option) => option.value !== '' && !option.disabled && optionMatchesDependency(option));
+        const ensureSelectionMatchesDependency = () => {
+            const option = selectedOption();
+            if (option?.value && !optionMatchesDependency(option)) {
+                select.value = '';
+                syncInput();
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        };
+        const close = () => {
+            menu.hidden = true;
+            input.setAttribute('aria-expanded', 'false');
+        };
+        const open = () => {
+            menu.hidden = false;
+            input.setAttribute('aria-expanded', 'true');
+        };
+        const render = () => {
+            ensureSelectionMatchesDependency();
+            const query = input.value.trim().toLocaleLowerCase('id-ID');
+            const matches = options()
+                .filter((option) => !query || option.textContent.toLocaleLowerCase('id-ID').includes(query))
+                .slice(0, 80);
+            menu.replaceChildren();
+
+            if (!matches.length) {
+                const empty = document.createElement('div');
+                empty.className = 'searchable-select-empty';
+                empty.textContent = select.dataset.dependsOn && dependencyValues().some((value) => !value)
+                    ? (select.dataset.dependsEmpty || 'Lengkapi pilihan terkait dulu')
+                    : 'Data tidak ditemukan';
+                menu.append(empty);
+                return;
+            }
+
+            matches.forEach((option) => {
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'searchable-select-option';
+                button.textContent = option.textContent.trim();
+                button.setAttribute('role', 'option');
+                button.setAttribute('aria-selected', String(option.value === select.value));
+                button.addEventListener('mousedown', (event) => event.preventDefault());
+                button.addEventListener('click', () => {
+                    select.value = option.value;
+                    syncInput();
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                    close();
+                });
+                menu.append(button);
+            });
+        };
+
+        syncInput();
+        ensureSelectionMatchesDependency();
+        dependencies().forEach((dependency) => dependency.addEventListener('change', () => {
+            ensureSelectionMatchesDependency();
+            render();
+        }));
+        input.addEventListener('focus', () => {
+            render();
+            open();
+        });
+        input.addEventListener('input', () => {
+            const selected = selectedOption();
+            if (selected && input.value.trim() !== selected.textContent.trim()) {
+                select.value = '';
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            syncClearButton();
+            render();
+            open();
+        });
+        clearButton.addEventListener('mousedown', (event) => event.preventDefault());
+        clearButton.addEventListener('click', () => {
+            select.value = '';
+            input.value = '';
+            syncClearButton();
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            render();
+            open();
+            input.focus();
+        });
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                close();
+                return;
+            }
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                if (menu.hidden) {
+                    render();
+                    open();
+                }
+                menu.querySelector('button')?.focus();
+            }
+        });
+        menu.addEventListener('keydown', (event) => {
+            const buttons = [...menu.querySelectorAll('button')];
+            const index = buttons.indexOf(document.activeElement);
+            if (event.key === 'Escape') {
+                input.focus();
+                close();
+            }
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                buttons[Math.min(index + 1, buttons.length - 1)]?.focus();
+            }
+            if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                if (index <= 0) input.focus();
+                else buttons[index - 1]?.focus();
+            }
         });
     });
 }
@@ -168,6 +336,24 @@ function closeUserMenu() {
     button?.setAttribute('aria-expanded', 'false');
 }
 document.addEventListener('click', (event) => {
+    const confirmForm = event.target.closest('form[data-confirm-action]');
+    if (confirmForm && event.target.closest('button[type="submit"], button:not([type])')) {
+        event.preventDefault();
+        Swal.fire({
+            title: confirmForm.dataset.confirmTitle || 'Lanjutkan tindakan?',
+            text: confirmForm.dataset.confirmText || 'Pastikan data yang dipilih sudah benar.',
+            icon: confirmForm.dataset.confirmIcon || 'warning',
+            showCancelButton: true,
+            confirmButtonText: confirmForm.dataset.confirmButton || 'Ya, lanjutkan',
+            cancelButtonText: confirmForm.dataset.cancelButton || 'Batal',
+            reverseButtons: true,
+            confirmButtonColor: confirmForm.dataset.confirmColor || '#e11d48',
+            cancelButtonColor: '#64748b',
+        }).then((result) => {
+            if (result.isConfirmed) confirmForm.submit();
+        });
+        return;
+    }
     const cancelDraftForm = event.target.closest('form[data-confirm-cancel-draft]');
     if (cancelDraftForm && event.target.closest('button[type="submit"], button:not([type])')) {
         event.preventDefault();
@@ -186,6 +372,50 @@ document.addEventListener('click', (event) => {
         });
         return;
     }
+    const cancelReceiptDraftForm = event.target.closest('form[data-confirm-receipt-draft]');
+    if (cancelReceiptDraftForm && event.target.closest('button[type="submit"], button:not([type])')) {
+        event.preventDefault();
+        Swal.fire({
+            title: 'Batalkan draft penerimaan?',
+            text: 'Dokumen draft dan item di dalamnya akan dihapus. Stok tidak berubah.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, batalkan',
+            cancelButtonText: 'Kembali',
+            reverseButtons: true,
+            confirmButtonColor: '#e11d48',
+            cancelButtonColor: '#64748b',
+        }).then((result) => {
+            if (result.isConfirmed) cancelReceiptDraftForm.submit();
+        });
+        return;
+    }
+    if (event.target.closest('[data-receipt-add-row]')) {
+        const table = document.querySelector('[data-receipt-items]');
+        const template = document.getElementById('receipt-row-template');
+        if (!table || !template) return;
+        const index = table.querySelectorAll('[data-receipt-row]').length;
+        const fragment = template.content.cloneNode(true);
+        fragment.querySelectorAll('[data-name]').forEach((input) => {
+            input.name = `items[${index}][${input.dataset.name}]`;
+            input.removeAttribute('data-name');
+        });
+        table.appendChild(fragment);
+        initSearchableSelects(table);
+        return;
+    }
+    if (event.target.closest('[data-receipt-remove-row]')) {
+        const row = event.target.closest('[data-receipt-row]');
+        const table = row?.closest('[data-receipt-items]');
+        if (!row || !table || table.querySelectorAll('[data-receipt-row]').length <= 1) return;
+        row.remove();
+        table.querySelectorAll('[data-receipt-row]').forEach((row, index) => {
+            row.querySelectorAll('[name^="items["]').forEach((input) => {
+                input.name = input.name.replace(/items\[\d+]/, `items[${index}]`);
+            });
+        });
+        return;
+    }
     const userMenuButton = event.target.closest('[data-user-menu-toggle]');
     if (userMenuButton) {
         const menu = document.getElementById('user-menu');
@@ -195,6 +425,12 @@ document.addEventListener('click', (event) => {
         return;
     }
     if (!event.target.closest('#user-menu')) closeUserMenu();
+    if (!event.target.closest('.searchable-select')) {
+        document.querySelectorAll('.searchable-select-menu').forEach((menu) => {
+            menu.hidden = true;
+            menu.closest('.searchable-select')?.querySelector('[role="combobox"]')?.setAttribute('aria-expanded', 'false');
+        });
+    }
     if (event.target.closest('#nightly-prev, #nightly-prev-bottom')) {
         nightlyPage = Math.max(1, nightlyPage - 1);
         filterNightlyRows();
@@ -244,6 +480,81 @@ document.addEventListener('keydown', (event) => {
         closeUserMenu();
     }
 });
+document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+
+    for (const select of form.querySelectorAll('select[data-searchable-select]')) {
+        const wrapper = select.closest('.searchable-select');
+        const input = wrapper?.querySelector('.searchable-select-input');
+        if (!input) continue;
+
+        const query = input.value.trim().toLocaleLowerCase('id-ID');
+        const dependentValues = (select.dataset.dependsOn || '')
+            .split(',')
+            .map((selector) => selector.trim())
+            .filter(Boolean)
+            .map((selector) => document.querySelector(selector)?.value || '');
+        const exact = [...select.options].find((option) => {
+            const optionDependencyValues = option.dataset.dependsValues
+                ? option.dataset.dependsValues.split('|')
+                : (option.dataset.dependsValue ? [option.dataset.dependsValue] : []);
+            const matchesDependency = optionDependencyValues.every((dependsValue, index) => !dependsValue || !dependentValues[index] || dependsValue === dependentValues[index]);
+            return matchesDependency && option.textContent.trim().toLocaleLowerCase('id-ID') === query;
+        });
+        if (exact) {
+            select.value = exact.value;
+        }
+    }
+
+    if (form.dataset.requiredAlert) {
+        const requiredFields = [...form.querySelectorAll('[required]')];
+        const invalidFields = requiredFields.filter((field) => !field.disabled && !field.checkValidity()).map((field) => {
+            return field.dataset.requiredLabel
+                || form.querySelector(`label[for="${field.id}"]`)?.textContent.trim()
+                || field.name;
+        });
+
+        const start = form.dataset.dateRangeStart ? document.querySelector(form.dataset.dateRangeStart) : null;
+        const end = form.dataset.dateRangeEnd ? document.querySelector(form.dataset.dateRangeEnd) : null;
+        const invalidRange = start?.value && end?.value && end.value < start.value;
+
+        if (invalidFields.length || invalidRange) {
+            event.preventDefault();
+            const messages = [
+                ...invalidFields.map((field) => `<li>${field}</li>`),
+                ...(invalidRange ? ['<li>Tanggal selesai tidak boleh sebelum tanggal mulai</li>'] : []),
+            ].join('');
+            Swal.fire({
+                title: form.dataset.requiredAlert,
+                html: `<div class="text-left text-sm text-slate-600">Isi atau perbaiki bagian berikut:<ul class="mt-2 list-disc pl-5">${messages}</ul></div>`,
+                icon: 'warning',
+                confirmButtonText: 'Mengerti',
+                confirmButtonColor: '#3277B2',
+            }).then(() => {
+                const firstMissing = requiredFields.find((field) => !field.disabled && !field.checkValidity()) || (invalidRange ? end : null);
+                const visibleInput = firstMissing?.closest('.searchable-select')?.querySelector('.searchable-select-input');
+                (visibleInput || firstMissing)?.focus();
+            });
+            return;
+        }
+    }
+
+    for (const select of form.querySelectorAll('select[data-searchable-select]')) {
+        const wrapper = select.closest('.searchable-select');
+        const input = wrapper?.querySelector('.searchable-select-input');
+        if (!input) continue;
+
+        if (select.required && !select.value) {
+            event.preventDefault();
+            const label = select.closest('div')?.querySelector('label')?.textContent.trim().toLocaleLowerCase('id-ID') || 'data';
+            input.setCustomValidity(`Pilih ${label} dari daftar.`);
+            input.reportValidity();
+            input.addEventListener('input', () => input.setCustomValidity(''), { once: true });
+            break;
+        }
+    }
+}, true);
 window.addEventListener('medicine-editing', () => {
     const dialog = document.getElementById('medicine-dialog');
     if (dialog && !dialog.open) dialog.showModal();

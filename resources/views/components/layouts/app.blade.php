@@ -21,27 +21,49 @@
             ['admin.users.index', '◉', 'Pengguna', null, 'manage-users'],
             ['admin.audit-logs.index', '◌', 'Audit Log', null, 'view-audit-logs'],
         ]],
-        ['label' => 'DATA & PERGERAKAN', 'inventory' => false, 'anyCan' => ['view-medicines', 'view-receipts', 'view-transfers'], 'items' => [
+        ['label' => 'DATA & PERGERAKAN', 'inventory' => false, 'anyCan' => ['view-medicines', 'view-receipts', 'view-transfers', 'view-returns'], 'items' => [
             ['medicines.index', '▤', 'Data Obat', null, 'view-medicines'],
             ['preview.receipts', '↓', 'Penerimaan Obat', null, 'view-receipts'],
             ['preview.transfers', '⇄', 'Transfer Gudang–Apotek', null, 'view-transfers'],
+            ['preview.returns', '↩', 'Retur PBF', null, 'view-returns'],
         ]],
         ['label' => 'PEMERIKSAAN STOK', 'inventory' => false, 'anyCan' => ['view-nightly-checks', 'view-opname', 'view-nightly-history'], 'items' => [
-            ['preview.nightly', '✓', 'Pemeriksaan Harian', null, 'view-nightly-checks'],
-            ['preview.opname', '◫', 'Stock Opname Periodik', null, 'view-opname'],
-            ['nightly.history', '▧', 'Riwayat Pemeriksaan', null, 'view-nightly-history'],
+            ['preview.nightly', '✓', 'Pemeriksaan Stok', null, 'view-nightly-checks', ['preview.nightly', 'nightly.show', 'preview.opname', 'nightly.history']],
         ]],
-        ['label' => 'TINDAK LANJ', 'inventory' => false, 'anyCan' => ['view-shortages', 'view-expiry', 'view-reports'], 'items' => [
-            ['shortages.index', '!', 'Kekurangan & Permintaan', null, 'view-shortages'],
-            ['preview.expiry', '◷', 'Monitoring Kedaluwarsa', null, 'view-expiry'],
-            ['preview.reports', '▥', 'Laporan', null, 'view-reports'],
+        ['label' => 'TINDAK LANJ', 'inventory' => false, 'anyCan' => ['view-shortages', 'view-expiry', 'view-special-adjustments', 'view-reports', 'view-stock-card'], 'items' => [
+            ['shortages.index', '!', 'Monitoring', null, 'view-shortages', ['shortages.index', 'preview.expiry']],
+            ['special-adjustments.index', '◇', 'Kondisi Khusus', null, 'view-special-adjustments'],
+            ['preview.reports', '▥', 'Laporan', null, 'view-reports', ['preview.reports', 'stock-card.index']],
         ]],
     ];
     $currentPageLabel = $title ?? 'Dashboard';
     $currentGroupLabel = null;
+    $pageDescription = null;
+    $pageDescriptions = [
+        'dashboard' => 'Gunakan halaman ini untuk memantau kondisi stok secara cepat: total obat, aktivitas penerimaan dan transfer, stok yang perlu perhatian, serta ringkasan data real atau demo sesuai mode yang dipilih.',
+        'admin.users.index' => 'Kelola akun pengguna, role, dan hak akses menu dari satu tempat. Password hanya bisa diubah oleh superadmin/admin yang memiliki akses kelola pengguna, sehingga akun petugas tidak mengubah password sendiri.',
+        'admin.users.create' => 'Buat akun baru untuk petugas, admin, kepala apoteker, atau guest. Pastikan role sesuai tugasnya karena role menentukan menu dan aksi yang bisa dilakukan.',
+        'admin.users.edit' => 'Perbarui nama, username, role, status aktif, atau password pengguna. Nonaktifkan akun jika petugas tidak lagi boleh login, tanpa menghapus riwayat aktivitasnya.',
+        'admin.audit-logs.index' => 'Lihat riwayat aktivitas penting seperti login, perubahan pengguna, hak akses, dan transaksi stok. Halaman ini membantu menelusuri siapa melakukan perubahan dan kapan perubahan terjadi.',
+        'medicines.index' => 'Kelola master obat yang menjadi dasar semua transaksi stok. Obat perlu aktif, punya satuan, dan bentuk sediaan agar bisa dipakai pada penerimaan, transfer, pemeriksaan, monitoring, dan laporan.',
+        'preview.receipts' => 'Catat obat masuk dari PBF berdasarkan faktur. Simpan draft jika item belum lengkap; lakukan final posting hanya saat data sudah benar karena stok Gudang dan saldo batch akan langsung bertambah.',
+        'preview.transfers' => 'Pindahkan stok dari satu lokasi ke lokasi lain, misalnya Gudang ke Apotek. Jika batch dikosongkan, sistem otomatis memakai FEFO dari batch dengan kedaluwarsa paling dekat dan bisa membagi jumlah ke beberapa batch.',
+        'preview.returns' => 'Catat obat yang dikembalikan ke PBF, misalnya karena rusak, recall, atau salah kirim. Setelah diposting, stok di lokasi sumber dan saldo batch akan berkurang.',
+        'preview.nightly' => 'Mulai pemeriksaan fisik stok harian per lokasi. Petugas dapat menyimpan draft, mengirim untuk ditinjau, lalu kepala apoteker dapat menyetujui atau mengembalikan laporan.',
+        'nightly.show' => 'Isi atau tinjau rincian pemeriksaan fisik stok. Saat laporan disetujui, hasil hitung dapat menjadi dasar penyesuaian saldo dan riwayat pemeriksaan.',
+        'preview.opname' => 'Lihat rekap stock opname periodik dari pemeriksaan yang sudah disetujui. Gunakan filter periode untuk mengecek hasil fisik per bulan dan sumber pemeriksaannya.',
+        'nightly.history' => 'Cari riwayat hasil hitung fisik berdasarkan obat, lokasi, dan rentang tanggal. Cocok untuk mengecek perubahan stok fisik dari pemeriksaan sebelumnya.',
+        'shortages.index' => 'Pantau daftar obat yang kosong atau menipis berdasarkan pemeriksaan yang sudah disetujui. Gunakan halaman ini untuk menentukan obat yang perlu diminta atau diprioritaskan.',
+        'preview.expiry' => 'Pantau batch obat yang sudah kedaluwarsa atau mendekati kedaluwarsa. Lokasi stok ikut ditampilkan agar petugas tahu batch mana yang perlu diprioritaskan atau ditindaklanjuti.',
+        'special-adjustments.index' => 'Catat kejadian khusus di luar penerimaan dan transfer, seperti obat rusak, hilang, terjatuh, tidak diambil pasien, expired, atau koreksi stok. Posting akan menyesuaikan saldo sesuai arah stok yang dipilih.',
+        'preview.reports' => 'Lihat ringkasan saldo persediaan per lokasi, mutasi terbaru, dan pemeriksaan yang sudah disetujui. Halaman ini membantu mengecek kondisi stok tanpa membuka transaksi satu per satu.',
+        'stock-card.index' => 'Telusuri pergerakan stok secara detail per obat, lokasi, batch, dan periode. Jika lokasi dipilih, sistem menampilkan saldo awal, mutasi masuk-keluar, dan saldo berjalan.',
+    ];
     foreach ($navigationGroups as $group) {
-        foreach ($group['items'] as [$route, $icon, $label]) {
-            if (request()->routeIs($route)) {
+        foreach ($group['items'] as $item) {
+            [$route, $icon, $label, $badge, $can, $activeRoutes] = array_pad($item, 6, []);
+            $activeRoutes = $activeRoutes ?: [$route];
+            if (collect($activeRoutes)->contains(fn ($activeRoute) => request()->routeIs($activeRoute))) {
                 $currentPageLabel = $label;
                 $currentGroupLabel = match ($group['label']) {
                     'MENU UTAMA' => null,
@@ -53,6 +75,12 @@
                 };
                 break 2;
             }
+        }
+    }
+    foreach ($pageDescriptions as $route => $description) {
+        if (request()->routeIs($route)) {
+            $pageDescription = $description;
+            break;
         }
     }
 @endphp
@@ -68,9 +96,12 @@
                 @if((!($group['inventory'] ?? false) || auth()->user()->can('view-inventory')) && (!isset($group['can']) || auth()->user()->can($group['can'])) && (!isset($group['anyCan']) || collect($group['anyCan'])->contains(fn ($ability) => auth()->user()->can($ability))))
                     <p class="mb-2 mt-5 text-[10px] font-bold uppercase tracking-wider text-slate-400 first:mt-0">{{ $group['label'] }}</p>
                     <div class="space-y-1">
-                        @foreach($group['items'] as [$route, $icon, $label, $badge, $can])
+                        @foreach($group['items'] as $item)
+                            @php([$route, $icon, $label, $badge, $can, $activeRoutes] = array_pad($item, 6, []))
+                            @php($activeRoutes = $activeRoutes ?: [$route])
+                            @php($isActive = collect($activeRoutes)->contains(fn ($activeRoute) => request()->routeIs($activeRoute)))
                             @continue($can && !auth()->user()->can($can))
-                            <a class="nav-link {{ request()->routeIs($route) ? 'nav-active' : '' }}" href="{{ route($route) }}" @if(request()->routeIs($route)) aria-current="page" @endif><span class="w-5 shrink-0 text-center text-base" aria-hidden="true">{{ $icon }}</span><span class="min-w-0 flex-1">{{ $label }}</span>@if($badge)<span class="text-[9px] font-semibold uppercase text-slate-400">{{ $badge }}</span>@endif</a>
+                            <a class="nav-link {{ $isActive ? 'nav-active' : '' }}" href="{{ route($route) }}" @if($isActive) aria-current="page" @endif><span class="w-5 shrink-0 text-center text-base" aria-hidden="true">{{ $icon }}</span><span class="min-w-0 flex-1">{{ $label }}</span>@if($badge)<span class="text-[9px] font-semibold uppercase text-slate-400">{{ $badge }}</span>@endif</a>
                         @endforeach
                     </div>
                 @endif
@@ -115,7 +146,14 @@
                 </div>
             </div>
         </header>
-        <div class="p-4 md:p-6">{{ $slot }}</div>
+        <div class="p-4 md:p-6">
+            @if($pageDescription)
+                <div class="mb-5 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium leading-6 text-slate-600">
+                    {{ $pageDescription }}
+                </div>
+            @endif
+            {{ $slot }}
+        </div>
     </main>
 </div>
 @livewireScripts

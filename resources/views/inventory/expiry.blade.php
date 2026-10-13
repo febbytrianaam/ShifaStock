@@ -1,4 +1,15 @@
 <x-layouts.app title="Monitoring Kedaluwarsa">
+    <x-page-tabs :links="[
+        ['route' => 'shortages.index', 'label' => 'Kekurangan Stok', 'can' => 'view-shortages'],
+        ['route' => 'preview.expiry', 'label' => 'Kedaluwarsa', 'can' => 'view-expiry'],
+    ]" />
+
+    @if($errors->any())
+        <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
     <div class="mb-5 grid gap-3 sm:grid-cols-3">
         <!-- Kedaluwarsa -->
         <div class="card p-4 {{ $counts['expired'] > 0 ? 'attention-critical' : '' }}">
@@ -20,6 +31,43 @@
         </div>
     </div>
 
+    <form method="GET" class="card mb-5 grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-[1fr_180px_170px_160px_160px_auto]">
+        <div>
+            <label class="label" for="expiry-search">Obat / batch</label>
+            <input class="field text-xs" id="expiry-search" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Cari nama, kode, atau batch">
+        </div>
+        <div>
+            <label class="label" for="expiry-location">Lokasi stok</label>
+            <select class="field text-xs" id="expiry-location" name="location_id">
+                <option value="">Semua lokasi</option>
+                @foreach($locations as $location)
+                    <option value="{{ $location->id }}" @selected(($filters['location_id'] ?? null)==$location->id)>{{ $location->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div>
+            <label class="label" for="expiry-status">Status</label>
+            <select class="field text-xs" id="expiry-status" name="status">
+                <option value="all" @selected(($filters['status'] ?? 'all')==='all')>Semua status</option>
+                <option value="expired" @selected(($filters['status'] ?? 'all')==='expired')>Kedaluwarsa</option>
+                <option value="near" @selected(($filters['status'] ?? 'all')==='near')>Dalam 3 bulan</option>
+                <option value="safe" @selected(($filters['status'] ?? 'all')==='safe')>Aman</option>
+            </select>
+        </div>
+        <div>
+            <label class="label" for="expiry-from">ED dari</label>
+            <input class="field text-xs" id="expiry-from" name="from" type="date" value="{{ $filters['from'] ?? '' }}">
+        </div>
+        <div>
+            <label class="label" for="expiry-to">ED sampai</label>
+            <input class="field text-xs" id="expiry-to" name="to" type="date" value="{{ $filters['to'] ?? '' }}">
+        </div>
+        <div class="flex items-end gap-2">
+            <button class="btn text-xs">Tampilkan</button>
+            <a class="btn-secondary text-xs" href="{{ route('preview.expiry') }}">Reset</a>
+        </div>
+    </form>
+
     <div class="card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full whitespace-nowrap text-left text-sm">
@@ -37,7 +85,7 @@
                     @forelse($batches as $batch)
                         @php
                             $days=now('Asia/Jakarta')->startOfDay()->diffInDays($batch->expiry_date,false);
-                            $locations = $batch->medicine->balances
+                            $locations = $batch->balances
                                 ->filter(fn($balance) => (float) $balance->quantity > 0)
                                 ->sortBy(fn($balance) => $balance->location?->name)
                                 ->values();
@@ -63,7 +111,7 @@
                                 </div>
                             </td>
                             <td class="p-4 font-bold tabular-nums text-slate-900">
-                                {{ number_format((float)$batch->medicine->balances->sum('quantity'),0,',','.') }} {{ $batch->medicine->unit?->name }} <span class="text-xs font-normal text-slate-400">(total obat)</span>
+                                {{ number_format((float)$batch->balances->sum('quantity'),0,',','.') }} {{ $batch->medicine->unit?->name }} <span class="text-xs font-normal text-slate-400">(batch ini)</span>
                             </td>
                             <td class="p-4 text-right">
                                 <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $days<0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : ($days<=90 ? 'attention-badge-warning bg-amber-100 text-amber-800 border border-amber-300' : 'bg-[#edf5fb] text-[#266194] border border-[#b2d4ee]') }}">

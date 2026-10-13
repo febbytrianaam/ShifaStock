@@ -7,7 +7,7 @@
         <div class="mb-5 rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ $errors->first() }}</div>
     @endif
 
-    <form method="POST" action="{{ $user->exists ? route('admin.users.update', $user) : route('admin.users.store') }}" class="card max-w-3xl p-6">
+    <form method="POST" action="{{ $user->exists ? route('admin.users.update', $user) : route('admin.users.store') }}" class="card max-w-3xl p-6" data-required-alert="Lengkapi data pengguna" novalidate>
         @csrf
         @if($user->exists)
             @method('PUT')

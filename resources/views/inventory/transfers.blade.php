@@ -11,7 +11,7 @@
     @endif
 
     @can('operate-inventory')
-    <form method="POST" action="{{ route('transfers.store') }}" class="card mb-5 grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-4">
+    <form method="POST" action="{{ route('transfers.store') }}" class="card mb-5 grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-4" data-required-alert="Lengkapi data transfer" novalidate>
         @csrf
         <div>
             <label class="label text-xs font-semibold text-slate-700" for="transfer-reference">Referensi</label>
@@ -19,7 +19,7 @@
         </div>
         <div class="md:col-span-2">
             <label class="label text-xs font-semibold text-slate-700" for="transfer-medicine">Obat</label>
-            <select class="field w-full text-xs" id="transfer-medicine" name="medicine_id" required>
+            <select class="field w-full text-xs" id="transfer-medicine" name="medicine_id" data-searchable-select data-search-placeholder="Cari kode atau nama obat..." required>
                 <option value="">Pilih obat</option>
                 @foreach($medicines as $medicine)
                     <option value="{{ $medicine->id }}" @selected(old('medicine_id')==$medicine->id)>{{ $medicine->code }} — {{ $medicine->name }} ({{ $medicine->unit->name }})</option>
@@ -28,12 +28,12 @@
         </div>
         <div>
             <label class="label text-xs font-semibold text-slate-700" for="transfer-batch">Batch (opsional)</label>
-            <select class="field w-full text-xs" id="transfer-batch" name="batch_id">
-                <option value="">Tanpa rincian batch</option>
-                @foreach($medicines as $medicine)
-                    @foreach($medicine->batches as $batch)
-                        <option value="{{ $batch->id }}" @selected(old('batch_id')==$batch->id)>{{ $medicine->code }} · {{ $batch->number }}</option>
-                    @endforeach
+            <select class="field w-full text-xs" id="transfer-batch" name="batch_id" data-searchable-select data-search-placeholder="Cari batch..." data-depends-on="#transfer-medicine,#transfer-source" data-depends-empty="Pilih obat dan lokasi sumber dulu">
+                <option value="">FEFO otomatis jika memungkinkan</option>
+                @foreach($batchBalances as $balance)
+                    <option value="{{ $balance->batch_id }}" data-depends-values="{{ $balance->medicine_id }}|{{ $balance->location_id }}" @selected(old('batch_id')==$balance->batch_id)>
+                        {{ $balance->medicine->code }} · {{ $balance->batch->number }} · {{ $balance->location->name }} · {{ number_format((float)$balance->quantity,0,',','.') }} {{ $balance->medicine->unit?->name }}
+                    </option>
                 @endforeach
             </select>
         </div>

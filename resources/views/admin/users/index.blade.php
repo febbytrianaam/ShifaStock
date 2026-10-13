@@ -125,7 +125,7 @@
                                 <div class="flex justify-end gap-2">
                                     <a href="{{ route('admin.users.edit', $user) }}" class="btn-secondary">Edit</a>
                                     @if(!$user->is(auth()->user()) && $user->is_active)
-                                        <form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Nonaktifkan pengguna ini?')">
+                                        <form method="POST" action="{{ route('admin.users.destroy', $user) }}" data-confirm-action data-confirm-title="Nonaktifkan pengguna?" data-confirm-text="Akun {{ $user->name }} tidak bisa login lagi sampai diaktifkan kembali." data-confirm-button="Ya, nonaktifkan">
                                             @csrf
                                             @method('DELETE')
                                             <button class="btn-secondary text-rose-600">Nonaktifkan</button>

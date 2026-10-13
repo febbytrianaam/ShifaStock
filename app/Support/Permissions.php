@@ -14,6 +14,9 @@ class Permissions
     public const VIEW_MEDICINES = 'view-medicines';
     public const VIEW_RECEIPTS = 'view-receipts';
     public const VIEW_TRANSFERS = 'view-transfers';
+    public const VIEW_RETURNS = 'view-returns';
+    public const VIEW_STOCK_CARD = 'view-stock-card';
+    public const VIEW_SPECIAL_ADJUSTMENTS = 'view-special-adjustments';
     public const VIEW_NIGHTLY_CHECKS = 'view-nightly-checks';
     public const VIEW_OPNAME = 'view-opname';
     public const VIEW_NIGHTLY_HISTORY = 'view-nightly-history';
@@ -35,6 +38,9 @@ class Permissions
                 self::VIEW_MEDICINES => 'Lihat menu Data Obat',
                 self::VIEW_RECEIPTS => 'Lihat menu Penerimaan Obat',
                 self::VIEW_TRANSFERS => 'Lihat menu Transfer Gudang-Apotek',
+                self::VIEW_RETURNS => 'Lihat menu Retur PBF',
+                self::VIEW_STOCK_CARD => 'Lihat menu Kartu Stok',
+                self::VIEW_SPECIAL_ADJUSTMENTS => 'Lihat menu Kondisi Khusus',
                 self::VIEW_NIGHTLY_CHECKS => 'Lihat menu Pemeriksaan Harian',
                 self::VIEW_OPNAME => 'Lihat menu Stock Opname Periodik',
                 self::VIEW_NIGHTLY_HISTORY => 'Lihat menu Riwayat Pemeriksaan',
@@ -75,6 +81,9 @@ class Permissions
                 self::VIEW_MEDICINES => false,
                 self::VIEW_RECEIPTS => false,
                 self::VIEW_TRANSFERS => false,
+                self::VIEW_RETURNS => false,
+                self::VIEW_STOCK_CARD => false,
+                self::VIEW_SPECIAL_ADJUSTMENTS => false,
                 self::VIEW_NIGHTLY_CHECKS => false,
                 self::VIEW_OPNAME => false,
                 self::VIEW_NIGHTLY_HISTORY => false,
@@ -94,6 +103,9 @@ class Permissions
                 self::VIEW_MEDICINES => true,
                 self::VIEW_RECEIPTS => true,
                 self::VIEW_TRANSFERS => true,
+                self::VIEW_RETURNS => true,
+                self::VIEW_STOCK_CARD => true,
+                self::VIEW_SPECIAL_ADJUSTMENTS => true,
                 self::VIEW_NIGHTLY_CHECKS => true,
                 self::VIEW_OPNAME => true,
                 self::VIEW_NIGHTLY_HISTORY => true,
@@ -113,6 +125,9 @@ class Permissions
                 self::VIEW_MEDICINES => true,
                 self::VIEW_RECEIPTS => true,
                 self::VIEW_TRANSFERS => true,
+                self::VIEW_RETURNS => true,
+                self::VIEW_STOCK_CARD => true,
+                self::VIEW_SPECIAL_ADJUSTMENTS => true,
                 self::VIEW_NIGHTLY_CHECKS => true,
                 self::VIEW_OPNAME => true,
                 self::VIEW_NIGHTLY_HISTORY => true,
@@ -132,6 +147,9 @@ class Permissions
                 self::VIEW_MEDICINES => true,
                 self::VIEW_RECEIPTS => true,
                 self::VIEW_TRANSFERS => true,
+                self::VIEW_RETURNS => true,
+                self::VIEW_STOCK_CARD => true,
+                self::VIEW_SPECIAL_ADJUSTMENTS => true,
                 self::VIEW_NIGHTLY_CHECKS => true,
                 self::VIEW_OPNAME => true,
                 self::VIEW_NIGHTLY_HISTORY => true,

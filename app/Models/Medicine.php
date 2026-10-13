@@ -68,6 +68,11 @@ class Medicine extends Model
         return $this->hasMany(StockBalance::class);
     }
 
+    public function batchBalances(): HasMany
+    {
+        return $this->hasMany(BatchStockBalance::class);
+    }
+
     public function stockParameters(): HasMany
     {
         return $this->hasMany(StockParameter::class);

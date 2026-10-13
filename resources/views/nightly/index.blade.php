@@ -1,4 +1,10 @@
 <x-layouts.app title="Pengecekan Stok Malam">
+    <x-page-tabs :links="[
+        ['route' => 'preview.nightly', 'label' => 'Harian', 'can' => 'view-nightly-checks', 'active' => ['preview.nightly', 'nightly.show']],
+        ['route' => 'preview.opname', 'label' => 'Opname Periodik', 'can' => 'view-opname'],
+        ['route' => 'nightly.history', 'label' => 'Riwayat', 'can' => 'view-nightly-history'],
+    ]" />
+
     @if($errors->any())
         <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">
             {{ $errors->first() }}
@@ -11,7 +17,7 @@
     @endif
 
     @can('operate-inventory')
-    <form method="POST" action="{{ route('nightly.store') }}" class="card mb-5 flex flex-wrap items-end gap-4 p-4">
+    <form method="POST" action="{{ route('nightly.store') }}" class="card mb-5 flex flex-wrap items-end gap-4 p-4" data-required-alert="Lengkapi data pemeriksaan" novalidate>
         @csrf
         <div>
             <label class="label text-xs font-semibold text-slate-700" for="date">Tanggal pemeriksaan</label>

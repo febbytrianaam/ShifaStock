@@ -1,5 +1,11 @@
 <x-layouts.app title="Stock Opname Periodik">
-    <form method="GET" class="card mb-5 flex flex-wrap items-end gap-3 p-4">
+    <x-page-tabs :links="[
+        ['route' => 'preview.nightly', 'label' => 'Harian', 'can' => 'view-nightly-checks', 'active' => ['preview.nightly', 'nightly.show']],
+        ['route' => 'preview.opname', 'label' => 'Opname Periodik', 'can' => 'view-opname'],
+        ['route' => 'nightly.history', 'label' => 'Riwayat', 'can' => 'view-nightly-history'],
+    ]" />
+
+    <form method="GET" class="card mb-5 flex flex-wrap items-end gap-3 p-4" data-required-alert="Lengkapi periode opname" novalidate>
         <div>
             <label class="label text-xs font-semibold text-slate-700" for="opname-period">Periode</label>
             <input class="field text-xs" id="opname-period" name="period" type="month" value="{{ $period }}" required>

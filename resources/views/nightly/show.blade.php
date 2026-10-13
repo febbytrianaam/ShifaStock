@@ -2,6 +2,14 @@
 @php($editable = auth()->user()->can('operate-inventory') && $check->status === 'draft' && $check->created_by === auth()->id())
 <style>@media print {aside,header,nav,.no-print{display:none!important}main{margin:0!important;padding:0!important}body{background:white!important}.card{box-shadow:none!important}input,textarea{border:0!important}table{font-size:10px}tr{break-inside:avoid}}</style>
 
+<div class="no-print">
+    <x-page-tabs :links="[
+        ['route' => 'preview.nightly', 'label' => 'Harian', 'can' => 'view-nightly-checks', 'active' => ['preview.nightly', 'nightly.show']],
+        ['route' => 'preview.opname', 'label' => 'Opname Periodik', 'can' => 'view-opname'],
+        ['route' => 'nightly.history', 'label' => 'Riwayat', 'can' => 'view-nightly-history'],
+    ]" />
+</div>
+
 <div class="mb-4">
     <a class="no-print inline-flex items-center gap-1 text-xs font-semibold text-[#3277B2] hover:underline" href="{{ route('preview.nightly') }}">
         ← Kembali ke daftar pemeriksaan

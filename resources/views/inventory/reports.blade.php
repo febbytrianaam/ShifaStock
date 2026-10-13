@@ -1,4 +1,9 @@
 <x-layouts.app title="Laporan Persediaan">
+    <x-page-tabs :links="[
+        ['route' => 'preview.reports', 'label' => 'Ringkasan', 'can' => 'view-reports'],
+        ['route' => 'stock-card.index', 'label' => 'Kartu Stok', 'can' => 'view-stock-card'],
+    ]" />
+
     <!-- 1. Stok Saat Ini per Lokasi -->
     <section class="mb-8">
         <div class="mb-3 flex items-center justify-between">
@@ -67,8 +72,8 @@
                             <tr class="hover:bg-slate-50/70 transition-colors">
                                 <td class="p-4 text-xs font-medium text-slate-600 tabular-nums">{{ $movement->occurred_at->format('d/m/Y H:i') }}</td>
                                 <td class="p-4">
-                                    <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $movement->type==='receipt' ? 'bg-[#edf5fb] text-[#266194] border border-[#b2d4ee]' : ($movement->type==='transfer' ? 'bg-sky-50 text-sky-800 border border-sky-200' : 'bg-amber-100 text-amber-800 border border-amber-300') }}">
-                                        {{ ['receipt'=>'Penerimaan','transfer'=>'Transfer','physical_count'=>'Penyesuaian Fisik'][$movement->type] ?? $movement->type }}
+                                    <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $movement->type==='receipt' ? 'bg-[#edf5fb] text-[#266194] border border-[#b2d4ee]' : ($movement->type==='transfer' ? 'bg-sky-50 text-sky-800 border border-sky-200' : (in_array($movement->type, ['supplier_return','special_adjustment'], true) ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-amber-100 text-amber-800 border border-amber-300')) }}">
+                                        {{ ['receipt'=>'Penerimaan','transfer'=>'Transfer','physical_count'=>'Penyesuaian Fisik','supplier_return'=>'Retur PBF','special_adjustment'=>'Kondisi Khusus'][$movement->type] ?? $movement->type }}
                                     </span>
                                 </td>
                                 <td class="p-4 font-mono text-xs font-semibold text-slate-700">{{ $movement->reference }}</td>

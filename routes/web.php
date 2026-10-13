@@ -32,8 +32,15 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::group([], function () {
         Route::get('/obat-masuk', [InventoryController::class, 'receipts'])->middleware('can:view-receipts')->name('preview.receipts');
         Route::post('/obat-masuk', [InventoryController::class, 'storeReceipt'])->middleware(['can:view-receipts', 'can:operate-inventory'])->name('receipts.store');
+        Route::post('/obat-masuk/{receipt}/post', [InventoryController::class, 'postReceipt'])->middleware(['can:view-receipts', 'can:operate-inventory'])->whereNumber('receipt')->name('receipts.post');
+        Route::delete('/obat-masuk/{receipt}', [InventoryController::class, 'destroyReceipt'])->middleware(['can:view-receipts', 'can:operate-inventory'])->whereNumber('receipt')->name('receipts.destroy');
         Route::get('/transfer', [InventoryController::class, 'transfers'])->middleware('can:view-transfers')->name('preview.transfers');
         Route::post('/transfer', [InventoryController::class, 'storeTransfer'])->middleware(['can:view-transfers', 'can:operate-inventory'])->name('transfers.store');
+        Route::get('/retur-pbf', [InventoryController::class, 'returns'])->middleware('can:view-returns')->name('preview.returns');
+        Route::post('/retur-pbf', [InventoryController::class, 'storeReturn'])->middleware(['can:view-returns', 'can:operate-inventory'])->name('returns.store');
+        Route::get('/kartu-stok', [InventoryController::class, 'stockCard'])->middleware('can:view-stock-card')->name('stock-card.index');
+        Route::get('/kondisi-khusus', [InventoryController::class, 'specialAdjustments'])->middleware('can:view-special-adjustments')->name('special-adjustments.index');
+        Route::post('/kondisi-khusus', [InventoryController::class, 'storeSpecialAdjustment'])->middleware(['can:view-special-adjustments', 'can:operate-inventory'])->name('special-adjustments.store');
         Route::get('/stock-opname', [InventoryController::class, 'opname'])->middleware('can:view-opname')->name('preview.opname');
         Route::get('/kedaluwarsa', [InventoryController::class, 'expiry'])->middleware('can:view-expiry')->name('preview.expiry');
         Route::get('/laporan', [InventoryController::class, 'reports'])->middleware('can:view-reports')->name('preview.reports');
