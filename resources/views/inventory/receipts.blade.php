@@ -9,13 +9,14 @@
     @can('operate-inventory')
         @php
             $oldItems = old('items', [
-                ['medicine_id' => '', 'batch_number' => '', 'expiry_date' => '', 'quantity' => '', 'notes' => ''],
-                ['medicine_id' => '', 'batch_number' => '', 'expiry_date' => '', 'quantity' => '', 'notes' => ''],
+                ['medicine_id' => '', 'batch_number' => '', 'expiry_date' => '', 'input_quantity' => '', 'input_unit_name' => '', 'conversion_factor' => '', 'quantity' => '', 'notes' => ''],
+                ['medicine_id' => '', 'batch_number' => '', 'expiry_date' => '', 'input_quantity' => '', 'input_unit_name' => '', 'conversion_factor' => '', 'quantity' => '', 'notes' => ''],
             ]);
+            $defaultLocationId = old('destination_location_id', $defaultReceiptLocationId ?? $locations->firstWhere('code', 'GDG')?->id ?? $locations->first()?->id);
         @endphp
         <form method="POST" action="{{ route('receipts.store') }}" class="card mb-5 p-4" data-required-alert="Lengkapi data penerimaan" novalidate>
             @csrf
-            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                 <div>
                     <label class="label" for="receipt-reference">Nomor faktur / referensi</label>
                     <input class="field bg-slate-50 text-xs font-semibold text-slate-700" id="receipt-reference" name="reference" value="{{ old('reference', $nextReference) }}" readonly required maxlength="100">
@@ -29,6 +30,14 @@
                     <input class="field text-xs" id="receipt-time" name="occurred_at" type="datetime-local" value="{{ old('occurred_at',now('Asia/Jakarta')->format('Y-m-d\\TH:i')) }}" required>
                 </div>
                 <div>
+                    <label class="label" for="receipt-destination">Lokasi tujuan</label>
+                    <select class="field text-xs" id="receipt-destination" name="destination_location_id" required>
+                        @foreach($locations as $location)
+                            <option value="{{ $location->id }}" @selected((string) $defaultLocationId === (string) $location->id)>{{ $location->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
                     <label class="label" for="receipt-notes">Catatan dokumen</label>
                     <input class="field text-xs" id="receipt-notes" name="notes" value="{{ old('notes') }}" placeholder="Keterangan umum faktur" maxlength="1000">
                 </div>
@@ -40,13 +49,16 @@
                     <button type="button" class="btn-secondary px-2.5 py-1 text-xs" data-receipt-add-row>+ Baris</button>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full min-w-[980px] text-left text-sm">
+                    <table class="w-full min-w-[1320px] text-left text-sm">
                         <thead class="bg-[#edf5fb] text-[#266194]">
                             <tr>
                                 <th class="p-3">Obat</th>
                                 <th class="p-3">Batch</th>
                                 <th class="p-3">Kedaluwarsa</th>
-                                <th class="p-3">Jumlah</th>
+                                <th class="p-3">Qty Faktur</th>
+                                <th class="p-3">Satuan Faktur</th>
+                                <th class="p-3">Konversi</th>
+                                <th class="p-3">Jumlah Stok</th>
                                 <th class="p-3">Catatan Item</th>
                                 <th class="p-3 text-right">Aksi</th>
                             </tr>
@@ -55,16 +67,19 @@
                             @foreach($oldItems as $index => $item)
                                 <tr data-receipt-row>
                                     <td class="p-3">
-                                        <select class="field text-xs" name="items[{{ $index }}][medicine_id]" data-searchable-select data-search-placeholder="Cari kode atau nama obat..." {{ $index === 0 ? 'required' : '' }}>
+                                        <select class="field text-xs" name="items[{{ $index }}][medicine_id]" data-searchable-select data-search-placeholder="Cari kode atau nama obat..." data-receipt-medicine {{ $index === 0 ? 'required' : '' }}>
                                             <option value="">Pilih obat</option>
                                             @foreach($medicines as $medicine)
-                                                <option value="{{ $medicine->id }}" @selected(($item['medicine_id'] ?? '') == $medicine->id)>{{ $medicine->code }} - {{ $medicine->name }} ({{ $medicine->unit?->name }})</option>
+                                                <option value="{{ $medicine->id }}" data-stock-unit="{{ $medicine->unit?->name }}" data-purchase-unit="{{ $medicine->purchase_unit_name ?: $medicine->unit?->name }}" data-conversion="{{ $medicine->conversion_candidate ?: 1 }}" @selected(($item['medicine_id'] ?? '') == $medicine->id)>{{ $medicine->code }} - {{ $medicine->name }} ({{ $medicine->unit?->name }})</option>
                                             @endforeach
                                         </select>
                                     </td>
                                     <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][batch_number]" value="{{ $item['batch_number'] ?? '' }}" placeholder="Batch" {{ $index === 0 ? 'required' : '' }} maxlength="100"></td>
                                     <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][expiry_date]" type="date" value="{{ $item['expiry_date'] ?? '' }}" {{ $index === 0 ? 'required' : '' }}></td>
-                                    <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][quantity]" type="number" min="0.0001" step="0.0001" value="{{ $item['quantity'] ?? '' }}" placeholder="0" {{ $index === 0 ? 'required' : '' }}></td>
+                                    <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][input_quantity]" data-receipt-input-quantity type="number" min="0.0001" step="0.0001" value="{{ $item['input_quantity'] ?? '' }}" placeholder="0"></td>
+                                    <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][input_unit_name]" data-receipt-input-unit value="{{ $item['input_unit_name'] ?? '' }}" placeholder="Box / strip / botol" maxlength="100"></td>
+                                    <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][conversion_factor]" data-receipt-conversion type="number" min="0.0001" step="0.0001" value="{{ $item['conversion_factor'] ?? '' }}" placeholder="1"></td>
+                                    <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][quantity]" data-receipt-stock-quantity type="number" min="0.0001" step="0.0001" value="{{ $item['quantity'] ?? '' }}" placeholder="Satuan stok" {{ $index === 0 ? 'required' : '' }}></td>
                                     <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][notes]" value="{{ $item['notes'] ?? '' }}" placeholder="Opsional" maxlength="1000"></td>
                                     <td class="p-3 text-right"><button type="button" class="btn-secondary px-2.5 py-1 text-xs" data-receipt-remove-row>Hapus</button></td>
                                 </tr>
@@ -83,16 +98,19 @@
         <template id="receipt-row-template">
             <tr data-receipt-row>
                 <td class="p-3">
-                    <select class="field text-xs" data-name="medicine_id" data-searchable-select data-search-placeholder="Cari kode atau nama obat...">
+                    <select class="field text-xs" data-name="medicine_id" data-searchable-select data-search-placeholder="Cari kode atau nama obat..." data-receipt-medicine>
                         <option value="">Pilih obat</option>
                         @foreach($medicines as $medicine)
-                            <option value="{{ $medicine->id }}">{{ $medicine->code }} - {{ $medicine->name }} ({{ $medicine->unit?->name }})</option>
+                            <option value="{{ $medicine->id }}" data-stock-unit="{{ $medicine->unit?->name }}" data-purchase-unit="{{ $medicine->purchase_unit_name ?: $medicine->unit?->name }}" data-conversion="{{ $medicine->conversion_candidate ?: 1 }}">{{ $medicine->code }} - {{ $medicine->name }} ({{ $medicine->unit?->name }})</option>
                         @endforeach
                     </select>
                 </td>
                 <td class="p-3"><input class="field text-xs" data-name="batch_number" placeholder="Batch" maxlength="100"></td>
                 <td class="p-3"><input class="field text-xs" data-name="expiry_date" type="date"></td>
-                <td class="p-3"><input class="field text-xs" data-name="quantity" type="number" min="0.0001" step="0.0001" placeholder="0"></td>
+                <td class="p-3"><input class="field text-xs" data-name="input_quantity" data-receipt-input-quantity type="number" min="0.0001" step="0.0001" placeholder="0"></td>
+                <td class="p-3"><input class="field text-xs" data-name="input_unit_name" data-receipt-input-unit placeholder="Box / strip / botol" maxlength="100"></td>
+                <td class="p-3"><input class="field text-xs" data-name="conversion_factor" data-receipt-conversion type="number" min="0.0001" step="0.0001" placeholder="1"></td>
+                <td class="p-3"><input class="field text-xs" data-name="quantity" data-receipt-stock-quantity type="number" min="0.0001" step="0.0001" placeholder="Satuan stok"></td>
                 <td class="p-3"><input class="field text-xs" data-name="notes" placeholder="Opsional" maxlength="1000"></td>
                 <td class="p-3 text-right"><button type="button" class="btn-secondary px-2.5 py-1 text-xs" data-receipt-remove-row>Hapus</button></td>
             </tr>
@@ -112,6 +130,7 @@
                             <th class="p-4">Referensi</th>
                             <th class="p-4">Status</th>
                             <th class="p-4">Supplier</th>
+                            <th class="p-4">Lokasi</th>
                             <th class="p-4">Item</th>
                             <th class="p-4">Diterima</th>
                             <th class="p-4">Posting</th>
@@ -124,6 +143,7 @@
                                 <td class="p-4 font-mono text-xs font-semibold text-slate-700">{{ $receipt->reference }}</td>
                                 <td class="p-4"><span class="badge {{ $receipt->status === 'posted' ? 'badge-ok' : 'badge-warn' }}">{{ $receipt->status === 'posted' ? 'Posted' : 'Draft' }}</span></td>
                                 <td class="p-4 text-xs font-medium text-slate-600">{{ $receipt->counterparty ?: '-' }}</td>
+                                <td class="p-4 text-xs font-semibold text-slate-600">{{ $receipt->destinationLocation?->name ?? 'Gudang' }}</td>
                                 <td class="p-4">
                                     <p class="text-xs font-bold text-slate-900">{{ $receipt->items->count() }} item</p>
                                     <p class="text-xs text-slate-500">{{ number_format($receipt->items->sum(fn ($item) => (float) $item->quantity),0,',','.') }} satuan dasar</p>
@@ -151,18 +171,21 @@
                                 </td>
                             </tr>
                             <tr class="bg-slate-50/60">
-                                <td colspan="7" class="px-4 py-2">
+                                <td colspan="8" class="px-4 py-2">
                                     <div class="flex flex-wrap gap-2">
                                         @foreach($receipt->items as $item)
                                             <span class="inline-flex rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600">
                                                 {{ $item->medicine->name }} · {{ $item->batch_number }} · {{ number_format((float)$item->quantity,0,',','.') }} {{ $item->medicine->unit?->name }}
+                                                @if($item->input_quantity && ($item->input_unit_name || (float) $item->conversion_factor !== 1.0))
+                                                    · faktur {{ number_format((float)$item->input_quantity,0,',','.') }} {{ $item->input_unit_name ?: 'satuan' }} x {{ number_format((float)$item->conversion_factor,0,',','.') }}
+                                                @endif
                                             </span>
                                         @endforeach
                                     </div>
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="7" class="p-8 text-center font-medium text-slate-500">Belum ada dokumen penerimaan.</td></tr>
+                            <tr><td colspan="8" class="p-8 text-center font-medium text-slate-500">Belum ada dokumen penerimaan.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -185,7 +208,7 @@
                             <th class="p-4">Referensi</th>
                             <th class="p-4">Obat / Batch</th>
                             <th class="p-4">Supplier</th>
-                            <th class="p-4">Masuk Gudang</th>
+                            <th class="p-4">Masuk Lokasi</th>
                             <th class="p-4">Petugas</th>
                         </tr>
                     </thead>

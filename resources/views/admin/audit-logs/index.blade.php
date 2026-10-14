@@ -1,13 +1,30 @@
 <x-layouts.app title="Audit Log">
-    <form method="GET" class="card mb-5 grid gap-3 p-4 md:grid-cols-[1fr_240px_auto]">
-        <input name="search" value="{{ $filters['search'] ?? '' }}" class="field" placeholder="Cari aktivitas, pengguna, atau IP">
-        <select name="event" class="field">
+    <form method="GET" class="card mb-5 grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-[1fr_220px_220px_220px_150px_150px_auto]">
+        <input name="search" value="{{ $filters['search'] ?? '' }}" class="field text-xs" placeholder="Cari aktivitas, pengguna, event, atau IP">
+        <select name="event" class="field text-xs">
             <option value="">Semua event</option>
             @foreach($events as $event)
                 <option value="{{ $event }}" @selected(($filters['event'] ?? '') === $event)>{{ $event }}</option>
             @endforeach
         </select>
-        <button class="btn-secondary">Filter</button>
+        <select name="user_id" class="field text-xs">
+            <option value="">Semua pelaku</option>
+            @foreach($actors as $actor)
+                <option value="{{ $actor->id }}" @selected((string)($filters['user_id'] ?? '') === (string)$actor->id)>{{ $actor->name }}</option>
+            @endforeach
+        </select>
+        <select name="auditable_type" class="field text-xs">
+            <option value="">Semua subjek</option>
+            @foreach($auditableTypes as $type)
+                <option value="{{ $type }}" @selected(($filters['auditable_type'] ?? '') === $type)>{{ class_basename($type) }}</option>
+            @endforeach
+        </select>
+        <input name="from" type="date" value="{{ $filters['from'] ?? '' }}" class="field text-xs">
+        <input name="to" type="date" value="{{ $filters['to'] ?? '' }}" class="field text-xs">
+        <div class="flex gap-2">
+            <button class="btn-secondary flex-1 text-xs">Filter</button>
+            <button class="btn flex-1 text-xs" name="export" value="csv">CSV</button>
+        </div>
     </form>
 
     <div class="card overflow-hidden">

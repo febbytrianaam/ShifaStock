@@ -79,7 +79,7 @@
                 <p class="mt-2 text-lg font-bold tabular-nums text-slate-900">{{ number_format((float)$balance->quantity,0,',','.') }} <span class="text-xs font-medium text-slate-500">{{ $balance->medicine->unit?->name }}</span></p>
             </div>
         @empty
-            <div class="card p-4 text-slate-500 font-medium">Belum ada saldo untuk ditransfer.</div>
+            <div class="card p-4 text-slate-500 font-medium">Belum ada stok untuk ditransfer.</div>
         @endforelse
     </div>
 

@@ -10,9 +10,11 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 - [AI handoff](00_current/ai_handoff.md)
 - [Testing strategy](00_current/testing_strategy.md)
 - [Security](00_current/security.md)
+- [Deployment, backup, and restore](00_current/deployment_backup.md)
 - [Privacy and retention](00_current/privacy_and_retention.md)
 - [Current roadmap](00_current/roadmap.md)
 - [Next-step plan](20_plans/active/next-step-plan.md)
+- [PRD completion manual QA plan](20_plans/active/prd-completion-manual-qa-plan.md)
 
 ## Folder Lifecycle
 
@@ -42,6 +44,8 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 - [2026-10-13 Inventory workflows and batch stock](30_implemented/2026-10-13-inventory-workflows-batch-stock/)
 - [2026-10-13 UI, validation, and monitoring polish](30_implemented/2026-10-13-ui-validation-monitoring-polish/)
 - [2026-10-13 Documentation system](30_implemented/2026-10-13-ai-documentation-system/)
+- [2026-10-14 PRD gap completion](30_implemented/2026-10-14-prd-gap-completion/)
+- [2026-10-14 Superadmin controls](30_implemented/2026-10-14-superadmin-controls/)
 
 Use [the implementation report template](30_implemented/implementation_report_template.md) when recording future shipped work.
 

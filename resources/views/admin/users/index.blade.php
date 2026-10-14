@@ -79,6 +79,80 @@
                 <button class="btn">Simpan Hak Akses</button>
             </div>
         </form>
+        <form id="reset-permissions-form" method="POST" action="{{ route('admin.users.permissions.reset') }}" class="mt-3 flex justify-end" data-confirm-action data-confirm-title="Reset hak akses?" data-confirm-text="Semua role akan dikembalikan ke permission default sistem. Akses wajib Administrator tetap dikunci." data-confirm-button="Ya, reset default" data-confirm-color="#e11d48">
+            @csrf
+            <button class="btn-secondary text-rose-700">Kembalikan Default Role</button>
+        </form>
+
+        <section class="card mt-5 overflow-hidden">
+            <div class="border-b border-slate-100 p-4">
+                <h2 class="text-base font-bold text-slate-900">Preview Akses Role</h2>
+                <p class="mt-1 text-sm text-slate-500">Gunakan bagian ini untuk mengecek menu dan aksi yang terlihat per role sebelum atau setelah matrix disimpan.</p>
+            </div>
+            <div class="grid gap-4 p-4 lg:grid-cols-[260px_1fr]">
+                <div>
+                    <label class="label" for="role-preview-select">Role</label>
+                    <select id="role-preview-select" class="field text-xs" data-role-preview-select>
+                        @foreach($roles as $role)
+                            <option value="{{ $role->value }}">{{ $role->label() }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="space-y-4">
+                    @foreach($roles as $role)
+                        @php
+                            $visibleMenus = collect($menuPreview)->filter(fn ($item) => (bool) ($permissionMatrix[$role->value][$item['permission']] ?? false));
+                            $allowedPermissions = collect($permissionGroups)->map(fn ($permissions) => collect($permissions)->filter(fn ($label, $permission) => (bool) ($permissionMatrix[$role->value][$permission] ?? false)));
+                        @endphp
+                        <div data-role-preview-panel="{{ $role->value }}" @if(!$loop->first) hidden @endif>
+                            <div class="grid gap-4 xl:grid-cols-2">
+                                <div class="rounded-lg border border-slate-200 bg-white p-4">
+                                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Menu terlihat</p>
+                                    @if($visibleMenus->isEmpty())
+                                        <p class="mt-3 text-sm font-semibold text-rose-700">Role ini belum punya menu yang bisa dibuka.</p>
+                                    @else
+                                        <div class="mt-3 space-y-3">
+                                            @foreach($visibleMenus->groupBy('group') as $group => $items)
+                                                <div>
+                                                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ $group }}</p>
+                                                    <div class="mt-1 flex flex-wrap gap-1.5">
+                                                        @foreach($items as $item)
+                                                            <span class="badge badge-brand">{{ $item['label'] }}</span>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="rounded-lg border border-slate-200 bg-white p-4">
+                                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Aksi diizinkan</p>
+                                    <div class="mt-3 space-y-3">
+                                        @foreach($allowedPermissions as $group => $permissions)
+                                            <div>
+                                                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ $group }}</p>
+                                                @if($permissions->isEmpty())
+                                                    <p class="mt-1 text-xs text-slate-400">Tidak ada.</p>
+                                                @else
+                                                    <ul class="mt-1 space-y-1 text-sm text-slate-700">
+                                                        @foreach($permissions as $permission => $label)
+                                                            <li class="flex items-start gap-2">
+                                                                <span class="mt-1 h-1.5 w-1.5 rounded-full bg-[#3277B2]"></span>
+                                                                <span>{{ $label }}</span>
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
     @else
     <form method="GET" class="card mb-5 grid gap-3 p-4 md:grid-cols-[1fr_220px_180px_auto]">
         <input type="hidden" name="tab" value="users">

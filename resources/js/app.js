@@ -105,6 +105,8 @@ function initialize() {
     filterNightlyRows();
     initBalanceSearch();
     initSearchableSelects();
+    initReceiptRows();
+    initRolePreview();
 }
 
 function initBalanceSearch() {
@@ -287,6 +289,59 @@ function initSearchableSelects(root = document) {
     });
 }
 
+function initReceiptRows(root = document) {
+    root.querySelectorAll('[data-receipt-row]:not([data-receipt-ready])').forEach((row) => {
+        row.dataset.receiptReady = '1';
+        const medicine = row.querySelector('[data-receipt-medicine]');
+        const inputQuantity = row.querySelector('[data-receipt-input-quantity]');
+        const inputUnit = row.querySelector('[data-receipt-input-unit]');
+        const conversion = row.querySelector('[data-receipt-conversion]');
+        const stockQuantity = row.querySelector('[data-receipt-stock-quantity]');
+        const applyMedicineDefaults = () => {
+            const option = medicine?.options[medicine.selectedIndex];
+            if (!option?.value) return;
+            if (inputUnit && !inputUnit.value) inputUnit.value = option.dataset.purchaseUnit || option.dataset.stockUnit || '';
+            if (conversion && !conversion.value) conversion.value = option.dataset.conversion || '1';
+            updateReceiptStockQuantity(row);
+        };
+        medicine?.addEventListener('change', applyMedicineDefaults);
+        inputQuantity?.addEventListener('input', () => updateReceiptStockQuantity(row));
+        conversion?.addEventListener('input', () => updateReceiptStockQuantity(row));
+        stockQuantity?.addEventListener('input', () => {
+            stockQuantity.dataset.autoCalculated = '0';
+        });
+        applyMedicineDefaults();
+    });
+}
+
+function initRolePreview() {
+    const select = document.querySelector('[data-role-preview-select]');
+    if (!select || select.dataset.initialized) return;
+    select.dataset.initialized = '1';
+    const sync = () => {
+        document.querySelectorAll('[data-role-preview-panel]').forEach((panel) => {
+            panel.hidden = panel.dataset.rolePreviewPanel !== select.value;
+        });
+    };
+    select.addEventListener('change', sync);
+    sync();
+}
+
+function updateReceiptStockQuantity(row) {
+    const inputQuantity = row.querySelector('[data-receipt-input-quantity]');
+    const conversion = row.querySelector('[data-receipt-conversion]');
+    const stockQuantity = row.querySelector('[data-receipt-stock-quantity]');
+    if (!inputQuantity || !conversion || !stockQuantity || !inputQuantity.value || !conversion.value) return;
+    if (stockQuantity.value && stockQuantity.dataset.autoCalculated !== '1') return;
+
+    const quantity = Number(inputQuantity.value);
+    const factor = Number(conversion.value);
+    if (!Number.isFinite(quantity) || !Number.isFinite(factor) || quantity <= 0 || factor <= 0) return;
+
+    stockQuantity.value = Number((quantity * factor).toFixed(4)).toString();
+    stockQuantity.dataset.autoCalculated = '1';
+}
+
 function filterNightlyRows() {
     const search = document.getElementById('nightly-search');
     const filter = document.getElementById('nightly-filter');
@@ -402,6 +457,7 @@ document.addEventListener('click', (event) => {
         });
         table.appendChild(fragment);
         initSearchableSelects(table);
+        initReceiptRows(table);
         return;
     }
     if (event.target.closest('[data-receipt-remove-row]')) {

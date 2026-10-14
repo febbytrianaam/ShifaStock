@@ -40,6 +40,7 @@ class UserController extends Controller
             'permissionGroups' => Permissions::definitions(),
             'permissionMatrix' => Permissions::matrix(),
             'lockedPermissions' => Permissions::locked(),
+            'menuPreview' => $this->menuPreview(),
         ]);
     }
 
@@ -59,6 +60,20 @@ class UserController extends Controller
         ], $request);
 
         return redirect()->route('admin.users.index', ['tab' => 'permissions'])->with('status', 'Hak akses role berhasil diperbarui.');
+    }
+
+    public function resetPermissions(Request $request)
+    {
+        $before = Permissions::matrix();
+        Permissions::syncMatrix(Permissions::defaults());
+        $after = Permissions::matrix();
+
+        AuditLogger::record('permissions.reset', 'Matrix hak akses role dikembalikan ke default.', null, [
+            'before' => $before,
+            'after' => $after,
+        ], $request);
+
+        return redirect()->route('admin.users.index', ['tab' => 'permissions'])->with('status', 'Hak akses role dikembalikan ke default.');
     }
 
     public function create()
@@ -156,6 +171,32 @@ class UserController extends Controller
             'email' => $user->email,
             'role' => $user->role?->value,
             'is_active' => $user->is_active,
+        ];
+    }
+
+    private function menuPreview(): array
+    {
+        return [
+            ['group' => 'Menu Utama', 'label' => 'Dashboard', 'permission' => Permissions::VIEW_DASHBOARD],
+            ['group' => 'Administrasi', 'label' => 'Pengguna', 'permission' => Permissions::MANAGE_USERS],
+            ['group' => 'Administrasi', 'label' => 'Audit Log', 'permission' => Permissions::VIEW_AUDIT_LOGS],
+            ['group' => 'Administrasi', 'label' => 'Referensi Sistem', 'permission' => Permissions::MANAGE_SYSTEM_REFERENCES],
+            ['group' => 'Administrasi', 'label' => 'Pengaturan Sistem', 'permission' => Permissions::MANAGE_SYSTEM_SETTINGS],
+            ['group' => 'Data & Pergerakan', 'label' => 'Data Obat', 'permission' => Permissions::VIEW_MEDICINES],
+            ['group' => 'Data & Pergerakan', 'label' => 'Stok Awal', 'permission' => Permissions::VIEW_OPENING_BALANCES],
+            ['group' => 'Data & Pergerakan', 'label' => 'Penerimaan Obat', 'permission' => Permissions::VIEW_RECEIPTS],
+            ['group' => 'Data & Pergerakan', 'label' => 'Transfer Gudang-Apotek', 'permission' => Permissions::VIEW_TRANSFERS],
+            ['group' => 'Data & Pergerakan', 'label' => 'Pengeluaran Obat', 'permission' => Permissions::VIEW_ISSUES],
+            ['group' => 'Data & Pergerakan', 'label' => 'Retur PBF', 'permission' => Permissions::VIEW_RETURNS],
+            ['group' => 'Pemeriksaan Stok', 'label' => 'Pemeriksaan Stok', 'permission' => Permissions::VIEW_NIGHTLY_CHECKS],
+            ['group' => 'Pemeriksaan Stok', 'label' => 'Stock Opname Periodik', 'permission' => Permissions::VIEW_OPNAME],
+            ['group' => 'Pemeriksaan Stok', 'label' => 'Riwayat Pemeriksaan', 'permission' => Permissions::VIEW_NIGHTLY_HISTORY],
+            ['group' => 'Tindak Lanjut', 'label' => 'Monitoring', 'permission' => Permissions::VIEW_SHORTAGES],
+            ['group' => 'Tindak Lanjut', 'label' => 'Monitoring Kedaluwarsa', 'permission' => Permissions::VIEW_EXPIRY],
+            ['group' => 'Tindak Lanjut', 'label' => 'Parameter Monitoring', 'permission' => Permissions::MANAGE_MONITORING_PARAMETERS],
+            ['group' => 'Tindak Lanjut', 'label' => 'Kondisi Khusus', 'permission' => Permissions::VIEW_SPECIAL_ADJUSTMENTS],
+            ['group' => 'Tindak Lanjut', 'label' => 'Laporan', 'permission' => Permissions::VIEW_REPORTS],
+            ['group' => 'Tindak Lanjut', 'label' => 'Kartu Stok', 'permission' => Permissions::VIEW_STOCK_CARD],
         ];
     }
 }

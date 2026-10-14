@@ -57,7 +57,7 @@ Run a browser-based manual QA pass with seeded/local data and document results u
 ## Things Not To Do Yet
 
 - Do not introduce Spatie Permission unless the current simple RBAC matrix becomes insufficient.
-- Do not add external integrations without a confirmed data contract.
+- Do not add patient-service, prescription, POS, or supplier integrations; current PRD keeps ShifaStock focused on medicine inventory management.
 - Do not remove legacy reference assets in `docs/` unless the user asks.
 - Do not create speculative docs in `00_current/`.
 

@@ -17,21 +17,26 @@
         ['label' => 'MENU UTAMA', 'inventory' => false, 'items' => [
             ['dashboard', '▦', 'Dashboard', null, 'view-dashboard'],
         ]],
-        ['label' => 'ADMINISTRASI', 'inventory' => false, 'anyCan' => ['manage-users', 'view-audit-logs'], 'items' => [
+        ['label' => 'ADMINISTRASI', 'inventory' => false, 'anyCan' => ['manage-users', 'view-audit-logs', 'manage-system-references', 'manage-system-settings'], 'items' => [
             ['admin.users.index', '◉', 'Pengguna', null, 'manage-users'],
             ['admin.audit-logs.index', '◌', 'Audit Log', null, 'view-audit-logs'],
+            ['admin.references.index', '◇', 'Referensi Sistem', null, 'manage-system-references'],
+            ['admin.settings.index', '⚙', 'Pengaturan Sistem', null, 'manage-system-settings'],
         ]],
-        ['label' => 'DATA & PERGERAKAN', 'inventory' => false, 'anyCan' => ['view-medicines', 'view-receipts', 'view-transfers', 'view-returns'], 'items' => [
+        ['label' => 'DATA & PERGERAKAN', 'inventory' => false, 'anyCan' => ['view-medicines', 'view-opening-balances', 'view-receipts', 'view-transfers', 'view-issues', 'view-returns'], 'items' => [
             ['medicines.index', '▤', 'Data Obat', null, 'view-medicines'],
+            ['opening-balances.index', '+', 'Stok Awal', null, 'view-opening-balances'],
             ['preview.receipts', '↓', 'Penerimaan Obat', null, 'view-receipts'],
             ['preview.transfers', '⇄', 'Transfer Gudang–Apotek', null, 'view-transfers'],
+            ['preview.issues', '↑', 'Pengeluaran Obat', null, 'view-issues'],
             ['preview.returns', '↩', 'Retur PBF', null, 'view-returns'],
         ]],
         ['label' => 'PEMERIKSAAN STOK', 'inventory' => false, 'anyCan' => ['view-nightly-checks', 'view-opname', 'view-nightly-history'], 'items' => [
             ['preview.nightly', '✓', 'Pemeriksaan Stok', null, 'view-nightly-checks', ['preview.nightly', 'nightly.show', 'preview.opname', 'nightly.history']],
         ]],
-        ['label' => 'TINDAK LANJ', 'inventory' => false, 'anyCan' => ['view-shortages', 'view-expiry', 'view-special-adjustments', 'view-reports', 'view-stock-card'], 'items' => [
+        ['label' => 'TINDAK LANJ', 'inventory' => false, 'anyCan' => ['view-shortages', 'view-expiry', 'view-special-adjustments', 'view-reports', 'view-stock-card', 'manage-monitoring-parameters'], 'items' => [
             ['shortages.index', '!', 'Monitoring', null, 'view-shortages', ['shortages.index', 'preview.expiry']],
+            ['monitoring-parameters.index', '⚙', 'Parameter Monitoring', null, 'manage-monitoring-parameters'],
             ['special-adjustments.index', '◇', 'Kondisi Khusus', null, 'view-special-adjustments'],
             ['preview.reports', '▥', 'Laporan', null, 'view-reports', ['preview.reports', 'stock-card.index']],
         ]],
@@ -45,19 +50,24 @@
         'admin.users.create' => 'Buat akun baru untuk petugas, admin, kepala apoteker, atau guest. Pastikan role sesuai tugasnya karena role menentukan menu dan aksi yang bisa dilakukan.',
         'admin.users.edit' => 'Perbarui nama, username, role, status aktif, atau password pengguna. Nonaktifkan akun jika petugas tidak lagi boleh login, tanpa menghapus riwayat aktivitasnya.',
         'admin.audit-logs.index' => 'Lihat riwayat aktivitas penting seperti login, perubahan pengguna, hak akses, dan transaksi stok. Halaman ini membantu menelusuri siapa melakukan perubahan dan kapan perubahan terjadi.',
+        'admin.references.index' => 'Kelola referensi dasar yang dipakai transaksi stok, seperti lokasi dan satuan obat. Nonaktifkan data yang tidak dipakai lagi agar riwayat lama tetap aman.',
+        'admin.settings.index' => 'Atur preferensi ringan untuk operasional sistem, seperti default lokasi penerimaan dan identitas klinik yang muncul pada laporan.',
         'medicines.index' => 'Kelola master obat yang menjadi dasar semua transaksi stok. Obat perlu aktif, punya satuan, dan bentuk sediaan agar bisa dipakai pada penerimaan, transfer, pemeriksaan, monitoring, dan laporan.',
-        'preview.receipts' => 'Catat obat masuk dari PBF berdasarkan faktur. Simpan draft jika item belum lengkap; lakukan final posting hanya saat data sudah benar karena stok Gudang dan saldo batch akan langsung bertambah.',
+        'opening-balances.index' => 'Catat stok awal per obat, batch, dan lokasi ketika data awal persediaan mulai dimasukkan ke sistem. Setiap stok awal dibuat sebagai mutasi agar bisa ditelusuri di kartu stok.',
+        'preview.receipts' => 'Catat obat masuk dari PBF berdasarkan faktur. Pilih lokasi tujuan, isi batch dan konversi satuan jika obat diterima per box/strip, lalu posting saat data sudah benar karena stok lokasi dan batch akan langsung bertambah.',
         'preview.transfers' => 'Pindahkan stok dari satu lokasi ke lokasi lain, misalnya Gudang ke Apotek. Jika batch dikosongkan, sistem otomatis memakai FEFO dari batch dengan kedaluwarsa paling dekat dan bisa membagi jumlah ke beberapa batch.',
-        'preview.returns' => 'Catat obat yang dikembalikan ke PBF, misalnya karena rusak, recall, atau salah kirim. Setelah diposting, stok di lokasi sumber dan saldo batch akan berkurang.',
+        'preview.issues' => 'Catat obat keluar dari persediaan berdasarkan referensi layanan, tindakan, atau catatan internal klinik. Jika batch dikosongkan, sistem memakai FEFO dan menolak batch yang sudah kedaluwarsa.',
+        'preview.returns' => 'Catat obat yang dikembalikan ke PBF, misalnya karena rusak, recall, atau salah kirim. Setelah diposting, stok di lokasi sumber dan stok batch akan berkurang.',
         'preview.nightly' => 'Mulai pemeriksaan fisik stok harian per lokasi. Petugas dapat menyimpan draft, mengirim untuk ditinjau, lalu kepala apoteker dapat menyetujui atau mengembalikan laporan.',
-        'nightly.show' => 'Isi atau tinjau rincian pemeriksaan fisik stok. Saat laporan disetujui, hasil hitung dapat menjadi dasar penyesuaian saldo dan riwayat pemeriksaan.',
+        'nightly.show' => 'Isi atau tinjau rincian pemeriksaan fisik stok. Saat laporan disetujui, hasil hitung dapat menjadi dasar penyesuaian stok dan riwayat pemeriksaan.',
         'preview.opname' => 'Lihat rekap stock opname periodik dari pemeriksaan yang sudah disetujui. Gunakan filter periode untuk mengecek hasil fisik per bulan dan sumber pemeriksaannya.',
         'nightly.history' => 'Cari riwayat hasil hitung fisik berdasarkan obat, lokasi, dan rentang tanggal. Cocok untuk mengecek perubahan stok fisik dari pemeriksaan sebelumnya.',
         'shortages.index' => 'Pantau daftar obat yang kosong atau menipis berdasarkan pemeriksaan yang sudah disetujui. Gunakan halaman ini untuk menentukan obat yang perlu diminta atau diprioritaskan.',
         'preview.expiry' => 'Pantau batch obat yang sudah kedaluwarsa atau mendekati kedaluwarsa. Lokasi stok ikut ditampilkan agar petugas tahu batch mana yang perlu diprioritaskan atau ditindaklanjuti.',
-        'special-adjustments.index' => 'Catat kejadian khusus di luar penerimaan dan transfer, seperti obat rusak, hilang, terjatuh, tidak diambil pasien, expired, atau koreksi stok. Posting akan menyesuaikan saldo sesuai arah stok yang dipilih.',
-        'preview.reports' => 'Lihat ringkasan saldo persediaan per lokasi, mutasi terbaru, dan pemeriksaan yang sudah disetujui. Halaman ini membantu mengecek kondisi stok tanpa membuka transaksi satu per satu.',
-        'stock-card.index' => 'Telusuri pergerakan stok secara detail per obat, lokasi, batch, dan periode. Jika lokasi dipilih, sistem menampilkan saldo awal, mutasi masuk-keluar, dan saldo berjalan.',
+        'monitoring-parameters.index' => 'Atur batas minimum stok per obat dan lokasi, serta periode peringatan kedaluwarsa. Parameter ini membantu monitoring menandai stok yang perlu perhatian dengan aturan yang jelas.',
+        'special-adjustments.index' => 'Catat kejadian khusus di luar penerimaan dan transfer, seperti obat rusak, hilang, terjatuh, tidak diambil pasien, expired, atau koreksi stok. Posting akan menyesuaikan stok sesuai arah yang dipilih.',
+        'preview.reports' => 'Lihat ringkasan stok persediaan per lokasi, mutasi terbaru, dan pemeriksaan yang sudah disetujui. Halaman ini membantu mengecek kondisi stok tanpa membuka transaksi satu per satu.',
+        'stock-card.index' => 'Telusuri pergerakan stok secara detail per obat, lokasi, batch, dan periode. Jika lokasi dipilih, sistem menampilkan stok awal periode, mutasi masuk-keluar, dan stok berjalan.',
     ];
     foreach ($navigationGroups as $group) {
         foreach ($group['items'] as $item) {

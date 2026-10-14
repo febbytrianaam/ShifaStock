@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InventoryReceipt extends Model
 {
-    protected $fillable = ['reference', 'status', 'counterparty', 'received_at', 'posted_at', 'notes', 'created_by', 'posted_by'];
+    protected $fillable = ['reference', 'status', 'counterparty', 'destination_location_id', 'received_at', 'posted_at', 'notes', 'created_by', 'posted_by'];
 
     protected function casts(): array
     {
@@ -28,5 +28,10 @@ class InventoryReceipt extends Model
     public function poster(): BelongsTo
     {
         return $this->belongsTo(User::class, 'posted_by');
+    }
+
+    public function destinationLocation(): BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'destination_location_id');
     }
 }

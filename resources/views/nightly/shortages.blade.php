@@ -98,4 +98,39 @@
         </div>
     </div>
     <div class="mt-4">{{ $rows->links() }}</div>
+
+    <section class="mt-8">
+        <div class="mb-3 flex items-center gap-2">
+            <span class="h-2 w-2 rounded-full bg-[#3277B2]"></span>
+            <h3 class="font-bold text-slate-900 text-base tracking-tight">Berdasarkan Parameter Minimum</h3>
+        </div>
+        <div class="card overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full whitespace-nowrap text-left text-sm">
+                    <thead class="bg-[#edf5fb] border-b border-[#d6e8f6] text-[#266194]">
+                        <tr>
+                            <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Obat</th>
+                            <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Lokasi</th>
+                            <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Stok Saat Ini</th>
+                            <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Minimum</th>
+                            <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Kondisi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($parameterRows as $row)
+                            <tr class="{{ (float)$row->quantity <= 0 ? 'attention-critical' : 'attention-warning' }}">
+                                <td class="p-4"><b class="font-bold text-slate-900">{{ $row->name }}</b><br><span class="font-mono text-[11px] text-slate-500">{{ $row->code }}</span></td>
+                                <td class="p-4 text-xs font-semibold text-slate-600">{{ $row->location }}</td>
+                                <td class="p-4 font-bold tabular-nums text-slate-900">{{ number_format((float)$row->quantity,0,',','.') }} {{ $row->unit }}</td>
+                                <td class="p-4 font-bold tabular-nums text-[#266194]">{{ number_format((float)$row->minimum_quantity,0,',','.') }} {{ $row->unit }}</td>
+                                <td class="p-4"><span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ (float)$row->quantity <= 0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : 'attention-badge-warning bg-amber-100 text-amber-800 border border-amber-300' }}">{{ (float)$row->quantity <= 0 ? 'Kosong' : 'Di bawah minimum' }}</span></td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="5" class="p-8 text-center text-slate-500 font-medium">Belum ada stok di bawah parameter minimum.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
 </x-layouts.app>

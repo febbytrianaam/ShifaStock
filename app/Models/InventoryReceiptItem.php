@@ -7,11 +7,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InventoryReceiptItem extends Model
 {
-    protected $fillable = ['inventory_receipt_id', 'medicine_id', 'batch_id', 'inventory_movement_id', 'batch_number', 'expiry_date', 'quantity', 'notes'];
+    protected $fillable = ['inventory_receipt_id', 'medicine_id', 'batch_id', 'inventory_movement_id', 'batch_number', 'expiry_date', 'quantity', 'input_quantity', 'input_unit_name', 'conversion_factor', 'notes'];
 
     protected function casts(): array
     {
-        return ['expiry_date' => 'date', 'quantity' => 'decimal:4'];
+        return [
+            'expiry_date' => 'date',
+            'quantity' => 'decimal:4',
+            'input_quantity' => 'decimal:4',
+            'conversion_factor' => 'decimal:4',
+        ];
     }
 
     public function receipt(): BelongsTo

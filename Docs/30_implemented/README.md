@@ -14,4 +14,6 @@ This folder records shipped work as historical truth. Each feature folder contai
 - [2026-10-13 Inventory workflows and batch stock](2026-10-13-inventory-workflows-batch-stock/)
 - [2026-10-13 UI, validation, and monitoring polish](2026-10-13-ui-validation-monitoring-polish/)
 - [2026-10-13 Documentation system](2026-10-13-ai-documentation-system/)
+- [2026-10-14 PRD gap completion](2026-10-14-prd-gap-completion/)
+- [2026-10-14 Superadmin controls](2026-10-14-superadmin-controls/)
 

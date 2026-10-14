@@ -56,7 +56,7 @@
 
     @if(!empty($filters['location_id']) && !empty($filters['start']))
         <div class="mb-4 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
-            Saldo awal periode: <span class="tabular-nums text-slate-950">{{ number_format((float)$opening,0,',','.') }}</span>
+            Stok awal periode: <span class="tabular-nums text-slate-950">{{ number_format((float)$opening,0,',','.') }}</span>
         </div>
     @endif
 
@@ -73,17 +73,19 @@
                         <th class="p-4">Ke</th>
                         <th class="p-4">Masuk</th>
                         <th class="p-4">Keluar</th>
-                        <th class="p-4">Saldo</th>
+                        <th class="p-4">Stok</th>
+                        <th class="p-4 text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse($rows as $row)
                         @php($delta = (float) $row->getAttribute('card_delta'))
+                        @php($alreadyReversed = in_array($row->id, $reversedMovementIds ?? [], true))
                         <tr>
                             <td class="p-4 text-xs font-medium text-slate-600 tabular-nums">{{ $row->occurred_at->format('d/m/Y H:i') }}</td>
                             <td class="p-4">
                                 <span class="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700">
-                                    {{ ['receipt'=>'Penerimaan','transfer'=>'Transfer','physical_count'=>'Hitung Fisik','supplier_return'=>'Retur PBF','special_adjustment'=>'Kondisi Khusus'][$row->type] ?? $row->type }}
+                                    {{ ['opening_balance'=>'Stok Awal','receipt'=>'Penerimaan','transfer'=>'Transfer','issue'=>'Pengeluaran','physical_count'=>'Hitung Fisik','stock_opname_adjustment'=>'Opname','supplier_return'=>'Retur PBF','special_adjustment'=>'Kondisi Khusus','reversal'=>'Reversal'][$row->type] ?? $row->type }}
                                 </span>
                             </td>
                             <td class="p-4 font-mono text-xs font-semibold text-slate-700">{{ $row->reference }}</td>
@@ -93,9 +95,24 @@
                             <td class="p-4 font-bold tabular-nums text-emerald-700">{{ $delta > 0 ? number_format($delta,0,',','.') : '—' }}</td>
                             <td class="p-4 font-bold tabular-nums text-rose-700">{{ $delta < 0 ? number_format(abs($delta),0,',','.') : '—' }}</td>
                             <td class="p-4 font-bold tabular-nums text-slate-900">{{ $row->getAttribute('card_running_balance') === null ? 'Pilih lokasi' : number_format((float)$row->getAttribute('card_running_balance'),0,',','.') }}</td>
+                            <td class="p-4 text-right">
+                                @can('reverse-inventory-movements')
+                                    @if($row->type !== 'reversal' && ! $row->reversed_movement_id && ! $alreadyReversed)
+                                        <form method="POST" action="{{ route('movements.reverse', $row) }}" class="inline-flex items-center gap-2" data-confirm-action data-confirm-title="Balik mutasi final?" data-confirm-text="Sistem akan membuat mutasi reversal yang terhubung ke transaksi asal. Stok akan ikut dikembalikan." data-confirm-button="Ya, reversal">
+                                            @csrf
+                                            <input type="hidden" name="reason" value="Koreksi transaksi final dari kartu stok">
+                                            <button class="rounded-lg px-2.5 py-1 text-xs font-bold text-rose-700 hover:bg-rose-50">Reversal</button>
+                                        </form>
+                                    @else
+                                        <span class="text-xs font-medium text-slate-400">{{ $alreadyReversed ? 'Sudah dibalik' : '—' }}</span>
+                                    @endif
+                                @else
+                                    <span class="text-xs font-medium text-slate-400">—</span>
+                                @endcan
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="9" class="p-8 text-center text-slate-500 font-medium">Belum ada mutasi sesuai filter.</td></tr>
+                        <tr><td colspan="10" class="p-8 text-center text-slate-500 font-medium">Belum ada mutasi sesuai filter.</td></tr>
                     @endforelse
                 </tbody>
             </table>

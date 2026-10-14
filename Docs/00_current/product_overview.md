@@ -44,7 +44,7 @@ ShifaStock provides one operational source for medicine master data, stock balan
 
 - Assumption: the first production database target is MySQL, matching local Laragon setup.
 - Assumption: use in the clinic is currently internal, not public internet exposure.
+- Assumption: ShifaStock is standalone for medicine inventory management and does not integrate with patient-service systems.
 - Unknown: final retention policy for audit logs and stock movement history.
-- Unknown: whether ShifaStock will integrate with prescription, sales, or patient-service systems.
 - Unknown: production hosting, backup, and monitoring plan.
 

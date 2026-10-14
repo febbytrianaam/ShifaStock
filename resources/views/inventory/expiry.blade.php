@@ -17,15 +17,15 @@
             <p class="mt-2 text-xl font-bold tabular-nums text-rose-600">{{ $counts['expired'] }}</p>
             <p class="mt-1 text-xs text-slate-400 font-normal">Sudah melewati tanggal batas</p>
         </div>
-        <!-- Dalam 3 Bulan -->
+        <!-- Dalam batas parameter -->
         <div class="card p-4 {{ $counts['near'] > 0 ? 'attention-warning' : '' }}">
-            <span class="inline-flex rounded-md {{ $counts['near'] > 0 ? 'attention-badge-warning bg-amber-100 border border-amber-300' : 'bg-amber-50 border border-amber-200' }} px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-800">Dalam 3 Bulan</span>
+            <span class="inline-flex rounded-md {{ $counts['near'] > 0 ? 'attention-badge-warning bg-amber-100 border border-amber-300' : 'bg-amber-50 border border-amber-200' }} px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-800">Dalam {{ $warningMonths }} Bulan</span>
             <p class="mt-2 text-xl font-bold tabular-nums text-amber-700">{{ $counts['near'] }}</p>
             <p class="mt-1 text-xs text-slate-400 font-normal">Perlu prioritas penggunaan (FEFO)</p>
         </div>
-        <!-- Di Luar 3 Bulan -->
+        <!-- Di luar batas parameter -->
         <div class="card p-4">
-            <span class="inline-flex rounded-md bg-[#edf5fb] border border-[#d6e8f6] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#266194]">Di Luar 3 Bulan</span>
+            <span class="inline-flex rounded-md bg-[#edf5fb] border border-[#d6e8f6] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#266194]">Di Luar {{ $warningMonths }} Bulan</span>
             <p class="mt-2 text-xl font-bold tabular-nums text-[#266194]">{{ $counts['safe'] }}</p>
             <p class="mt-1 text-xs text-slate-400 font-normal">Masa simpan masih aman</p>
         </div>
@@ -50,7 +50,7 @@
             <select class="field text-xs" id="expiry-status" name="status">
                 <option value="all" @selected(($filters['status'] ?? 'all')==='all')>Semua status</option>
                 <option value="expired" @selected(($filters['status'] ?? 'all')==='expired')>Kedaluwarsa</option>
-                <option value="near" @selected(($filters['status'] ?? 'all')==='near')>Dalam 3 bulan</option>
+                <option value="near" @selected(($filters['status'] ?? 'all')==='near')>Dalam {{ $warningMonths }} bulan</option>
                 <option value="safe" @selected(($filters['status'] ?? 'all')==='safe')>Aman</option>
             </select>
         </div>
@@ -90,7 +90,7 @@
                                 ->sortBy(fn($balance) => $balance->location?->name)
                                 ->values();
                         @endphp
-                        <tr class="{{ $days<0 ? 'attention-critical' : ($days<=90 ? 'attention-warning' : '') }} hover:bg-slate-50/70 transition-colors">
+                        <tr class="{{ $days<0 ? 'attention-critical' : ($days<=($warningMonths * 31) ? 'attention-warning' : '') }} hover:bg-slate-50/70 transition-colors">
                             <td class="p-4">
                                 <b class="font-bold text-slate-900 tracking-tight">{{ $batch->medicine->name }}</b><br>
                                 <span class="inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500 mt-0.5">{{ $batch->medicine->code }}</span>
@@ -106,7 +106,7 @@
                                             <span class="font-mono text-[11px] text-slate-400">{{ number_format((float)$balance->quantity,0,',','.') }}</span>
                                         </span>
                                     @empty
-                                        <span class="text-xs text-slate-400">Belum ada saldo lokasi</span>
+                                        <span class="text-xs text-slate-400">Belum ada stok lokasi</span>
                                     @endforelse
                                 </div>
                             </td>
@@ -114,8 +114,8 @@
                                 {{ number_format((float)$batch->balances->sum('quantity'),0,',','.') }} {{ $batch->medicine->unit?->name }} <span class="text-xs font-normal text-slate-400">(batch ini)</span>
                             </td>
                             <td class="p-4 text-right">
-                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $days<0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : ($days<=90 ? 'attention-badge-warning bg-amber-100 text-amber-800 border border-amber-300' : 'bg-[#edf5fb] text-[#266194] border border-[#b2d4ee]') }}">
-                                    {{ $days<0 ? 'Kedaluwarsa' : ($days<=90 ? $days.' hari lagi' : 'Aman') }}
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $days<0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : ($days<=($warningMonths * 31) ? 'attention-badge-warning bg-amber-100 text-amber-800 border border-amber-300' : 'bg-[#edf5fb] text-[#266194] border border-[#b2d4ee]') }}">
+                                    {{ $days<0 ? 'Kedaluwarsa' : ($days<=($warningMonths * 31) ? $days.' hari lagi' : 'Aman') }}
                                 </span>
                             </td>
                         </tr>

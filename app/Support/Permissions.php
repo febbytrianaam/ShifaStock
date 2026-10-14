@@ -14,7 +14,9 @@ class Permissions
     public const VIEW_MEDICINES = 'view-medicines';
     public const VIEW_RECEIPTS = 'view-receipts';
     public const VIEW_TRANSFERS = 'view-transfers';
+    public const VIEW_ISSUES = 'view-issues';
     public const VIEW_RETURNS = 'view-returns';
+    public const VIEW_OPENING_BALANCES = 'view-opening-balances';
     public const VIEW_STOCK_CARD = 'view-stock-card';
     public const VIEW_SPECIAL_ADJUSTMENTS = 'view-special-adjustments';
     public const VIEW_NIGHTLY_CHECKS = 'view-nightly-checks';
@@ -25,10 +27,14 @@ class Permissions
     public const VIEW_REPORTS = 'view-reports';
     public const OPERATE_INVENTORY = 'operate-inventory';
     public const MANAGE_MEDICINES = 'manage-medicines';
+    public const MANAGE_MONITORING_PARAMETERS = 'manage-monitoring-parameters';
     public const FINALIZE_OPNAME = 'finalize-opname';
+    public const REVERSE_INVENTORY_MOVEMENTS = 'reverse-inventory-movements';
     public const MANAGE_USERS = 'manage-users';
     public const MANAGE_PERMISSIONS = 'manage-permissions';
     public const VIEW_AUDIT_LOGS = 'view-audit-logs';
+    public const MANAGE_SYSTEM_REFERENCES = 'manage-system-references';
+    public const MANAGE_SYSTEM_SETTINGS = 'manage-system-settings';
 
     public static function definitions(): array
     {
@@ -38,7 +44,9 @@ class Permissions
                 self::VIEW_MEDICINES => 'Lihat menu Data Obat',
                 self::VIEW_RECEIPTS => 'Lihat menu Penerimaan Obat',
                 self::VIEW_TRANSFERS => 'Lihat menu Transfer Gudang-Apotek',
+                self::VIEW_ISSUES => 'Lihat menu Pengeluaran Obat',
                 self::VIEW_RETURNS => 'Lihat menu Retur PBF',
+                self::VIEW_OPENING_BALANCES => 'Lihat menu Stok Awal',
                 self::VIEW_STOCK_CARD => 'Lihat menu Kartu Stok',
                 self::VIEW_SPECIAL_ADJUSTMENTS => 'Lihat menu Kondisi Khusus',
                 self::VIEW_NIGHTLY_CHECKS => 'Lihat menu Pemeriksaan Harian',
@@ -52,12 +60,16 @@ class Permissions
                 self::VIEW_INVENTORY => 'Lihat dashboard persediaan',
                 self::OPERATE_INVENTORY => 'Input penerimaan, transfer, dan pemeriksaan harian',
                 self::MANAGE_MEDICINES => 'Kelola master obat',
+                self::MANAGE_MONITORING_PARAMETERS => 'Kelola parameter minimum stok dan expiry',
                 self::FINALIZE_OPNAME => 'Review dan finalisasi pemeriksaan',
+                self::REVERSE_INVENTORY_MOVEMENTS => 'Membalik mutasi stok final',
             ],
             'Administrasi' => [
                 self::MANAGE_USERS => 'Kelola pengguna',
                 self::MANAGE_PERMISSIONS => 'Kelola hak akses',
                 self::VIEW_AUDIT_LOGS => 'Lihat audit log',
+                self::MANAGE_SYSTEM_REFERENCES => 'Kelola referensi sistem',
+                self::MANAGE_SYSTEM_SETTINGS => 'Kelola pengaturan sistem',
             ],
         ];
     }
@@ -81,7 +93,9 @@ class Permissions
                 self::VIEW_MEDICINES => false,
                 self::VIEW_RECEIPTS => false,
                 self::VIEW_TRANSFERS => false,
+                self::VIEW_ISSUES => false,
                 self::VIEW_RETURNS => false,
+                self::VIEW_OPENING_BALANCES => false,
                 self::VIEW_STOCK_CARD => false,
                 self::VIEW_SPECIAL_ADJUSTMENTS => false,
                 self::VIEW_NIGHTLY_CHECKS => false,
@@ -92,10 +106,14 @@ class Permissions
                 self::VIEW_REPORTS => false,
                 self::OPERATE_INVENTORY => false,
                 self::MANAGE_MEDICINES => false,
+                self::MANAGE_MONITORING_PARAMETERS => false,
                 self::FINALIZE_OPNAME => false,
+                self::REVERSE_INVENTORY_MOVEMENTS => true,
                 self::MANAGE_USERS => true,
                 self::MANAGE_PERMISSIONS => true,
                 self::VIEW_AUDIT_LOGS => true,
+                self::MANAGE_SYSTEM_REFERENCES => true,
+                self::MANAGE_SYSTEM_SETTINGS => true,
             ],
             Role::Pharmacy->value => [
                 self::VIEW_DASHBOARD => true,
@@ -103,7 +121,9 @@ class Permissions
                 self::VIEW_MEDICINES => true,
                 self::VIEW_RECEIPTS => true,
                 self::VIEW_TRANSFERS => true,
+                self::VIEW_ISSUES => true,
                 self::VIEW_RETURNS => true,
+                self::VIEW_OPENING_BALANCES => false,
                 self::VIEW_STOCK_CARD => true,
                 self::VIEW_SPECIAL_ADJUSTMENTS => true,
                 self::VIEW_NIGHTLY_CHECKS => true,
@@ -114,10 +134,14 @@ class Permissions
                 self::VIEW_REPORTS => true,
                 self::OPERATE_INVENTORY => true,
                 self::MANAGE_MEDICINES => false,
+                self::MANAGE_MONITORING_PARAMETERS => false,
                 self::FINALIZE_OPNAME => false,
+                self::REVERSE_INVENTORY_MOVEMENTS => false,
                 self::MANAGE_USERS => false,
                 self::MANAGE_PERMISSIONS => false,
                 self::VIEW_AUDIT_LOGS => false,
+                self::MANAGE_SYSTEM_REFERENCES => false,
+                self::MANAGE_SYSTEM_SETTINGS => false,
             ],
             Role::Pharmacist->value => [
                 self::VIEW_DASHBOARD => true,
@@ -125,7 +149,9 @@ class Permissions
                 self::VIEW_MEDICINES => true,
                 self::VIEW_RECEIPTS => true,
                 self::VIEW_TRANSFERS => true,
+                self::VIEW_ISSUES => true,
                 self::VIEW_RETURNS => true,
+                self::VIEW_OPENING_BALANCES => true,
                 self::VIEW_STOCK_CARD => true,
                 self::VIEW_SPECIAL_ADJUSTMENTS => true,
                 self::VIEW_NIGHTLY_CHECKS => true,
@@ -136,10 +162,14 @@ class Permissions
                 self::VIEW_REPORTS => true,
                 self::OPERATE_INVENTORY => true,
                 self::MANAGE_MEDICINES => true,
+                self::MANAGE_MONITORING_PARAMETERS => true,
                 self::FINALIZE_OPNAME => true,
+                self::REVERSE_INVENTORY_MOVEMENTS => true,
                 self::MANAGE_USERS => false,
                 self::MANAGE_PERMISSIONS => false,
                 self::VIEW_AUDIT_LOGS => false,
+                self::MANAGE_SYSTEM_REFERENCES => false,
+                self::MANAGE_SYSTEM_SETTINGS => false,
             ],
             Role::Guest->value => [
                 self::VIEW_DASHBOARD => true,
@@ -147,7 +177,9 @@ class Permissions
                 self::VIEW_MEDICINES => true,
                 self::VIEW_RECEIPTS => true,
                 self::VIEW_TRANSFERS => true,
+                self::VIEW_ISSUES => true,
                 self::VIEW_RETURNS => true,
+                self::VIEW_OPENING_BALANCES => false,
                 self::VIEW_STOCK_CARD => true,
                 self::VIEW_SPECIAL_ADJUSTMENTS => true,
                 self::VIEW_NIGHTLY_CHECKS => true,
@@ -158,10 +190,14 @@ class Permissions
                 self::VIEW_REPORTS => true,
                 self::OPERATE_INVENTORY => false,
                 self::MANAGE_MEDICINES => false,
+                self::MANAGE_MONITORING_PARAMETERS => false,
                 self::FINALIZE_OPNAME => false,
+                self::REVERSE_INVENTORY_MOVEMENTS => false,
                 self::MANAGE_USERS => false,
                 self::MANAGE_PERMISSIONS => false,
                 self::VIEW_AUDIT_LOGS => false,
+                self::MANAGE_SYSTEM_REFERENCES => false,
+                self::MANAGE_SYSTEM_SETTINGS => false,
             ],
         ];
     }
@@ -174,6 +210,9 @@ class Permissions
                 self::MANAGE_USERS,
                 self::MANAGE_PERMISSIONS,
                 self::VIEW_AUDIT_LOGS,
+                self::REVERSE_INVENTORY_MOVEMENTS,
+                self::MANAGE_SYSTEM_REFERENCES,
+                self::MANAGE_SYSTEM_SETTINGS,
             ],
         ];
     }
@@ -230,7 +269,9 @@ class Permissions
         DB::transaction(function () use ($input) {
             foreach (Role::cases() as $role) {
                 foreach (self::all() as $permission) {
-                    $allowed = isset($input[$role->value][$permission]);
+                    $allowed = array_key_exists($permission, $input[$role->value] ?? [])
+                        ? (bool) $input[$role->value][$permission]
+                        : false;
 
                     if (in_array($permission, self::locked()[$role->value] ?? [], true)) {
                         $allowed = true;

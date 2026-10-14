@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InventoryMovement extends Model
 {
-    protected $fillable = ['type', 'reference', 'medicine_id', 'batch_id', 'source_location_id', 'destination_location_id', 'quantity', 'occurred_at', 'counterparty', 'notes', 'created_by'];
+    protected $fillable = ['type', 'reversed_movement_id', 'reference', 'medicine_id', 'batch_id', 'source_location_id', 'destination_location_id', 'quantity', 'occurred_at', 'counterparty', 'notes', 'created_by'];
 
     protected function casts(): array
     {
@@ -37,5 +37,10 @@ class InventoryMovement extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function reversedMovement(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'reversed_movement_id');
     }
 }

@@ -47,12 +47,38 @@ class NightlyCheckController extends Controller
             $query->where('i.quantity', '>', 0)->where('i.is_low', true);
         }
 
+        $parameterQuery = DB::table('stock_parameters as p')
+            ->join('medicines as m', 'm.id', '=', 'p.medicine_id')
+            ->join('locations as l', 'l.id', '=', 'p.location_id')
+            ->leftJoin('stock_balances as b', fn ($join) => $join
+                ->on('b.medicine_id', '=', 'p.medicine_id')
+                ->on('b.location_id', '=', 'p.location_id'))
+            ->leftJoin('units as u', 'u.id', '=', 'm.unit_id')
+            ->whereNotNull('p.minimum_quantity')
+            ->whereRaw('COALESCE(b.quantity, 0) <= p.minimum_quantity')
+            ->selectRaw('m.code, m.name, l.name as location, COALESCE(b.quantity, 0) as quantity, p.minimum_quantity, u.name as unit');
+
+        if (! empty($data['search'])) {
+            $parameterQuery->where(fn ($q) => $q
+                ->where('m.name', 'like', '%'.$data['search'].'%')
+                ->orWhere('m.code', 'like', '%'.$data['search'].'%'));
+        }
+        if (! empty($data['location_id'])) {
+            $parameterQuery->where('p.location_id', $data['location_id']);
+        }
+        if (($data['status'] ?? 'all') === 'empty') {
+            $parameterQuery->whereRaw('COALESCE(b.quantity, 0) = 0');
+        } elseif (($data['status'] ?? 'all') === 'low') {
+            $parameterQuery->whereRaw('COALESCE(b.quantity, 0) > 0');
+        }
+
         $allLatestShortages = DB::table('nightly_check_items')
             ->whereIn('nightly_check_id', $latestChecks->pluck('id'))
             ->where(fn ($q) => $q->where('quantity', 0)->orWhere('is_low', true));
 
         return view('nightly.shortages', [
             'rows' => $query->orderBy('l.name')->orderBy('i.name')->paginate(25)->withQueryString(),
+            'parameterRows' => $parameterQuery->orderBy('l.name')->orderBy('m.name')->get(),
             'locations' => DB::table('locations')->where('is_active', true)->orderBy('name')->get(),
             'summary' => [
                 'total' => (clone $allLatestShortages)->count(),

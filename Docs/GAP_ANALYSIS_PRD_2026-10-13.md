@@ -3,6 +3,7 @@
 Tanggal audit: 13 Oktober 2026  
 Acuan: PRD ShifaStock v0.1 draft review, 12 Oktober 2026  
 Basis audit: source code lokal pada `C:\laragon\www\ShifaStock`
+Status dokumen: arsip audit awal. Banyak gap di bawah sudah ditutup pada implementasi 14 Oktober 2026; gunakan `Docs/30_implemented/2026-10-14-prd-gap-completion/implementation_report.md` dan `Docs/00_current/current_state.md` untuk kondisi terbaru.
 
 ## Ringkasan Eksekutif
 
@@ -30,7 +31,7 @@ Selain itu, penerimaan saat ini langsung mem-posting saldo, belum ada draf pener
 | F-07 | Kartu stok | Sebagian | `inventory_movements` menyimpan mutasi penerimaan, transfer, physical count dan laporan menampilkan 50 pergerakan terbaru. | Belum ada menu kartu stok khusus dengan filter obat/lokasi/periode dan saldo berjalan; route legacy `/kartu-stok` justru 404. |
 | F-08 | Stock opname | Sebagian | Pemeriksaan harian draft-submit-review sudah ada; stock opname periodik menampilkan approved checks per periode; finalisasi oleh kepala apoteker mengoreksi saldo agregat lokasi. | Belum ada modul stock opname bulanan mandiri dengan stok tercatat, stok fisik, selisih, alasan per periode sebagai entitas terpisah; koreksi batch dari opname belum ada. |
 | F-09 | Kondisi khusus dan penyesuaian | Belum dibuat | Tidak ada modul insiden obat hilang/terjatuh/rusak/tidak diambil/expired sebagai workflow tersendiri. | Perlu pencatatan kejadian, status penyelesaian, batch opsional, dan posting penyesuaian satu kali. |
-| F-10 | Laporan persediaan | Sebagian | Laporan stok saat ini, 50 mutasi terbaru, dan pemeriksaan disetujui sudah ada. | Belum ada rekap bulanan formal, ekspor, filter periode lengkap, laporan retur/kondisi khusus, laporan kartu stok, serta disclaimer sumber data Neoklinik. |
+| F-10 | Laporan persediaan | Sebagian | Laporan stok saat ini, 50 mutasi terbaru, dan pemeriksaan disetujui sudah ada. | Belum ada rekap bulanan formal, ekspor, filter periode lengkap, laporan retur/kondisi khusus, dan laporan kartu stok. |
 
 ## Status Aturan Bisnis Kritis
 
@@ -44,13 +45,13 @@ Selain itu, penerimaan saat ini langsung mem-posting saldo, belum ada draf pener
 | Stock opname existing total obat/lokasi, bukan per batch | Sebagian | Implementasi koreksi agregat per obat/lokasi sesuai batasan, namun belum ada penjelasan formal di semua laporan. |
 | Kondisi khusus maksimal satu penyesuaian final | Belum dibuat | Modul kondisi khusus belum ada. |
 | Obat berhistori tidak dihapus | Sebagian | UI cenderung nonaktifkan obat, foreign key restrict menjaga histori. Perlu cek semua aksi delete. |
-| Tidak duplikasi transaksi pasien / data pasien | Selesai sementara | Tidak ada modul pasien/resep. Perlu disclaimer bahwa saldo Apotek belum sinkron Neoklinik. |
+| Tidak duplikasi transaksi pasien / data pasien | Selesai | Tidak ada modul pasien/resep karena ShifaStock berfokus pada pengelolaan stok obat. |
 
 ## Keputusan Terbuka PRD
 
 | ID | Keputusan Terbuka | Status Implementasi |
 | --- | --- | --- |
-| D-01 | Dampak transaksi pasien dari Neoklinik | Belum diputuskan/diimplementasi. Sistem belum sinkron transaksi pasien. |
+| D-01 | Dampak transaksi pasien | Di luar scope. ShifaStock tidak membuat modul pasien dan tidak diasumsikan terintegrasi dengan sistem layanan pasien. |
 | D-02 | Migrasi/inisialisasi saldo awal | Sebagian melalui penerimaan/pemeriksaan; belum ada workflow import saldo awal formal. |
 | D-03 | Koreksi batch dari opname agregat | Belum ada. |
 | D-04 | Batas minimum stok per obat/lokasi | Struktur `stock_parameters` ada, UI konfigurasi belum lengkap. |
@@ -76,17 +77,16 @@ Selain itu, penerimaan saat ini langsung mem-posting saldo, belum ada draf pener
 4. FEFO recommendation untuk batch layak pakai.
 5. Laporan bulanan dengan filter dan ekspor.
 
-### P2 - Integrasi dan Dokumentasi
+### P2 - Dokumentasi
 
 1. Disclaimer sumber/keterkinian data di dashboard/laporan.
-2. Desain keputusan integrasi Neoklinik atau workflow rekonsiliasi.
-3. ERD final dan dokumen deployment/backup.
-4. Audit log untuk aksi stok penting, bukan hanya admin/user/permission.
+2. ERD final dan dokumen deployment/backup.
+3. Audit log untuk aksi stok penting, bukan hanya admin/user/permission.
 
 ## Catatan Risiko
 
 - Saldo stok batch belum ada, sehingga fitur yang menampilkan batch harus dianggap informasi batch penerimaan, bukan bukti saldo batch aktual.
 - Penerimaan langsung menambah saldo; jika proses klinik butuh validasi terpisah antara terima fisik dan posting, model saat ini perlu diubah.
 - Dashboard mode demo aman untuk presentasi, tetapi harus jelas ketika user sedang membaca data demo vs data real.
-- Laporan belum boleh diklaim sudah mencerminkan transaksi pasien dari Neoklinik.
+- Laporan hanya mencerminkan transaksi stok yang dicatat di ShifaStock.
 

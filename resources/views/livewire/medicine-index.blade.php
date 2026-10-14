@@ -284,7 +284,7 @@
                                 </div>
                             </td>
                             <td class="p-4 font-bold tabular-nums text-slate-900">
-                                {{ $medicine->balances->isEmpty() ? 'Belum ada saldo' : number_format($stock, 0, ',', '.').' '.$medicine->unit?->name }}
+                                {{ $medicine->balances->isEmpty() ? 'Belum ada stok' : number_format($stock, 0, ',', '.').' '.$medicine->unit?->name }}
                                 @if($low)
                                     <p class="mt-1 text-xs font-semibold text-rose-600">Stok menipis</p>
                                 @endif

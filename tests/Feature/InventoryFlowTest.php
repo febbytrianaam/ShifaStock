@@ -29,7 +29,7 @@ class InventoryFlowTest extends TestCase
         $this->actingAs($petugas)->post('/obat-masuk', [
             'reference' => 'FKT-001', 'medicine_id' => $medicine->id, 'batch_number' => 'BA-01',
             'expiry_date' => '2027-12-31', 'quantity' => 100, 'occurred_at' => '2026-01-01T08:00',
-            'counterparty' => 'PBF Sehat',
+            'counterparty' => 'PBF Sehat', 'destination_location_id' => $gudang->id,
         ])->assertRedirect();
         $this->assertSame(100.0, (float) StockBalance::whereBelongsTo($medicine)->whereBelongsTo($gudang)->value('quantity'));
         $batchId = DB::table('batches')->where('number', 'BA-01')->value('id');
@@ -59,7 +59,7 @@ class InventoryFlowTest extends TestCase
         $this->get('/kedaluwarsa')->assertOk()->assertSee('BA-01')->assertSee('31/12/2027');
         $this->get('/laporan')->assertOk()->assertSee('FKT-001')->assertSee('TRF-001');
         $this->get('/stock-opname?period=2026-01')->assertOk()->assertSee('Januari 2026')->assertSee('Obat A');
-        $this->get('/kartu-stok?medicine_id='.$medicine->id.'&location_id='.$apotek->id.'&start=2026-01-01')
+        $this->get('/kartu-stok?medicine_id='.$medicine->id.'&location_id='.$apotek->id.'&start=2026-01-01&end=2026-01-01')
             ->assertOk()
             ->assertSee('TRF-001')
             ->assertSee('CHECK-'.$check->id);
@@ -94,10 +94,12 @@ class InventoryFlowTest extends TestCase
         $this->actingAs($petugas)->post('/obat-masuk', [
             'reference' => 'FKT-FEFO-A', 'medicine_id' => $medicine->id, 'batch_number' => 'FEFO-A',
             'expiry_date' => '2027-01-01', 'quantity' => 20, 'occurred_at' => '2026-01-01T08:00',
+            'destination_location_id' => $gudang->id,
         ])->assertRedirect();
         $this->post('/obat-masuk', [
             'reference' => 'FKT-FEFO-B', 'medicine_id' => $medicine->id, 'batch_number' => 'FEFO-B',
             'expiry_date' => '2027-06-01', 'quantity' => 60, 'occurred_at' => '2026-01-01T08:10',
+            'destination_location_id' => $gudang->id,
         ])->assertRedirect();
 
         $batchA = DB::table('batches')->where('number', 'FEFO-A')->value('id');
@@ -127,6 +129,7 @@ class InventoryFlowTest extends TestCase
         $this->actingAs($petugas)->post('/obat-masuk', [
             'reference' => 'FKT-RET', 'medicine_id' => $medicine->id, 'batch_number' => 'RB-01',
             'expiry_date' => '2027-10-10', 'quantity' => 50, 'occurred_at' => '2026-01-02T08:00',
+            'destination_location_id' => $gudang->id,
         ])->assertRedirect();
         $batchId = DB::table('batches')->where('number', 'RB-01')->value('id');
 
@@ -174,8 +177,9 @@ class InventoryFlowTest extends TestCase
             'reference' => 'FKT-MULTI',
             'occurred_at' => '2026-01-03T08:00',
             'counterparty' => 'PBF Multi',
+            'destination_location_id' => $gudang->id,
             'items' => [
-                ['medicine_id' => $medicineA->id, 'batch_number' => 'MC-01', 'expiry_date' => '2027-01-01', 'quantity' => 12],
+                ['medicine_id' => $medicineA->id, 'batch_number' => 'MC-01', 'expiry_date' => '2027-01-01', 'input_quantity' => 1, 'input_unit_name' => 'Box', 'conversion_factor' => 12, 'quantity' => 12],
                 ['medicine_id' => $medicineB->id, 'batch_number' => 'MD-01', 'expiry_date' => '2027-02-01', 'quantity' => 8],
             ],
         ])->assertRedirect();
@@ -187,6 +191,8 @@ class InventoryFlowTest extends TestCase
         $this->post('/obat-masuk/'.$receipt->id.'/post')->assertRedirect();
 
         $this->assertDatabaseHas('inventory_receipts', ['reference' => 'FKT-MULTI', 'status' => 'posted']);
+        $this->assertDatabaseHas('inventory_receipts', ['reference' => 'FKT-MULTI', 'destination_location_id' => $gudang->id]);
+        $this->assertDatabaseHas('inventory_receipt_items', ['batch_number' => 'MC-01', 'input_unit_name' => 'Box', 'conversion_factor' => 12]);
         $this->assertDatabaseHas('inventory_movements', ['reference' => 'FKT-MULTI', 'medicine_id' => $medicineA->id, 'quantity' => 12]);
         $this->assertDatabaseHas('inventory_movements', ['reference' => 'FKT-MULTI', 'medicine_id' => $medicineB->id, 'quantity' => 8]);
         $this->assertSame(12.0, (float) StockBalance::whereBelongsTo($medicineA)->whereBelongsTo($gudang)->value('quantity'));

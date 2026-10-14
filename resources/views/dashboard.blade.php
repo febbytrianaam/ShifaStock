@@ -18,7 +18,7 @@
                     Selamat Datang, {{ auth()->user()->username ?? 'Petugas Farmasi' }}
                 </h1>
                 <p class="mt-1 max-w-3xl text-sm leading-relaxed text-slate-500">
-                    {{ $isDemoDashboard ? 'Ringkasan demo untuk kebutuhan presentasi dan simulasi alur klinik.' : 'Ringkasan persediaan dari saldo operasional dan pemeriksaan fisik yang disetujui.' }}
+                    {{ $isDemoDashboard ? 'Ringkasan demo untuk kebutuhan presentasi dan simulasi alur klinik.' : 'Ringkasan persediaan dari stok operasional dan pemeriksaan fisik yang disetujui.' }}
                 </p>
             </div>
 
@@ -87,7 +87,7 @@
             </div>
             <p class="mt-2 text-xl font-bold tabular-nums text-slate-900">{{ number_format($stats['stocked'], 0, ',', '.') }}</p>
             <div class="mt-2 flex items-center justify-between text-xs">
-                <span class="text-slate-400 font-normal">Saldo lebih dari nol</span>
+                <span class="text-slate-400 font-normal">Stok lebih dari nol</span>
                 <span class="font-bold text-[#2a759e] group-hover:translate-x-0.5 transition-transform">Laporan →</span>
             </div>
         </a>
@@ -129,7 +129,7 @@
             </div>
             <p class="mt-2 text-xl font-bold tabular-nums text-slate-900">{{ number_format($stats['expiring'], 0, ',', '.') }}</p>
             <div class="mt-2 flex items-center justify-between text-xs">
-                <span class="text-slate-400 font-normal">Dalam tiga bulan</span>
+                <span class="text-slate-400 font-normal">Dalam {{ $expiryWarningMonths ?? 3 }} bulan</span>
                 <span class="font-bold text-amber-700 group-hover:translate-x-0.5 transition-transform">Periksa →</span>
             </div>
         </a>
@@ -200,7 +200,7 @@
         </div>
     </div>
 
-    <!-- Saldo Stok per Lokasi Table Section -->
+    <!-- Stok per Lokasi Table Section -->
     <section class="mt-6">
         <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -210,7 +210,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
                         </svg>
                     </span>
-                    <h2 class="font-bold text-slate-900 text-base tracking-tight">Saldo Stok per Lokasi</h2>
+                    <h2 class="font-bold text-slate-900 text-base tracking-tight">Stok per Lokasi</h2>
                 </div>
                 <p class="mt-1 text-xs font-normal text-slate-500 leading-normal">Diperbarui oleh penerimaan, transfer, dan persetujuan hitung fisik</p>
             </div>

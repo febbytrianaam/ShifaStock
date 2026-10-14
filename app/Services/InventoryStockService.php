@@ -58,6 +58,9 @@ class InventoryStockService
             ->where('medicine_id', $medicineId)
             ->where('location_id', $locationId)
             ->where('quantity', '>', 0)
+            ->whereHas('batch', fn ($query) => $query
+                ->whereNull('expiry_date')
+                ->orWhereDate('expiry_date', '>=', now('Asia/Jakarta')->toDateString()))
             ->lockForUpdate()
             ->get()
             ->sortBy(fn (BatchStockBalance $balance) => [
@@ -81,7 +84,7 @@ class InventoryStockService
         }
 
         if ($remaining > 0) {
-            $allocations[] = ['batch_id' => null, 'quantity' => $remaining];
+            throw ValidationException::withMessages(['quantity' => 'Stok batch layak pakai tidak mencukupi untuk FEFO. Pilih batch yang sesuai atau cek stok fisik.']);
         }
 
         return $allocations;
@@ -110,7 +113,7 @@ class InventoryStockService
             'destination_location_id' => $difference >= 0 ? $check['location_id'] : null,
             'quantity' => abs($difference),
             'occurred_at' => now(),
-            'notes' => 'Penyesuaian hasil pemeriksaan fisik; saldo sebelumnya '.$before.', hasil hitung '.$after.'.',
+            'notes' => 'Penyesuaian hasil pemeriksaan fisik; stok sebelumnya '.$before.', hasil hitung '.$after.'.',
             'created_by' => $userId,
         ]);
     }

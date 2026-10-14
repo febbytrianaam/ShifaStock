@@ -2,7 +2,7 @@
 
 ## Current Focus
 
-Stabilize the current inventory workflows and validate them manually with real clinic scenarios before adding larger integrations.
+Stabilize the current inventory workflows and validate them manually with real clinic scenarios before production use.
 
 ## Phase 1: Stabilization And QA
 
@@ -28,17 +28,11 @@ Stabilize the current inventory workflows and validate them manually with real c
 - Output: configurable minimum stock per medicine/location and printable/exportable purchase request recap.
 - Gate: can low-stock data reliably inform purchase decisions?
 
-## Phase 5: Integrations
-
-- Goal: connect ShifaStock to external systems only if operations require it.
-- Output: integration plan for prescription, POS, or supplier systems.
-- Gate: is there a stable upstream/downstream system and a clear owner for integration failures?
-
 ## What Not To Build Yet
 
 - Public patient-facing features.
 - Complex supplier purchase order automation.
-- Prescription/POS integration without confirmed source system and data contract.
+- Prescription, POS, or patient-service integration; ShifaStock stays focused on medicine inventory management.
 - Multi-tenant clinic support.
 - Advanced analytics until operational data quality is proven.
 

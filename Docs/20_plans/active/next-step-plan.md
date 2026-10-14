@@ -27,7 +27,8 @@ Run a structured manual QA pass across all roles and core inventory workflows, t
 5. As kepala apoteker, review and approve/return daily check.
 6. As guest, verify view-only behavior.
 7. Check dashboard real/demo mode, expiry filters, stock card, reports, shortage monitoring, and audit log.
-8. Document results in a dated folder under `docs/30_implemented/`.
+8. Check superadmin reference/settings menus, RBAC reset, role preview, and audit CSV export.
+9. Document results in a dated folder under `docs/30_implemented/`.
 
 ## Test Plan
 
@@ -42,6 +43,7 @@ Run a structured manual QA pass across all roles and core inventory workflows, t
 - Core inventory flows update stock and batch balances correctly.
 - User-facing validation messages are clear.
 - Expiry and stock card filters return understandable data.
+- Superadmin controls are visible only to administrator and do not lock out core admin access.
 - Known blockers are documented or fixed.
 
 ## Assumptions
