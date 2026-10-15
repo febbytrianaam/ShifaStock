@@ -65,7 +65,7 @@
                     </svg>
                 </span>
             </div>
-            <p class="mt-2 text-xl font-bold tabular-nums text-slate-900">{{ number_format($stats['verified'], 0, ',', '.') }}</p>
+            <p class="mt-2 text-xl font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format($stats['verified']) }}</p>
             <div class="mt-2 flex items-center justify-between text-xs">
                 <span class="text-slate-400 font-normal">Siap dipakai dalam transaksi</span>
                 <span class="font-bold text-[#3277B2] group-hover:translate-x-0.5 transition-transform">Kelola →</span>
@@ -85,7 +85,7 @@
                     </svg>
                 </span>
             </div>
-            <p class="mt-2 text-xl font-bold tabular-nums text-slate-900">{{ number_format($stats['stocked'], 0, ',', '.') }}</p>
+            <p class="mt-2 text-xl font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format($stats['stocked']) }}</p>
             <div class="mt-2 flex items-center justify-between text-xs">
                 <span class="text-slate-400 font-normal">Stok lebih dari nol</span>
                 <span class="font-bold text-[#2a759e] group-hover:translate-x-0.5 transition-transform">Laporan →</span>
@@ -107,7 +107,7 @@
                     </svg>
                 </span>
             </div>
-            <p class="mt-2 text-xl font-bold tabular-nums {{ $stats['shortages'] > 0 ? 'text-rose-600' : 'text-slate-900' }}">{{ number_format($stats['shortages'], 0, ',', '.') }}</p>
+            <p class="mt-2 text-xl font-bold tabular-nums {{ $stats['shortages'] > 0 ? 'text-rose-600' : 'text-slate-900' }}">{{ \App\Support\Quantity::format($stats['shortages']) }}</p>
             <div class="mt-2 flex items-center justify-between text-xs">
                 <span class="text-slate-400 font-normal">Pemeriksaan terbaru disetujui</span>
                 <span class="font-bold text-rose-600 group-hover:translate-x-0.5 transition-transform">Tindak Lanjut →</span>
@@ -127,7 +127,7 @@
                     </svg>
                 </span>
             </div>
-            <p class="mt-2 text-xl font-bold tabular-nums text-slate-900">{{ number_format($stats['expiring'], 0, ',', '.') }}</p>
+            <p class="mt-2 text-xl font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format($stats['expiring']) }}</p>
             <div class="mt-2 flex items-center justify-between text-xs">
                 <span class="text-slate-400 font-normal">Dalam {{ $expiryWarningMonths ?? 3 }} bulan</span>
                 <span class="font-bold text-amber-700 group-hover:translate-x-0.5 transition-transform">Periksa →</span>
@@ -177,7 +177,7 @@
                                 @endif
                                 <p class="truncate text-sm font-bold text-slate-900 tracking-tight group-hover:text-[#3277B2] transition-colors">{{ $row->name }}</p>
                             </div>
-                            <p class="mt-1 text-xs font-medium text-slate-600 tabular-nums">{{ $row->location }} · {{ $row->quantity }} {{ $row->unit }} · {{ $row->quantity===0?'Kosong':'Menipis' }}</p>
+                            <p class="mt-1 text-xs font-medium text-slate-600 tabular-nums">{{ $row->location }} · {{ \App\Support\Quantity::format($row->quantity) }} {{ $row->unit }} · {{ $row->quantity===0?'Kosong':'Menipis' }}</p>
                         </div>
                         <span class="text-slate-400 group-hover:text-[#3277B2] group-hover:translate-x-0.5 transition-all">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -263,7 +263,7 @@
                                     </span>
                                 </td>
                                 <td class="p-4">
-                                    <span class="tabular-nums font-bold text-slate-900 text-sm">{{ number_format((float)$balance->quantity, 0, ',', '.') }}</span> <span class="text-xs font-medium text-slate-500">{{ $balance->medicine->unit?->name }}</span>
+                                    <span class="tabular-nums font-bold text-slate-900 text-sm">{{ \App\Support\Quantity::format((float)$balance->quantity) }}</span> <span class="text-xs font-medium text-slate-500">{{ $balance->medicine->unit?->name }}</span>
                                 </td>
                                 <td class="p-4 text-xs font-medium text-slate-600">
                                     @if($balance->last_counted_at)

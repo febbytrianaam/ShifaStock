@@ -36,11 +36,11 @@
         </div>
         <div>
             <label class="label" for="issue-batch">Batch</label>
-            <select class="field text-xs" id="issue-batch" name="batch_id" data-searchable-select data-search-placeholder="Cari batch..." data-depends-on="#issue-medicine,#issue-location" data-depends-empty="Pilih obat dan lokasi sumber dulu">
-                <option value="">FEFO otomatis</option>
+            <select class="field text-xs" id="issue-batch" name="batch_id" data-searchable-select data-empty-label="Otomatis: kedaluwarsa terdekat" data-search-placeholder="Cari batch..." data-depends-on="#issue-medicine,#issue-location" data-depends-empty="Pilih obat dan lokasi sumber dulu">
+                <option value="">Otomatis: kedaluwarsa terdekat</option>
                 @foreach($batchBalances as $balance)
                     <option value="{{ $balance->batch_id }}" data-depends-values="{{ $balance->medicine_id }}|{{ $balance->location_id }}" @selected(old('batch_id')==$balance->batch_id)>
-                        {{ $balance->medicine->code }} · {{ $balance->batch->number }} · {{ $balance->location->name }} · ED {{ $balance->batch->expiry_date?->format('d/m/Y') }} · {{ number_format((float)$balance->quantity,0,',','.') }} {{ $balance->medicine->unit?->name }}
+                        {{ $balance->medicine->code }} · {{ $balance->batch->number }} · {{ $balance->location->name }} · ED {{ $balance->batch->expiry_date?->format('d/m/Y') }} · {{ \App\Support\Quantity::format((float)$balance->quantity) }} {{ $balance->medicine->unit?->name }}
                     </option>
                 @endforeach
             </select>
@@ -58,8 +58,9 @@
             <input class="field text-xs" id="issue-notes" name="notes" value="{{ old('notes') }}" placeholder="Keterangan pengeluaran" maxlength="1000">
         </div>
         <div class="flex items-end">
-            <button class="btn w-full text-xs">Posting Pengeluaran</button>
+            <button class="btn w-full text-xs">Simpan &amp; Kurangi Stok</button>
         </div>
+        <x-stock-entry-context :medicines="$medicines" :batch-balances="$batchBalances" medicine="#issue-medicine" location="#issue-location" quantity="#issue-quantity" batch="#issue-batch" :fefo="true" />
     </form>
     @endcan
 
@@ -84,7 +85,7 @@
                             <td class="p-4 font-mono text-xs font-semibold text-slate-700">{{ $row->reference }}</td>
                             <td class="p-4"><b>{{ $row->medicine->name }}</b><br><span class="text-xs text-slate-500">{{ $row->batch?->number ?? 'FEFO' }}</span></td>
                             <td class="p-4 text-xs font-semibold text-slate-600">{{ $row->sourceLocation?->name }}</td>
-                            <td class="p-4 font-bold tabular-nums text-rose-700">-{{ number_format((float)$row->quantity,0,',','.') }} {{ $row->medicine->unit?->name }}</td>
+                            <td class="p-4 font-bold tabular-nums text-rose-700">-{{ \App\Support\Quantity::format((float)$row->quantity) }} {{ $row->medicine->unit?->name }}</td>
                             <td class="p-4 text-xs font-medium text-slate-600">{{ $row->counterparty ?: '—' }}</td>
                             <td class="p-4 text-xs font-medium text-slate-600">{{ $row->creator?->name }}</td>
                         </tr>

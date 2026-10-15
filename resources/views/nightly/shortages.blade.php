@@ -4,25 +4,26 @@
         ['route' => 'preview.expiry', 'label' => 'Kedaluwarsa', 'can' => 'view-expiry'],
     ]" />
 
+    <p class="mb-4 text-xs text-slate-600">Sumber ringkasan dan tabel pertama: pemeriksaan fisik terakhir yang disetujui per lokasi. Tanggal hitung tercantum pada kolom Diperiksa. Stok sistem berdasarkan transaksi ditampilkan terpisah pada bagian batas minimum.</p>
     <div class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div class="card p-4 {{ $summary['total'] > 0 ? 'attention-warning' : '' }}">
             <span class="inline-flex rounded-md bg-[#edf5fb] border border-[#d6e8f6] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#266194]">Perlu Tindak Lanjut</span>
-            <p class="mt-2 text-xl font-bold tabular-nums text-[#3277B2]">{{ number_format($summary['total'], 0, ',', '.') }}</p>
+            <p class="mt-2 text-xl font-bold tabular-nums text-[#3277B2]">{{ \App\Support\Quantity::format($summary['total']) }}</p>
             <p class="mt-1 text-xs text-slate-400 font-normal">Obat kosong atau menipis</p>
         </div>
         <div class="card p-4 {{ $summary['empty'] > 0 ? 'attention-critical' : '' }}">
             <span class="inline-flex rounded-md {{ $summary['empty'] > 0 ? 'attention-badge-critical bg-rose-100 border border-rose-300 text-rose-800' : 'bg-rose-50 border border-rose-200 text-rose-700' }} px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider">Stok Kosong</span>
-            <p class="mt-2 text-xl font-bold tabular-nums text-rose-600">{{ number_format($summary['empty'], 0, ',', '.') }}</p>
+            <p class="mt-2 text-xl font-bold tabular-nums text-rose-600">{{ \App\Support\Quantity::format($summary['empty']) }}</p>
             <p class="mt-1 text-xs text-slate-400 font-normal">Fisik 0 pada pemeriksaan</p>
         </div>
         <div class="card p-4 {{ $summary['low'] > 0 ? 'attention-warning' : '' }}">
             <span class="inline-flex rounded-md {{ $summary['low'] > 0 ? 'attention-badge-warning bg-amber-100 border border-amber-300' : 'bg-amber-50 border border-amber-200' }} px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-amber-800">Stok Menipis</span>
-            <p class="mt-2 text-xl font-bold tabular-nums text-amber-700">{{ number_format($summary['low'], 0, ',', '.') }}</p>
+            <p class="mt-2 text-xl font-bold tabular-nums text-amber-700">{{ \App\Support\Quantity::format($summary['low']) }}</p>
             <p class="mt-1 text-xs text-slate-400 font-normal">Di bawah ambang batas</p>
         </div>
         <div class="card p-4">
             <span class="inline-flex rounded-md bg-[#edf5fb] border border-[#d6e8f6] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#266194]">Permintaan Diisi</span>
-            <p class="mt-2 text-xl font-bold tabular-nums text-[#266194]">{{ number_format($summary['requested'], 0, ',', '.') }}</p>
+            <p class="mt-2 text-xl font-bold tabular-nums text-[#266194]">{{ \App\Support\Quantity::format($summary['requested']) }}</p>
             <p class="mt-1 text-xs text-slate-400 font-normal">Telah dicatat jumlah usulan</p>
         </div>
     </div>
@@ -75,7 +76,7 @@
                             </td>
                             <td class="p-4 font-medium text-slate-700">{{ $row->location }}</td>
                             <td class="p-4 text-xs font-medium text-slate-600 tabular-nums">{{ $row->date }}</td>
-                            <td class="p-4 font-bold tabular-nums text-slate-900">{{ $row->quantity }} {{ $row->unit }}</td>
+                            <td class="p-4 font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format($row->quantity) }} {{ $row->unit }}</td>
                             <td class="p-4">
                                 <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $row->quantity===0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : 'attention-badge-warning bg-amber-100 text-amber-800 border border-amber-300' }}">
                                     {{ $row->quantity===0 ? 'Kosong' : 'Menipis' }}
@@ -102,7 +103,7 @@
     <section class="mt-8">
         <div class="mb-3 flex items-center gap-2">
             <span class="h-2 w-2 rounded-full bg-[#3277B2]"></span>
-            <h3 class="font-bold text-slate-900 text-base tracking-tight">Berdasarkan Parameter Minimum</h3>
+            <h3 class="font-bold text-slate-900 text-base tracking-tight">Stok Sistem pada atau di Bawah Minimum</h3>
         </div>
         <div class="card overflow-hidden">
             <div class="overflow-x-auto">
@@ -113,6 +114,7 @@
                             <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Lokasi</th>
                             <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Stok Saat Ini</th>
                             <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Minimum</th>
+                            <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Stok diperbarui</th>
                             <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Kondisi</th>
                         </tr>
                     </thead>
@@ -121,12 +123,13 @@
                             <tr class="{{ (float)$row->quantity <= 0 ? 'attention-critical' : 'attention-warning' }}">
                                 <td class="p-4"><b class="font-bold text-slate-900">{{ $row->name }}</b><br><span class="font-mono text-[11px] text-slate-500">{{ $row->code }}</span></td>
                                 <td class="p-4 text-xs font-semibold text-slate-600">{{ $row->location }}</td>
-                                <td class="p-4 font-bold tabular-nums text-slate-900">{{ number_format((float)$row->quantity,0,',','.') }} {{ $row->unit }}</td>
-                                <td class="p-4 font-bold tabular-nums text-[#266194]">{{ number_format((float)$row->minimum_quantity,0,',','.') }} {{ $row->unit }}</td>
+                                <td class="p-4 font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format((float)$row->quantity) }} {{ $row->unit }}</td>
+                                <td class="p-4 font-bold tabular-nums text-[#266194]">{{ \App\Support\Quantity::format((float)$row->minimum_quantity) }} {{ $row->unit }}</td>
+                                <td class="p-4 text-xs">{{ $row->stock_updated_at ? \Carbon\Carbon::parse($row->stock_updated_at)->timezone('Asia/Jakarta')->format('d/m/Y H:i') : 'Belum ada transaksi stok' }}</td>
                                 <td class="p-4"><span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ (float)$row->quantity <= 0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : 'attention-badge-warning bg-amber-100 text-amber-800 border border-amber-300' }}">{{ (float)$row->quantity <= 0 ? 'Kosong' : 'Di bawah minimum' }}</span></td>
                             </tr>
                         @empty
-                            <tr><td colspan="5" class="p-8 text-center text-slate-500 font-medium">Belum ada stok di bawah parameter minimum.</td></tr>
+                            <tr><td colspan="6" class="p-8 text-center text-slate-500 font-medium">Tidak ada stok pada atau di bawah batas minimum yang diatur.</td></tr>
                         @endforelse
                     </tbody>
                 </table>

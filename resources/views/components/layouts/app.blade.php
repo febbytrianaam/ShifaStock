@@ -34,7 +34,7 @@
         ['label' => 'PEMERIKSAAN STOK', 'inventory' => false, 'anyCan' => ['view-nightly-checks', 'view-opname', 'view-nightly-history'], 'items' => [
             ['preview.nightly', '✓', 'Pemeriksaan Stok', null, 'view-nightly-checks', ['preview.nightly', 'nightly.show', 'preview.opname', 'nightly.history']],
         ]],
-        ['label' => 'TINDAK LANJ', 'inventory' => false, 'anyCan' => ['view-shortages', 'view-expiry', 'view-special-adjustments', 'view-reports', 'view-stock-card', 'manage-monitoring-parameters'], 'items' => [
+        ['label' => 'TINDAK LANJUT', 'inventory' => false, 'anyCan' => ['view-shortages', 'view-expiry', 'view-special-adjustments', 'view-reports', 'view-stock-card', 'manage-monitoring-parameters'], 'items' => [
             ['shortages.index', '!', 'Monitoring', null, 'view-shortages', ['shortages.index', 'preview.expiry']],
             ['monitoring-parameters.index', '⚙', 'Parameter Monitoring', null, 'manage-monitoring-parameters'],
             ['special-adjustments.index', '◇', 'Kondisi Khusus', null, 'view-special-adjustments'],
@@ -80,7 +80,7 @@
                     'ADMINISTRASI' => 'Administrasi',
                     'DATA & PERGERAKAN' => 'Data dan Pergerakan',
                     'PEMERIKSAAN STOK' => 'Pemeriksaan Stok',
-                    'TINDAK LANJ' => 'Tindak Lanjut',
+                    'TINDAK LANJUT' => 'Tindak Lanjut',
                     default => ucwords(strtolower($group['label'])),
                 };
                 break 2;

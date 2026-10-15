@@ -104,11 +104,11 @@ class MedicineIndex extends Component
         $this->stock_unit_suggestion = (string) $medicine->stock_unit_suggestion;
         $this->purchase_unit_name = (string) $medicine->purchase_unit_name;
         $this->package_reference = (string) $medicine->package_reference;
-        $this->conversion_candidate = $medicine->conversion_candidate !== null ? (string) $medicine->conversion_candidate : '';
+        $this->conversion_candidate = \App\Support\Quantity::input($medicine->conversion_candidate);
         $this->verification_status = $medicine->verification_status ?: 'belum_diverifikasi';
         $this->verification_note = (string) $medicine->verification_note;
-        $this->package_name = (string) $package?->name;
-        $this->package_conversion = $package?->conversion_factor !== null ? (string) $package->conversion_factor : '';
+        $this->package_name = (string) ($package?->name ?: $medicine->purchase_unit_name);
+        $this->package_conversion = \App\Support\Quantity::input($package?->conversion_factor ?? $medicine->conversion_candidate);
 
         $this->dispatch('medicine-editing');
     }
@@ -145,8 +145,8 @@ class MedicineIndex extends Component
             'conversion_candidate' => ['nullable', 'numeric', 'gt:0'],
             'verification_status' => ['required', 'in:belum_diverifikasi,perlu_revisi,terverifikasi'],
             'verification_note' => ['nullable', 'string', 'max:4000'],
-            'package_name' => ['nullable', 'string', 'max:100'],
-            'package_conversion' => ['nullable', 'numeric', 'gt:0'],
+            'package_name' => ['nullable', 'required_with:package_conversion', 'string', 'max:100'],
+            'package_conversion' => ['nullable', 'required_with:package_name', 'numeric', 'gt:0'],
         ]);
 
         $payload = collect($data)->except(['package_name', 'package_conversion'])->map(fn ($value) => blank($value) ? null : $value)->all();
@@ -161,10 +161,10 @@ class MedicineIndex extends Component
         $medicine->save();
 
         if (filled($data['package_name']) && filled($data['package_conversion'])) {
-            MedicinePackage::updateOrCreate(
-                ['medicine_id' => $medicine->id, 'name' => trim($data['package_name'])],
-                ['conversion_factor' => (float) $data['package_conversion']],
-            );
+            $package = $medicine->packages()->where('name', trim($data['package_name']))->first()
+                ?? $medicine->packages()->orderBy('id')->first()
+                ?? new MedicinePackage(['medicine_id' => $medicine->id]);
+            $package->fill(['name' => trim($data['package_name']), 'conversion_factor' => (float) $data['package_conversion']])->save();
         }
 
         MedicineAudit::create([

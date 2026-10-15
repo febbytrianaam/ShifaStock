@@ -76,7 +76,7 @@
                             <td class="p-4 font-mono text-xs font-semibold text-slate-700">{{ $row->reference }}</td>
                             <td class="p-4"><b>{{ $row->medicine->name }}</b><br><span class="text-xs text-slate-500">{{ $row->batch?->number }} · ED {{ $row->batch?->expiry_date?->format('d/m/Y') }}</span></td>
                             <td class="p-4 text-xs font-semibold text-slate-600">{{ $row->destinationLocation?->name }}</td>
-                            <td class="p-4 font-bold tabular-nums text-emerald-700">+{{ number_format((float)$row->quantity,0,',','.') }} {{ $row->medicine->unit?->name }}</td>
+                            <td class="p-4 font-bold tabular-nums text-emerald-700">+{{ \App\Support\Quantity::format((float)$row->quantity) }} {{ $row->medicine->unit?->name }}</td>
                             <td class="p-4 text-xs text-slate-600">{{ $row->notes ?: '—' }}</td>
                         </tr>
                     @empty

@@ -47,10 +47,10 @@
                             <tr>
                                 <td class="p-4"><b class="font-bold text-slate-900">{{ $row['medicine_name'] }}</b><br><span class="font-mono text-[11px] text-slate-500">{{ $row['medicine_code'] }}</span></td>
                                 <td class="p-4 text-xs font-semibold text-slate-600">{{ $row['location_name'] }}</td>
-                                <td class="p-4 font-bold tabular-nums text-slate-900">{{ number_format($row['opening'],0,',','.') }} {{ $row['unit_name'] }}</td>
-                                <td class="p-4 font-bold tabular-nums text-emerald-700">{{ number_format($row['incoming'],0,',','.') }} {{ $row['unit_name'] }}</td>
-                                <td class="p-4 font-bold tabular-nums text-rose-700">{{ number_format($row['outgoing'],0,',','.') }} {{ $row['unit_name'] }}</td>
-                                <td class="p-4 font-bold tabular-nums text-[#266194]">{{ number_format($row['ending'],0,',','.') }} {{ $row['unit_name'] }}</td>
+                                <td class="p-4 font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format($row['opening']) }} {{ $row['unit_name'] }}</td>
+                                <td class="p-4 font-bold tabular-nums text-emerald-700">{{ \App\Support\Quantity::format($row['incoming']) }} {{ $row['unit_name'] }}</td>
+                                <td class="p-4 font-bold tabular-nums text-rose-700">{{ \App\Support\Quantity::format($row['outgoing']) }} {{ $row['unit_name'] }}</td>
+                                <td class="p-4 font-bold tabular-nums text-[#266194]">{{ \App\Support\Quantity::format($row['ending']) }} {{ $row['unit_name'] }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="6" class="p-8 text-center text-slate-500 font-medium">Belum ada mutasi untuk periode ini.</td></tr>
@@ -90,7 +90,7 @@
                                         {{ $balance->location->name }}
                                     </span>
                                 </td>
-                                <td class="p-4 font-bold tabular-nums text-slate-900">{{ number_format((float)$balance->quantity,0,',','.') }} {{ $balance->medicine->unit?->name }}</td>
+                                <td class="p-4 font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format((float)$balance->quantity) }} {{ $balance->medicine->unit?->name }}</td>
                                 <td class="p-4 text-xs font-medium text-slate-600 tabular-nums">{{ $balance->last_counted_at?->format('d/m/Y H:i') ?? 'Belum dihitung fisik' }}</td>
                             </tr>
                         @empty
@@ -137,7 +137,7 @@
                                 <td class="p-4 font-bold text-slate-900 tracking-tight">{{ $movement->medicine->name }}</td>
                                 <td class="p-4 text-slate-600 font-medium text-xs">{{ $movement->sourceLocation?->name ?? '—' }}</td>
                                 <td class="p-4 text-slate-600 font-medium text-xs">{{ $movement->destinationLocation?->name ?? '—' }}</td>
-                                <td class="p-4 font-bold tabular-nums text-slate-900">{{ number_format((float)$movement->quantity,0,',','.') }} {{ $movement->medicine->unit?->name }}</td>
+                                <td class="p-4 font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format((float)$movement->quantity) }} {{ $movement->medicine->unit?->name }}</td>
                             </tr>
                         @empty
                             <tr>

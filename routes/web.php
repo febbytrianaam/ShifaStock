@@ -73,6 +73,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/retur-pbf', [InventoryController::class, 'returns'])->middleware('can:view-returns')->name('preview.returns');
         Route::post('/retur-pbf', [InventoryController::class, 'storeReturn'])->middleware(['can:view-returns', 'can:operate-inventory'])->name('returns.store');
         Route::get('/kartu-stok', [InventoryController::class, 'stockCard'])->middleware('can:view-stock-card')->name('stock-card.index');
+        Route::get('/kartu-stok/cetak', [InventoryController::class, 'stockCardPrint'])->middleware('can:view-stock-card')->name('stock-card.print');
         Route::post('/mutasi/{movement}/reversal', [InventoryController::class, 'reverseMovement'])->middleware(['can:view-stock-card', 'can:reverse-inventory-movements'])->whereNumber('movement')->name('movements.reverse');
         Route::get('/kondisi-khusus', [InventoryController::class, 'specialAdjustments'])->middleware('can:view-special-adjustments')->name('special-adjustments.index');
         Route::post('/kondisi-khusus', [InventoryController::class, 'storeSpecialAdjustment'])->middleware(['can:view-special-adjustments', 'can:operate-inventory'])->name('special-adjustments.store');

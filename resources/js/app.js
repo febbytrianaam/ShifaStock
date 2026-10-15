@@ -106,6 +106,7 @@ function initialize() {
     initBalanceSearch();
     initSearchableSelects();
     initReceiptRows();
+    initStockEntryContexts();
     initRolePreview();
 }
 
@@ -162,11 +163,11 @@ function initSearchableSelects(root = document) {
         };
         const optionMatchesDependency = (option) => {
             const values = dependencyValues();
-            return optionDependencyValues(option).every((dependsValue, index) => !dependsValue || !values[index] || dependsValue === values[index]);
+            return optionDependencyValues(option).every((dependsValue, index) => !dependsValue || dependsValue === values[index]);
         };
         const syncInput = () => {
             const option = selectedOption();
-            input.value = option?.value ? option.textContent.trim() : '';
+            input.value = option?.value ? option.textContent.trim() : (select.dataset.emptyLabel || '');
             syncClearButton();
         };
         const syncClearButton = () => {
@@ -186,12 +187,29 @@ function initSearchableSelects(root = document) {
             input.setAttribute('aria-expanded', 'false');
         };
         const open = () => {
+            if (select.closest('.receipt-entry')) {
+                const rect = input.getBoundingClientRect();
+                const below = window.innerHeight - rect.bottom - 12;
+                const above = rect.top - 12;
+                const upwards = below < 160 && above > below;
+                menu.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8))}px`;
+                menu.style.width = `${Math.min(rect.width, window.innerWidth - 16)}px`;
+                menu.style.maxHeight = `${Math.min(256, Math.max(80, upwards ? above : below))}px`;
+                menu.style.top = upwards ? 'auto' : `${rect.bottom + 4}px`;
+                menu.style.bottom = upwards ? `${window.innerHeight - rect.top + 4}px` : 'auto';
+            }
             menu.hidden = false;
             input.setAttribute('aria-expanded', 'true');
         };
+        if (select.closest('.receipt-entry')) {
+            window.addEventListener('resize', close);
+            document.addEventListener('scroll', (event) => {
+                if (!menu.contains(event.target)) close();
+            }, true);
+        }
         const render = () => {
             ensureSelectionMatchesDependency();
-            const query = input.value.trim().toLocaleLowerCase('id-ID');
+            const query = input.value === select.dataset.emptyLabel ? '' : input.value.trim().toLocaleLowerCase('id-ID');
             const matches = options()
                 .filter((option) => !query || option.textContent.toLocaleLowerCase('id-ID').includes(query))
                 .slice(0, 80);
@@ -289,6 +307,71 @@ function initSearchableSelects(root = document) {
     });
 }
 
+function initStockEntryContexts() {
+    const format = (value) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 4 }).format(value);
+    document.querySelectorAll('[data-stock-entry-context]:not([data-ready])').forEach((context) => {
+        context.dataset.ready = '1';
+        const data = JSON.parse(context.querySelector('[data-stock-context-data]').textContent);
+        const medicine = document.querySelector(context.dataset.medicine);
+        const location = document.querySelector(context.dataset.location);
+        const quantity = document.querySelector(context.dataset.quantity);
+        const batch = document.querySelector(context.dataset.batch);
+        const label = quantity.labels?.[0];
+        const summary = context.querySelector('[data-stock-context-summary]');
+        const plan = context.querySelector('[data-stock-context-plan]');
+        const sync = () => {
+            const unit = data.units[medicine.value] || '';
+            if (label) label.textContent = unit ? `Jumlah (${unit})` : 'Jumlah';
+            plan.textContent = '';
+            if (!medicine.value || !location.value) {
+                summary.textContent = 'Pilih obat dan lokasi untuk melihat stok tersedia.';
+                return;
+            }
+            const balances = data.balances.filter((item) => String(item.medicine) === medicine.value && String(item.location) === location.value)
+                .sort((a, b) => (a.expiry || '9999').localeCompare(b.expiry || '9999') || (a.number || '').localeCompare(b.number || '') || a.id - b.id);
+            const selected = batch.value ? balances.filter((item) => String(item.batch) === batch.value) : balances;
+            const available = selected.reduce((sum, item) => sum + item.quantity, 0);
+            summary.textContent = `Stok batch ${context.dataset.fefo === '1' ? 'layak pakai ' : ''}tersedia: ${format(available)} ${unit} di ${location.selectedOptions[0].textContent.trim()}.`;
+            if (context.dataset.medicine === '#adjust-medicine' && document.getElementById('adjust-direction')?.value === 'increase') return;
+            if (Number(quantity.value) > available) {
+                plan.textContent = 'Jumlah melebihi stok batch tersedia. Periksa jumlah dan pilihan batch.';
+                return;
+            }
+            if (context.dataset.fefo !== '1' || batch.value || !(Number(quantity.value) > 0)) return;
+            let remaining = Number(quantity.value);
+            const allocations = [];
+            for (const item of balances) {
+                const amount = Math.min(remaining, item.quantity);
+                if (amount > 0) allocations.push(`${item.number}: ${format(amount)} ${unit}`);
+                remaining = Number((remaining - amount).toFixed(4));
+                if (remaining <= 0) break;
+            }
+            plan.textContent = `Perkiraan batch otomatis: ${allocations.join('; ')}. Stok diperiksa kembali saat disimpan.`;
+        };
+        [medicine, location, batch].forEach((field) => field.addEventListener('change', sync));
+        quantity.addEventListener('input', sync);
+        if (context.dataset.medicine === '#adjust-medicine') {
+            document.getElementById('adjust-direction')?.addEventListener('change', sync);
+            document.getElementById('adjust-condition')?.addEventListener('change', () => queueMicrotask(sync));
+        }
+        sync();
+    });
+    const condition = document.getElementById('adjust-condition');
+    const direction = document.getElementById('adjust-direction');
+    if (condition && direction && !condition.dataset.directionReady) {
+        condition.dataset.directionReady = '1';
+        const syncDirection = () => {
+            const decreaseOnly = ['rusak', 'hilang', 'terjatuh', 'expired'].includes(condition.value);
+            direction.querySelector('[value="increase"]').disabled = decreaseOnly;
+            if (decreaseOnly) direction.value = 'decrease';
+            document.querySelector('[data-adjust-save]').textContent = direction.value === 'increase' ? 'Simpan & Tambah Stok Koreksi' : 'Simpan & Kurangi Stok';
+        };
+        condition.addEventListener('change', syncDirection);
+        direction.addEventListener('change', syncDirection);
+        syncDirection();
+    }
+}
+
 function initReceiptRows(root = document) {
     root.querySelectorAll('[data-receipt-row]:not([data-receipt-ready])').forEach((row) => {
         row.dataset.receiptReady = '1';
@@ -297,13 +380,59 @@ function initReceiptRows(root = document) {
         const inputUnit = row.querySelector('[data-receipt-input-unit]');
         const conversion = row.querySelector('[data-receipt-conversion]');
         const stockQuantity = row.querySelector('[data-receipt-stock-quantity]');
-        const applyMedicineDefaults = () => {
+        const syncUnitDisplay = () => {
+            const stockUnit = medicine?.selectedOptions[0]?.dataset.stockUnit || '';
+            const sameUnit = inputUnit.value.trim().toLocaleLowerCase() === stockUnit.trim().toLocaleLowerCase();
+            row.querySelector('[data-receipt-conversion-label]').hidden = !medicine.value || !inputUnit.value || sameUnit;
+            row.querySelector('[data-receipt-unit-equation]').textContent = `1 ${inputUnit.value} =`;
+            row.querySelector('[data-receipt-conversion-unit]').textContent = stockUnit;
+            row.querySelector('[data-receipt-stock-unit]').textContent = stockUnit;
+            if (sameUnit && medicine.value) conversion.value = '1';
+            conversion.readOnly = sameUnit;
+        };
+        const applyMedicineDefaults = (event) => {
             const option = medicine?.options[medicine.selectedIndex];
+            if (inputUnit?.tagName === 'SELECT') {
+                const previous = event ? '' : (inputUnit.dataset.initialUnit || inputUnit.value);
+                inputUnit.replaceChildren(new Option('Pilih satuan', ''));
+                if (!option?.value) {
+                    conversion.value = '';
+                    stockQuantity.value = '';
+                    syncUnitDisplay();
+                    return;
+                }
+                const packages = JSON.parse(option.dataset.packages || '[]');
+                if (option.dataset.purchaseUnit && !packages.some((item) => item.name === option.dataset.purchaseUnit)) {
+                    packages.push({ name: option.dataset.purchaseUnit, factor: option.dataset.conversion || '' });
+                }
+                if (option.dataset.stockUnit && !packages.some((item) => item.name === option.dataset.stockUnit)) {
+                    packages.push({ name: option.dataset.stockUnit, factor: 1 });
+                }
+                if (previous && !packages.some((item) => item.name === previous)) packages.push({ name: previous, factor: conversion.value || 1 });
+                packages.forEach((item) => {
+                    const unitOption = new Option(item.name, item.name);
+                    unitOption.dataset.factor = item.name.trim().toLocaleLowerCase() === (option.dataset.stockUnit || '').trim().toLocaleLowerCase() ? 1 : item.factor;
+                    inputUnit.add(unitOption);
+                });
+                inputUnit.value = previous || option.dataset.purchaseUnit || option.dataset.stockUnit || '';
+            }
             if (!option?.value) return;
-            if (inputUnit && !inputUnit.value) inputUnit.value = option.dataset.purchaseUnit || option.dataset.stockUnit || '';
-            if (conversion && !conversion.value) conversion.value = option.dataset.conversion || '1';
+            if (conversion && (event || !conversion.value)) {
+                const factor = inputUnit?.selectedOptions?.[0]?.dataset.factor || option.dataset.conversion;
+                conversion.value = factor ? String(Number(factor)) : '';
+            }
+            if (event) stockQuantity.dataset.autoCalculated = '1';
+            stockQuantity.placeholder = option.dataset.stockUnit || 'Satuan stok';
+            syncUnitDisplay();
             updateReceiptStockQuantity(row);
         };
+        inputUnit?.addEventListener('change', () => {
+            const factor = inputUnit.selectedOptions[0]?.dataset.factor;
+            conversion.value = factor ? String(Number(factor)) : '';
+            stockQuantity.dataset.autoCalculated = '1';
+            syncUnitDisplay();
+            updateReceiptStockQuantity(row);
+        });
         medicine?.addEventListener('change', applyMedicineDefaults);
         inputQuantity?.addEventListener('input', () => updateReceiptStockQuantity(row));
         conversion?.addEventListener('input', () => updateReceiptStockQuantity(row));
@@ -331,8 +460,9 @@ function updateReceiptStockQuantity(row) {
     const inputQuantity = row.querySelector('[data-receipt-input-quantity]');
     const conversion = row.querySelector('[data-receipt-conversion]');
     const stockQuantity = row.querySelector('[data-receipt-stock-quantity]');
-    if (!inputQuantity || !conversion || !stockQuantity || !inputQuantity.value || !conversion.value) return;
-    if (stockQuantity.value && stockQuantity.dataset.autoCalculated !== '1') return;
+    if (!inputQuantity || !conversion || !stockQuantity) return;
+    stockQuantity.value = '';
+    if (!inputQuantity.value || !conversion.value) return;
 
     const quantity = Number(inputQuantity.value);
     const factor = Number(conversion.value);
@@ -391,6 +521,17 @@ function closeUserMenu() {
     button?.setAttribute('aria-expanded', 'false');
 }
 document.addEventListener('click', (event) => {
+    const approveButton = event.target.closest('[data-confirm-stock-review]');
+    if (approveButton && approveButton.dataset.confirmed !== '1') {
+        event.preventDefault();
+        Swal.fire({ title: 'Setujui dan sesuaikan stok?', text: 'Stok sistem akan disesuaikan ke hasil hitung laporan ini. Pastikan satuan dan transaksi setelah penghitungan sudah diperiksa.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, setujui dan sesuaikan', cancelButtonText: 'Periksa kembali' }).then((result) => {
+            if (!result.isConfirmed) return;
+            approveButton.dataset.confirmed = '1';
+            approveButton.form.requestSubmit(approveButton);
+            delete approveButton.dataset.confirmed;
+        });
+        return;
+    }
     const confirmForm = event.target.closest('form[data-confirm-action]');
     if (confirmForm && event.target.closest('button[type="submit"], button:not([type])')) {
         event.preventDefault();

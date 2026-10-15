@@ -59,7 +59,7 @@
                 <option value="">Tanpa rincian batch</option>
                 @foreach($batchBalances as $balance)
                     <option value="{{ $balance->batch_id }}" data-depends-values="{{ $balance->medicine_id }}|{{ $balance->location_id }}" @selected(old('batch_id')==$balance->batch_id)>
-                        {{ $balance->medicine->code }} · {{ $balance->batch->number }} · {{ $balance->location->name }} · {{ number_format((float)$balance->quantity,0,',','.') }} {{ $balance->medicine->unit?->name }}
+                        {{ $balance->medicine->code }} · {{ $balance->batch->number }} · {{ $balance->location->name }} · {{ \App\Support\Quantity::format((float)$balance->quantity) }} {{ $balance->medicine->unit?->name }}
                     </option>
                 @endforeach
             </select>
@@ -69,8 +69,9 @@
             <input class="field text-xs" id="adjust-notes" name="notes" value="{{ old('notes') }}" placeholder="Detail kejadian atau tindak lanjut" maxlength="1000">
         </div>
         <div class="flex items-end">
-            <button class="btn w-full text-xs">Posting Kondisi</button>
+            <button class="btn w-full text-xs" data-adjust-save>Simpan &amp; Kurangi Stok</button>
         </div>
+        <x-stock-entry-context :medicines="$medicines" :batch-balances="$batchBalances" medicine="#adjust-medicine" location="#adjust-location" quantity="#adjust-quantity" batch="#adjust-batch" />
     </form>
     @endcan
 
@@ -95,7 +96,7 @@
                             <td class="p-4 font-mono text-xs font-semibold text-slate-700">{{ $row->reference }}</td>
                             <td class="p-4"><b>{{ $row->medicine->name }}</b><br><span class="text-xs text-slate-500">{{ $row->batch?->number ?? 'Tanpa batch' }}</span></td>
                             <td class="p-4 text-xs font-semibold text-slate-600">{{ $row->sourceLocation?->name ?? $row->destinationLocation?->name }}</td>
-                            <td class="p-4 font-bold tabular-nums {{ $decrease ? 'text-rose-700' : 'text-emerald-700' }}">{{ $decrease ? '-' : '+' }}{{ number_format((float)$row->quantity,0,',','.') }} {{ $row->medicine->unit?->name }}</td>
+                            <td class="p-4 font-bold tabular-nums {{ $decrease ? 'text-rose-700' : 'text-emerald-700' }}">{{ $decrease ? '-' : '+' }}{{ \App\Support\Quantity::format((float)$row->quantity) }} {{ $row->medicine->unit?->name }}</td>
                             <td class="p-4 text-xs text-slate-600">{{ $row->notes ?: '—' }}</td>
                         </tr>
                     @empty

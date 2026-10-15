@@ -24,18 +24,19 @@ use Illuminate\Validation\ValidationException;
 
 class InventoryController extends Controller
 {
-    public function receipts()
+    public function receipts(Request $request)
     {
         return view('inventory.receipts', [
-            'medicines' => $this->operationalMedicines()->with('unit')->orderBy('name')->get(),
+            'receiptHistory' => $request->query('tab') === 'riwayat',
+            'medicines' => $this->operationalMedicines()->with(['unit', 'packages'])->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
             'defaultReceiptLocationId' => $this->defaultReceiptLocationId(),
             'nextReference' => $this->nextReference('receipt', 'FKT'),
             'receipts' => InventoryReceipt::with(['items.medicine.unit', 'destinationLocation', 'creator', 'poster'])
                 ->latest('received_at')
-                ->paginate(12, ['*'], 'dokumen'),
+                ->paginate(12, ['*'], 'dokumen')->withQueryString(),
             'rows' => InventoryMovement::with(['medicine.unit', 'batch', 'destinationLocation', 'creator'])
-                ->where('type', 'receipt')->latest('occurred_at')->paginate(20),
+                ->where('type', 'receipt')->latest('occurred_at')->paginate(20)->withQueryString(),
         ]);
     }
 
@@ -44,6 +45,7 @@ class InventoryController extends Controller
         $this->normalizeReceiptItems($request);
         $data = $request->validate([
             'action' => ['nullable', Rule::in(['draft', 'post'])],
+            'supplier_invoice_number' => ['nullable', 'string', 'max:100'],
             'reference' => ['required', 'string', 'max:100', Rule::unique('inventory_receipts', 'reference'), Rule::unique('inventory_movements', 'reference')],
             'occurred_at' => ['required', 'date_format:Y-m-d\\TH:i'],
             'counterparty' => ['nullable', 'string', 'max:255'],
@@ -66,6 +68,7 @@ class InventoryController extends Controller
             $receipt = InventoryReceipt::create([
                 'reference' => $data['reference'],
                 'status' => 'draft',
+                'supplier_invoice_number' => $data['supplier_invoice_number'] ?? null,
                 'counterparty' => $data['counterparty'] ?? null,
                 'destination_location_id' => $data['destination_location_id'],
                 'received_at' => Carbon::parse($data['occurred_at'], 'Asia/Jakarta'),
@@ -100,7 +103,7 @@ class InventoryController extends Controller
 
         $destinationName = $receipt->destinationLocation?->name ?? 'lokasi tujuan';
 
-        return back()->with('status', $receipt->status === 'posted'
+        return redirect()->route('preview.receipts', ['tab' => 'riwayat'])->with('status', $receipt->status === 'posted'
             ? 'Penerimaan multi-item diposting. Stok '.$destinationName.' bertambah.'
             : 'Draft penerimaan tersimpan. Final posting bisa dilakukan dari daftar dokumen.');
     }
@@ -453,7 +456,7 @@ class InventoryController extends Controller
                 'quantity' => $data['quantity'],
                 'occurred_at' => Carbon::parse($data['occurred_at'], 'Asia/Jakarta'),
                 'counterparty' => $data['counterparty'] ?? null,
-                'notes' => trim($data['reason'].($data['notes'] ? ' - '.$data['notes'] : '')),
+                'notes' => trim($data['reason'].(! empty($data['notes']) ? ' - '.$data['notes'] : '')),
                 'created_by' => $request->user()->id,
             ]);
             AuditLogger::record('inventory.return.posted', 'Retur PBF '.$medicine->name.' diposting.', null, [
@@ -496,6 +499,9 @@ class InventoryController extends Controller
             'occurred_at' => ['required', 'date_format:Y-m-d\\TH:i'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
+        if (in_array($data['condition'], ['rusak', 'hilang', 'terjatuh', 'expired'], true)) {
+            $data['direction'] = 'decrease';
+        }
         $medicine = Medicine::findOrFail($data['medicine_id']);
         if (! empty($data['batch_id']) && ! Batch::where('id', $data['batch_id'])->where('medicine_id', $medicine->id)->exists()) {
             throw ValidationException::withMessages(['batch_id' => 'Batch tidak sesuai dengan obat yang dipilih.']);
@@ -520,7 +526,7 @@ class InventoryController extends Controller
                 'destination_location_id' => $data['direction'] === 'increase' ? $data['location_id'] : null,
                 'quantity' => $data['quantity'],
                 'occurred_at' => Carbon::parse($data['occurred_at'], 'Asia/Jakarta'),
-                'notes' => $this->conditionLabels()[$data['condition']].($data['notes'] ? ' - '.$data['notes'] : ''),
+                'notes' => $this->conditionLabels()[$data['condition']].(! empty($data['notes']) ? ' - '.$data['notes'] : ''),
                 'created_by' => $request->user()->id,
             ]);
             AuditLogger::record('inventory.special_adjustment.posted', 'Kondisi khusus '.$medicine->name.' diposting.', null, [
@@ -584,49 +590,8 @@ class InventoryController extends Controller
 
     public function stockCard(Request $request)
     {
-        $isFiltering = $request->hasAny(['medicine_id', 'location_id', 'batch_id', 'start', 'end']);
-        $data = $request->validate([
-            'medicine_id' => [$isFiltering ? 'required' : 'nullable', 'exists:medicines,id'],
-            'location_id' => [$isFiltering ? 'required' : 'nullable', 'exists:locations,id'],
-            'batch_id' => ['nullable', 'exists:batches,id'],
-            'start' => [$isFiltering ? 'required' : 'nullable', 'date_format:Y-m-d'],
-            'end' => [$isFiltering ? 'required' : 'nullable', 'date_format:Y-m-d', 'after_or_equal:start'],
-        ], [
-            'medicine_id.required' => 'Pilih obat dulu untuk membuat kartu stok.',
-            'location_id.required' => 'Pilih lokasi stok dulu.',
-            'start.required' => 'Isi tanggal mulai periode kartu stok.',
-            'end.required' => 'Isi tanggal selesai periode kartu stok.',
-            'end.after_or_equal' => 'Tanggal selesai tidak boleh sebelum tanggal mulai.',
-        ]);
-
-        $query = InventoryMovement::with(['medicine.unit', 'batch', 'sourceLocation', 'destinationLocation', 'creator'])
-            ->when($data['medicine_id'] ?? null, fn ($query, $id) => $query->where('medicine_id', $id))
-            ->when($data['batch_id'] ?? null, fn ($query, $id) => $query->where('batch_id', $id))
-            ->when($data['location_id'] ?? null, fn ($query, $id) => $query->where(fn ($inner) => $inner
-                ->where('source_location_id', $id)
-                ->orWhere('destination_location_id', $id)))
-            ->when($data['start'] ?? null, fn ($query, $date) => $query->whereDate('occurred_at', '>=', $date))
-            ->when($data['end'] ?? null, fn ($query, $date) => $query->whereDate('occurred_at', '<=', $date))
-            ->orderBy('occurred_at')
-            ->orderBy('id');
-
-        $locationId = (int) ($data['location_id'] ?? 0);
-        $opening = 0.0;
-        if ($locationId && ! empty($data['start'])) {
-            $opening = $this->movementQueryBefore($data, $locationId)
-                ->get()
-                ->sum(fn (InventoryMovement $movement) => $this->movementDelta($movement, $locationId));
-        }
-
-        $running = $opening;
-        $allRows = $query->get()->transform(function (InventoryMovement $movement) use (&$running, $locationId) {
-            $delta = $locationId ? $this->movementDelta($movement, $locationId) : 0.0;
-            $running += $delta;
-            $movement->setAttribute('card_delta', $delta);
-            $movement->setAttribute('card_running_balance', $locationId ? $running : null);
-
-            return $movement;
-        });
+        $data = $this->stockCardFilters($request);
+        [$allRows, $opening] = $this->stockCardRows($data);
         $page = max((int) $request->integer('page', 1), 1);
         $perPage = 30;
         $rows = new LengthAwarePaginator(
@@ -649,6 +614,20 @@ class InventoryController extends Controller
                 ->orderBy('medicine_id')
                 ->orderBy('location_id')
                 ->get(),
+            'filters' => $data,
+        ]);
+    }
+
+    public function stockCardPrint(Request $request)
+    {
+        $data = $this->stockCardFilters($request, true);
+        [$rows, $opening] = $this->stockCardRows($data);
+
+        return view('inventory.stock-card-print', [
+            'rows' => $rows,
+            'opening' => $opening,
+            'medicine' => Medicine::with('unit')->findOrFail((int) $data['medicine_id']),
+            'location' => Location::findOrFail((int) $data['location_id']),
             'filters' => $data,
         ]);
     }
@@ -1039,7 +1018,13 @@ class InventoryController extends Controller
 
         $items = collect($items ?? [])
             ->map(function (array $item) {
-                if (blank($item['quantity'] ?? null) && filled($item['input_quantity'] ?? null) && filled($item['conversion_factor'] ?? null)) {
+                if (filled($item['medicine_id'] ?? null) && filled($item['input_unit_name'] ?? null)) {
+                    $stockUnit = Medicine::with('unit')->find($item['medicine_id'])?->unit?->name;
+                    if ($stockUnit && mb_strtolower(trim($item['input_unit_name'])) === mb_strtolower(trim($stockUnit))) {
+                        $item['conversion_factor'] = 1;
+                    }
+                }
+                if (filled($item['input_quantity'] ?? null) && is_numeric($item['input_quantity']) && filled($item['conversion_factor'] ?? null) && is_numeric($item['conversion_factor'])) {
                     $item['quantity'] = (float) $item['input_quantity'] * (float) $item['conversion_factor'];
                 }
 
@@ -1055,6 +1040,9 @@ class InventoryController extends Controller
     private function receiptItemNotes(InventoryReceiptItem $item, InventoryReceipt $receipt): ?string
     {
         $notes = trim((string) ($item->notes ?: $receipt->notes ?: ''));
+        if (filled($receipt->supplier_invoice_number)) {
+            $notes = 'Faktur supplier: '.$receipt->supplier_invoice_number.($notes ? ' | '.$notes : '');
+        }
         $inputQuantity = $item->input_quantity === null ? null : (float) $item->input_quantity;
         $conversionFactor = $item->conversion_factor === null ? null : (float) $item->conversion_factor;
 
@@ -1079,6 +1067,59 @@ class InventoryController extends Controller
                 ]);
             }
         }
+    }
+
+    private function stockCardFilters(Request $request, bool $required = false): array
+    {
+        $isFiltering = $required || $request->hasAny(['medicine_id', 'location_id', 'batch_id', 'start', 'end']);
+
+        return $request->validate([
+            'medicine_id' => [$isFiltering ? 'required' : 'nullable', 'exists:medicines,id'],
+            'location_id' => [$isFiltering ? 'required' : 'nullable', 'exists:locations,id'],
+            'batch_id' => ['nullable', 'exists:batches,id'],
+            'start' => [$isFiltering ? 'required' : 'nullable', 'date_format:Y-m-d'],
+            'end' => [$isFiltering ? 'required' : 'nullable', 'date_format:Y-m-d', 'after_or_equal:start'],
+        ], [
+            'medicine_id.required' => 'Pilih obat dulu untuk membuat kartu stok.',
+            'location_id.required' => 'Pilih lokasi stok dulu.',
+            'start.required' => 'Isi tanggal mulai periode kartu stok.',
+            'end.required' => 'Isi tanggal selesai periode kartu stok.',
+            'end.after_or_equal' => 'Tanggal selesai tidak boleh sebelum tanggal mulai.',
+        ]);
+    }
+
+    private function stockCardRows(array $data): array
+    {
+        $query = InventoryMovement::with(['medicine.unit', 'batch', 'sourceLocation', 'destinationLocation', 'creator'])
+            ->when($data['medicine_id'] ?? null, fn ($query, $id) => $query->where('medicine_id', $id))
+            ->when($data['batch_id'] ?? null, fn ($query, $id) => $query->where('batch_id', $id))
+            ->when($data['location_id'] ?? null, fn ($query, $id) => $query->where(fn ($inner) => $inner
+                ->where('source_location_id', $id)
+                ->orWhere('destination_location_id', $id)))
+            ->when($data['start'] ?? null, fn ($query, $date) => $query->whereDate('occurred_at', '>=', $date))
+            ->when($data['end'] ?? null, fn ($query, $date) => $query->whereDate('occurred_at', '<=', $date))
+            ->orderBy('occurred_at')
+            ->orderBy('id');
+
+        $locationId = (int) ($data['location_id'] ?? 0);
+        $opening = 0.0;
+        if ($locationId && ! empty($data['start'])) {
+            $opening = $this->movementQueryBefore($data, $locationId)
+                ->get()
+                ->sum(fn (InventoryMovement $movement) => $this->movementDelta($movement, $locationId));
+        }
+
+        $running = $opening;
+        $rows = $query->get()->transform(function (InventoryMovement $movement) use (&$running, $locationId) {
+            $delta = $locationId ? $this->movementDelta($movement, $locationId) : 0.0;
+            $running += $delta;
+            $movement->setAttribute('card_delta', $delta);
+            $movement->setAttribute('card_running_balance', $locationId ? $running : null);
+
+            return $movement;
+        });
+
+        return [$rows, $opening];
     }
 
     private function movementQueryBefore(array $filters, int $locationId)

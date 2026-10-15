@@ -19,6 +19,7 @@ class InventoryFlowTest extends TestCase
 
     public function test_receipt_transfer_and_approved_count_share_one_stock_balance(): void
     {
+        $this->travelTo(\Carbon\Carbon::parse('2026-01-01 10:00:00', 'Asia/Jakarta'));
         $petugas = User::factory()->create(['role' => Role::Pharmacy]);
         $kepala = User::factory()->create(['role' => Role::Pharmacist]);
         $unit = Unit::create(['name' => 'Tablet']);
@@ -55,7 +56,8 @@ class InventoryFlowTest extends TestCase
         $this->assertSame(25.0, (float) StockBalance::whereBelongsTo($medicine)->whereBelongsTo($apotek)->value('quantity'));
         $this->assertDatabaseHas('inventory_movements', ['type' => 'physical_count', 'reference' => 'CHECK-'.$check->id, 'quantity' => 5]);
 
-        $this->get('/dashboard')->assertOk()->assertSee('Obat A')->assertSee('25 Tablet');
+        $this->get('/dashboard?data=real')->assertOk()->assertSee('Obat A')
+            ->assertViewHas('balances', fn ($balances) => $balances->contains(fn ($balance) => $balance->location_id === $apotek->id && (float) $balance->quantity === 25.0));
         $this->get('/kedaluwarsa')->assertOk()->assertSee('BA-01')->assertSee('31/12/2027');
         $this->get('/laporan')->assertOk()->assertSee('FKT-001')->assertSee('TRF-001');
         $this->get('/stock-opname?period=2026-01')->assertOk()->assertSee('Januari 2026')->assertSee('Obat A');

@@ -103,7 +103,7 @@
                                         <span class="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-700">
                                             <span class="h-1.5 w-1.5 rounded-full {{ str_contains(strtolower($balance->location?->name ?? ''), 'gudang') ? 'bg-[#3277B2]' : 'bg-slate-400' }}"></span>
                                             {{ $balance->location?->name ?? 'Lokasi tidak diketahui' }}
-                                            <span class="font-mono text-[11px] text-slate-400">{{ number_format((float)$balance->quantity,0,',','.') }}</span>
+                                            <span class="font-mono text-[11px] text-slate-400">{{ \App\Support\Quantity::format((float)$balance->quantity) }}</span>
                                         </span>
                                     @empty
                                         <span class="text-xs text-slate-400">Belum ada stok lokasi</span>
@@ -111,7 +111,7 @@
                                 </div>
                             </td>
                             <td class="p-4 font-bold tabular-nums text-slate-900">
-                                {{ number_format((float)$batch->balances->sum('quantity'),0,',','.') }} {{ $batch->medicine->unit?->name }} <span class="text-xs font-normal text-slate-400">(batch ini)</span>
+                                {{ \App\Support\Quantity::format((float)$batch->balances->sum('quantity')) }} {{ $batch->medicine->unit?->name }} <span class="text-xs font-normal text-slate-400">(batch ini)</span>
                             </td>
                             <td class="p-4 text-right">
                                 <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $days<0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : ($days<=($warningMonths * 31) ? 'attention-badge-warning bg-amber-100 text-amber-800 border border-amber-300' : 'bg-[#edf5fb] text-[#266194] border border-[#b2d4ee]') }}">

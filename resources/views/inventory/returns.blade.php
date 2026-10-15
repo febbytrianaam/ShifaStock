@@ -40,7 +40,7 @@
                 <option value="">Pilih batch tersedia</option>
                 @foreach($batchBalances as $balance)
                     <option value="{{ $balance->batch_id }}" data-depends-values="{{ $balance->medicine_id }}|{{ $balance->location_id }}" @selected(old('batch_id')==$balance->batch_id)>
-                        {{ $balance->medicine->code }} · {{ $balance->batch->number }} · {{ $balance->location->name }} · {{ number_format((float)$balance->quantity,0,',','.') }} {{ $balance->medicine->unit?->name }}
+                        {{ $balance->medicine->code }} · {{ $balance->batch->number }} · {{ $balance->location->name }} · {{ \App\Support\Quantity::format((float)$balance->quantity) }} {{ $balance->medicine->unit?->name }}
                     </option>
                 @endforeach
             </select>
@@ -62,8 +62,9 @@
             <input class="field text-xs" id="return-notes" name="notes" value="{{ old('notes') }}" placeholder="Keterangan tambahan" maxlength="1000">
         </div>
         <div class="flex items-end">
-            <button class="btn w-full text-xs">Posting Retur</button>
+            <button class="btn w-full text-xs">Simpan Retur &amp; Kurangi Stok</button>
         </div>
+        <x-stock-entry-context :medicines="$medicines" :batch-balances="$batchBalances" medicine="#return-medicine" location="#return-location" quantity="#return-quantity" batch="#return-batch" />
     </form>
     @endcan
 
@@ -88,7 +89,7 @@
                             <td class="p-4 font-mono text-xs font-semibold text-slate-700">{{ $row->reference }}</td>
                             <td class="p-4"><b>{{ $row->medicine->name }}</b><br><span class="text-xs text-slate-500">{{ $row->batch?->number }} · ED {{ $row->batch?->expiry_date?->format('d/m/Y') }}</span></td>
                             <td class="p-4 text-xs font-semibold text-slate-600">{{ $row->sourceLocation?->name }}</td>
-                            <td class="p-4 font-bold tabular-nums text-rose-700">-{{ number_format((float)$row->quantity,0,',','.') }} {{ $row->medicine->unit?->name }}</td>
+                            <td class="p-4 font-bold tabular-nums text-rose-700">-{{ \App\Support\Quantity::format((float)$row->quantity) }} {{ $row->medicine->unit?->name }}</td>
                             <td class="p-4 text-xs font-medium text-slate-600">{{ $row->counterparty ?: '—' }}</td>
                             <td class="p-4 text-xs text-slate-600">{{ $row->notes ?: '—' }}</td>
                         </tr>

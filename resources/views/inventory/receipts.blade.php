@@ -6,6 +6,13 @@
         <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">{{ $errors->first() }}</div>
     @endif
 
+    <nav class="mb-4 flex gap-5 border-b border-slate-200 text-sm" aria-label="Penerimaan">
+        @can('operate-inventory')
+            <a href="{{ route('preview.receipts') }}" class="border-b-2 px-1 py-2 {{ !$receiptHistory ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500' }}">Input Penerimaan</a>
+        @endcan
+        <a href="{{ route('preview.receipts', ['tab' => 'riwayat']) }}" class="border-b-2 px-1 py-2 {{ $receiptHistory ? 'border-blue-600 text-blue-700' : 'border-transparent text-slate-500' }}">Riwayat Penerimaan</a>
+    </nav>
+    @if(!$receiptHistory)
     @can('operate-inventory')
         @php
             $oldItems = old('items', [
@@ -14,12 +21,16 @@
             ]);
             $defaultLocationId = old('destination_location_id', $defaultReceiptLocationId ?? $locations->firstWhere('code', 'GDG')?->id ?? $locations->first()?->id);
         @endphp
-        <form method="POST" action="{{ route('receipts.store') }}" class="card mb-5 p-4" data-required-alert="Lengkapi data penerimaan" novalidate>
+        <form method="POST" action="{{ route('receipts.store') }}" class="receipt-entry mb-5" data-required-alert="Lengkapi data penerimaan" novalidate>
             @csrf
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
                 <div>
-                    <label class="label" for="receipt-reference">Nomor faktur / referensi</label>
+                    <label class="label" for="receipt-reference">Nomor penerimaan otomatis</label>
                     <input class="field bg-slate-50 text-xs font-semibold text-slate-700" id="receipt-reference" name="reference" value="{{ old('reference', $nextReference) }}" readonly required maxlength="100">
+                </div>
+                <div>
+                    <label class="label" for="receipt-invoice">Nomor faktur supplier</label>
+                    <input class="field text-xs" id="receipt-invoice" name="supplier_invoice_number" value="{{ old('supplier_invoice_number') }}" maxlength="100" placeholder="Sesuai faktur yang diterima">
                 </div>
                 <div>
                     <label class="label" for="receipt-supplier">Supplier / PBF</label>
@@ -49,17 +60,15 @@
                     <button type="button" class="btn-secondary px-2.5 py-1 text-xs" data-receipt-add-row>+ Baris</button>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full min-w-[1320px] text-left text-sm">
+                    <table class="w-full min-w-[960px] text-left text-sm">
                         <thead class="bg-[#edf5fb] text-[#266194]">
                             <tr>
-                                <th class="p-3">Obat</th>
+                                <th class="p-3">Nama Obat</th>
                                 <th class="p-3">Batch</th>
                                 <th class="p-3">Kedaluwarsa</th>
                                 <th class="p-3">Qty Faktur</th>
                                 <th class="p-3">Satuan Faktur</th>
-                                <th class="p-3">Konversi</th>
                                 <th class="p-3">Jumlah Stok</th>
-                                <th class="p-3">Catatan Item</th>
                                 <th class="p-3 text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -70,18 +79,16 @@
                                         <select class="field text-xs" name="items[{{ $index }}][medicine_id]" data-searchable-select data-search-placeholder="Cari kode atau nama obat..." data-receipt-medicine {{ $index === 0 ? 'required' : '' }}>
                                             <option value="">Pilih obat</option>
                                             @foreach($medicines as $medicine)
-                                                <option value="{{ $medicine->id }}" data-stock-unit="{{ $medicine->unit?->name }}" data-purchase-unit="{{ $medicine->purchase_unit_name ?: $medicine->unit?->name }}" data-conversion="{{ $medicine->conversion_candidate ?: 1 }}" @selected(($item['medicine_id'] ?? '') == $medicine->id)>{{ $medicine->code }} - {{ $medicine->name }} ({{ $medicine->unit?->name }})</option>
+                                                <option value="{{ $medicine->id }}" data-packages="{{ $medicine->packages->map(fn ($package) => ['name' => $package->name, 'factor' => $package->conversion_factor])->toJson() }}" data-stock-unit="{{ $medicine->unit?->name }}" data-purchase-unit="{{ $medicine->packages->first()?->name ?: ($medicine->purchase_unit_name ?: $medicine->unit?->name) }}" data-conversion="{{ $medicine->packages->first()?->conversion_factor ?? $medicine->conversion_candidate }}" @selected(($item['medicine_id'] ?? '') == $medicine->id)>{{ $medicine->code }} - {{ $medicine->name }} ({{ $medicine->unit?->name }})</option>
                                             @endforeach
                                         </select>
                                     </td>
                                     <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][batch_number]" value="{{ $item['batch_number'] ?? '' }}" placeholder="Batch" {{ $index === 0 ? 'required' : '' }} maxlength="100"></td>
                                     <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][expiry_date]" type="date" value="{{ $item['expiry_date'] ?? '' }}" {{ $index === 0 ? 'required' : '' }}></td>
                                     <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][input_quantity]" data-receipt-input-quantity type="number" min="0.0001" step="0.0001" value="{{ $item['input_quantity'] ?? '' }}" placeholder="0"></td>
-                                    <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][input_unit_name]" data-receipt-input-unit value="{{ $item['input_unit_name'] ?? '' }}" placeholder="Box / strip / botol" maxlength="100"></td>
-                                    <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][conversion_factor]" data-receipt-conversion type="number" min="0.0001" step="0.0001" value="{{ $item['conversion_factor'] ?? '' }}" placeholder="1"></td>
-                                    <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][quantity]" data-receipt-stock-quantity type="number" min="0.0001" step="0.0001" value="{{ $item['quantity'] ?? '' }}" placeholder="Satuan stok" {{ $index === 0 ? 'required' : '' }}></td>
-                                    <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][notes]" value="{{ $item['notes'] ?? '' }}" placeholder="Opsional" maxlength="1000"></td>
-                                    <td class="p-3 text-right"><button type="button" class="btn-secondary px-2.5 py-1 text-xs" data-receipt-remove-row>Hapus</button></td>
+                                    <td class="p-3"><select class="field text-xs" name="items[{{ $index }}][input_unit_name]" data-receipt-input-unit data-initial-unit="{{ $item['input_unit_name'] ?? '' }}"><option value="">Pilih satuan</option></select><label class="receipt-conversion flex items-center gap-1 px-2 pb-2 text-[11px] text-slate-500" data-receipt-conversion-label hidden><span class="whitespace-nowrap" data-receipt-unit-equation></span><input class="field text-xs" name="items[{{ $index }}][conversion_factor]" data-receipt-conversion type="number" min="0.0001" step="0.0001" value="{{ $item['conversion_factor'] ?? '' }}" placeholder="1"><span data-receipt-conversion-unit></span></label></td>
+                                    <td class="p-3"><input class="field text-xs" name="items[{{ $index }}][quantity]" data-receipt-stock-quantity readonly tabindex="-1" type="number" min="0.0001" step="0.0001" value="{{ $item['quantity'] ?? '' }}" placeholder="Satuan stok" {{ $index === 0 ? 'required' : '' }}><span class="block px-3 pb-2 text-xs text-slate-500" data-receipt-stock-unit></span></td>
+                                    <td class="p-3 text-right"><button type="button" class="btn-secondary px-2.5 py-1 text-xs" data-receipt-remove-row aria-label="Hapus baris" title="Hapus baris">&times;</button></td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -90,8 +97,8 @@
             </div>
 
             <div class="mt-4 flex flex-wrap justify-end gap-2">
-                <button class="btn-secondary text-xs" name="action" value="draft">Simpan Draft</button>
-                <button class="btn text-xs" name="action" value="post">Final Posting</button>
+                <button class="btn-secondary text-xs" name="action" value="draft">Simpan Draf</button>
+                <button class="btn text-xs" name="action" value="post">Simpan &amp; Tambah Stok</button>
             </div>
         </form>
 
@@ -101,22 +108,22 @@
                     <select class="field text-xs" data-name="medicine_id" data-searchable-select data-search-placeholder="Cari kode atau nama obat..." data-receipt-medicine>
                         <option value="">Pilih obat</option>
                         @foreach($medicines as $medicine)
-                            <option value="{{ $medicine->id }}" data-stock-unit="{{ $medicine->unit?->name }}" data-purchase-unit="{{ $medicine->purchase_unit_name ?: $medicine->unit?->name }}" data-conversion="{{ $medicine->conversion_candidate ?: 1 }}">{{ $medicine->code }} - {{ $medicine->name }} ({{ $medicine->unit?->name }})</option>
+                            <option value="{{ $medicine->id }}" data-packages="{{ $medicine->packages->map(fn ($package) => ['name' => $package->name, 'factor' => $package->conversion_factor])->toJson() }}" data-stock-unit="{{ $medicine->unit?->name }}" data-purchase-unit="{{ $medicine->packages->first()?->name ?: ($medicine->purchase_unit_name ?: $medicine->unit?->name) }}" data-conversion="{{ $medicine->packages->first()?->conversion_factor ?? $medicine->conversion_candidate }}">{{ $medicine->code }} - {{ $medicine->name }} ({{ $medicine->unit?->name }})</option>
                         @endforeach
                     </select>
                 </td>
                 <td class="p-3"><input class="field text-xs" data-name="batch_number" placeholder="Batch" maxlength="100"></td>
                 <td class="p-3"><input class="field text-xs" data-name="expiry_date" type="date"></td>
                 <td class="p-3"><input class="field text-xs" data-name="input_quantity" data-receipt-input-quantity type="number" min="0.0001" step="0.0001" placeholder="0"></td>
-                <td class="p-3"><input class="field text-xs" data-name="input_unit_name" data-receipt-input-unit placeholder="Box / strip / botol" maxlength="100"></td>
-                <td class="p-3"><input class="field text-xs" data-name="conversion_factor" data-receipt-conversion type="number" min="0.0001" step="0.0001" placeholder="1"></td>
-                <td class="p-3"><input class="field text-xs" data-name="quantity" data-receipt-stock-quantity type="number" min="0.0001" step="0.0001" placeholder="Satuan stok"></td>
-                <td class="p-3"><input class="field text-xs" data-name="notes" placeholder="Opsional" maxlength="1000"></td>
-                <td class="p-3 text-right"><button type="button" class="btn-secondary px-2.5 py-1 text-xs" data-receipt-remove-row>Hapus</button></td>
+                <td class="p-3"><select class="field text-xs" data-name="input_unit_name" data-receipt-input-unit><option value="">Pilih satuan</option></select><label class="receipt-conversion flex items-center gap-1 px-2 pb-2 text-[11px] text-slate-500" data-receipt-conversion-label hidden><span class="whitespace-nowrap" data-receipt-unit-equation></span><input class="field text-xs" data-name="conversion_factor" data-receipt-conversion type="number" min="0.0001" step="0.0001" placeholder="1"><span data-receipt-conversion-unit></span></label></td>
+                <td class="p-3"><input class="field text-xs" data-name="quantity" data-receipt-stock-quantity readonly tabindex="-1" type="number" min="0.0001" step="0.0001" placeholder="Satuan stok"><span class="block px-3 pb-2 text-xs text-slate-500" data-receipt-stock-unit></span></td>
+                <td class="p-3 text-right"><button type="button" class="btn-secondary px-2.5 py-1 text-xs" data-receipt-remove-row aria-label="Hapus baris" title="Hapus baris">&times;</button></td>
             </tr>
         </template>
     @endcan
 
+    @endif
+    @if($receiptHistory || !auth()->user()->can('operate-inventory'))
     <section class="mb-6">
         <div class="mb-3 flex items-center gap-2">
             <span class="h-2 w-2 rounded-full bg-[#3277B2]"></span>
@@ -140,13 +147,13 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse($receipts as $receipt)
                             <tr>
-                                <td class="p-4 font-mono text-xs font-semibold text-slate-700">{{ $receipt->reference }}</td>
-                                <td class="p-4"><span class="badge {{ $receipt->status === 'posted' ? 'badge-ok' : 'badge-warn' }}">{{ $receipt->status === 'posted' ? 'Posted' : 'Draft' }}</span></td>
+                                <td class="p-4 font-mono text-xs font-semibold text-slate-700">{{ $receipt->reference }}<p class="mt-1 font-sans font-normal">Faktur supplier: {{ $receipt->supplier_invoice_number ?: 'Belum dicatat' }}</p></td>
+                                <td class="p-4"><span class="badge {{ $receipt->status === 'posted' ? 'badge-ok' : 'badge-warn' }}">{{ $receipt->status === 'posted' ? 'Stok ditambahkan' : 'Draf' }}</span></td>
                                 <td class="p-4 text-xs font-medium text-slate-600">{{ $receipt->counterparty ?: '-' }}</td>
                                 <td class="p-4 text-xs font-semibold text-slate-600">{{ $receipt->destinationLocation?->name ?? 'Gudang' }}</td>
                                 <td class="p-4">
                                     <p class="text-xs font-bold text-slate-900">{{ $receipt->items->count() }} item</p>
-                                    <p class="text-xs text-slate-500">{{ number_format($receipt->items->sum(fn ($item) => (float) $item->quantity),0,',','.') }} satuan dasar</p>
+                                    <p class="text-xs text-slate-500">{{ \App\Support\Quantity::format($receipt->items->sum(fn ($item) => (float) $item->quantity)) }} satuan dasar</p>
                                 </td>
                                 <td class="p-4 text-xs font-medium text-slate-600 tabular-nums">{{ $receipt->received_at->format('d/m/Y H:i') }}</td>
                                 <td class="p-4 text-xs font-medium text-slate-600 tabular-nums">{{ $receipt->posted_at?->format('d/m/Y H:i') ?? 'Belum posting' }}</td>
@@ -156,7 +163,7 @@
                                             @can('operate-inventory')
                                                 <form method="POST" action="{{ route('receipts.post', $receipt) }}">
                                                     @csrf
-                                                    <button class="btn px-2.5 py-1 text-xs">Posting</button>
+                                                    <button class="btn px-2.5 py-1 text-xs">Tambah ke Stok</button>
                                                 </form>
                                                 <form method="POST" action="{{ route('receipts.destroy', $receipt) }}" data-confirm-receipt-draft>
                                                     @csrf
@@ -175,9 +182,9 @@
                                     <div class="flex flex-wrap gap-2">
                                         @foreach($receipt->items as $item)
                                             <span class="inline-flex rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600">
-                                                {{ $item->medicine->name }} · {{ $item->batch_number }} · {{ number_format((float)$item->quantity,0,',','.') }} {{ $item->medicine->unit?->name }}
+                                                {{ $item->medicine->name }} · {{ $item->batch_number }} · {{ \App\Support\Quantity::format((float)$item->quantity) }} {{ $item->medicine->unit?->name }}
                                                 @if($item->input_quantity && ($item->input_unit_name || (float) $item->conversion_factor !== 1.0))
-                                                    · faktur {{ number_format((float)$item->input_quantity,0,',','.') }} {{ $item->input_unit_name ?: 'satuan' }} x {{ number_format((float)$item->conversion_factor,0,',','.') }}
+                                                    · faktur {{ \App\Support\Quantity::format((float)$item->input_quantity) }} {{ $item->input_unit_name ?: 'satuan' }} x {{ \App\Support\Quantity::format((float)$item->conversion_factor) }}
                                                 @endif
                                             </span>
                                         @endforeach
@@ -219,7 +226,7 @@
                                 <td class="p-4"><span class="inline-flex rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-700">{{ $row->reference }}</span></td>
                                 <td class="p-4"><b class="font-bold text-slate-900 tracking-tight">{{ $row->medicine->name }}</b><br><span class="font-mono text-xs text-slate-500">{{ $row->batch?->number }} · ED {{ $row->batch?->expiry_date?->format('d/m/Y') }}</span></td>
                                 <td class="p-4 font-medium text-slate-700">{{ $row->counterparty ?: '-' }}</td>
-                                <td class="p-4 font-bold tabular-nums text-[#266194]">+{{ number_format((float)$row->quantity, 0, ',', '.') }} {{ $row->medicine->unit?->name }}<p class="mt-1 text-xs font-semibold text-slate-500">{{ $row->destinationLocation?->name ?? 'Lokasi tidak diketahui' }}</p></td>
+                                <td class="p-4 font-bold tabular-nums text-[#266194]">+{{ \App\Support\Quantity::format((float)$row->quantity) }} {{ $row->medicine->unit?->name }}<p class="mt-1 text-xs font-semibold text-slate-500">{{ $row->destinationLocation?->name ?? 'Lokasi tidak diketahui' }}</p></td>
                                 <td class="p-4 text-xs font-medium text-slate-600">{{ $row->creator->name }}</td>
                             </tr>
                         @empty
@@ -231,4 +238,5 @@
         </div>
         <div class="mt-4">{{ $rows->links() }}</div>
     </section>
+    @endif
 </x-layouts.app>

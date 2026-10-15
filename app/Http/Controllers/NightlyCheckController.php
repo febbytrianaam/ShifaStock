@@ -56,7 +56,7 @@ class NightlyCheckController extends Controller
             ->leftJoin('units as u', 'u.id', '=', 'm.unit_id')
             ->whereNotNull('p.minimum_quantity')
             ->whereRaw('COALESCE(b.quantity, 0) <= p.minimum_quantity')
-            ->selectRaw('m.code, m.name, l.name as location, COALESCE(b.quantity, 0) as quantity, p.minimum_quantity, u.name as unit');
+            ->selectRaw('m.code, m.name, l.name as location, COALESCE(b.quantity, 0) as quantity, p.minimum_quantity, u.name as unit, b.updated_at as stock_updated_at');
 
         if (! empty($data['search'])) {
             $parameterQuery->where(fn ($q) => $q
@@ -159,7 +159,9 @@ class NightlyCheckController extends Controller
             $summary .= "Belum ada obat kosong / menipis yang tercatat.\n";
         }
 
-        return view('nightly.show', compact('check', 'items', 'previous', 'baseline', 'shortages', 'summary'));
+        $systemBalances = DB::table('stock_balances')->where('location_id', $check->location_id)->pluck('quantity', 'medicine_id');
+
+        return view('nightly.show', compact('check', 'items', 'previous', 'baseline', 'shortages', 'summary', 'systemBalances'));
     }
 
     public function save(Request $r, int $id)

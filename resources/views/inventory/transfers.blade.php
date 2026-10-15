@@ -28,11 +28,11 @@
         </div>
         <div>
             <label class="label text-xs font-semibold text-slate-700" for="transfer-batch">Batch (opsional)</label>
-            <select class="field w-full text-xs" id="transfer-batch" name="batch_id" data-searchable-select data-search-placeholder="Cari batch..." data-depends-on="#transfer-medicine,#transfer-source" data-depends-empty="Pilih obat dan lokasi sumber dulu">
-                <option value="">FEFO otomatis jika memungkinkan</option>
+            <select class="field w-full text-xs" id="transfer-batch" name="batch_id" data-searchable-select data-empty-label="Otomatis: kedaluwarsa terdekat" data-search-placeholder="Cari batch..." data-depends-on="#transfer-medicine,#transfer-source" data-depends-empty="Pilih obat dan lokasi sumber dulu">
+                <option value="">Otomatis: kedaluwarsa terdekat</option>
                 @foreach($batchBalances as $balance)
                     <option value="{{ $balance->batch_id }}" data-depends-values="{{ $balance->medicine_id }}|{{ $balance->location_id }}" @selected(old('batch_id')==$balance->batch_id)>
-                        {{ $balance->medicine->code }} · {{ $balance->batch->number }} · {{ $balance->location->name }} · {{ number_format((float)$balance->quantity,0,',','.') }} {{ $balance->medicine->unit?->name }}
+                        {{ $balance->medicine->code }} · {{ $balance->batch->number }} · {{ $balance->location->name }} · {{ \App\Support\Quantity::format((float)$balance->quantity) }} {{ $balance->medicine->unit?->name }}
                     </option>
                 @endforeach
             </select>
@@ -54,7 +54,7 @@
             </select>
         </div>
         <div>
-            <label class="label text-xs font-semibold text-slate-700" for="transfer-quantity">Jumlah satuan dasar</label>
+            <label class="label text-xs font-semibold text-slate-700" for="transfer-quantity">Jumlah yang dipindahkan</label>
             <input class="field w-full text-xs" id="transfer-quantity" name="quantity" type="number" min="0.0001" step="0.0001" placeholder="0" value="{{ old('quantity') }}" required>
         </div>
         <div>
@@ -66,8 +66,9 @@
             <input class="field w-full text-xs" id="transfer-notes" name="notes" value="{{ old('notes') }}" placeholder="Catatan mutasi antar unit (opsional)" maxlength="1000">
         </div>
         <div class="flex items-end">
-            <button class="btn w-full bg-[#3277B2] hover:bg-[#266194] text-white font-bold text-xs">Posting Transfer</button>
+            <button class="btn w-full bg-[#3277B2] hover:bg-[#266194] text-white font-bold text-xs">Simpan Transfer</button>
         </div>
+        <x-stock-entry-context :medicines="$medicines" :batch-balances="$batchBalances" medicine="#transfer-medicine" location="#transfer-source" quantity="#transfer-quantity" batch="#transfer-batch" :fefo="true" />
     </form>
     @endcan
 
@@ -76,7 +77,7 @@
             <div class="card p-4">
                 <p class="font-bold text-slate-900 tracking-tight text-sm">{{ $balance->medicine->name }}</p>
                 <p class="mt-1 text-xs font-semibold text-[#3277B2]">{{ $balance->location->name }}</p>
-                <p class="mt-2 text-lg font-bold tabular-nums text-slate-900">{{ number_format((float)$balance->quantity,0,',','.') }} <span class="text-xs font-medium text-slate-500">{{ $balance->medicine->unit?->name }}</span></p>
+                <p class="mt-2 text-lg font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format((float)$balance->quantity) }} <span class="text-xs font-medium text-slate-500">{{ $balance->medicine->unit?->name }}</span></p>
             </div>
         @empty
             <div class="card p-4 text-slate-500 font-medium">Belum ada stok untuk ditransfer.</div>
@@ -94,10 +95,21 @@
                         <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Perpindahan</th>
                         <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Jumlah</th>
                         <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Petugas</th>
+                        <th class="p-4 text-right text-[11px] font-bold uppercase tracking-wider">Kartu Stok</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     @forelse($rows as $row)
+                        @php
+                            $cardStart = $row->occurred_at->toDateString();
+                            $cardEnd = now('Asia/Jakarta')->toDateString();
+                            $baseCardParams = [
+                                'medicine_id' => $row->medicine_id,
+                                'batch_id' => $row->batch_id,
+                                'start' => $cardStart,
+                                'end' => $cardEnd,
+                            ];
+                        @endphp
                         <tr class="hover:bg-slate-50/70 transition-colors">
                             <td class="p-4 text-xs font-medium text-slate-600 tabular-nums">{{ $row->occurred_at->format('d/m/Y H:i') }}</td>
                             <td class="p-4">
@@ -110,13 +122,23 @@
                                 </span>
                             </td>
                             <td class="p-4 font-bold tabular-nums text-slate-900">
-                                {{ number_format((float)$row->quantity, 0, ',', '.') }} {{ $row->medicine->unit?->name }}
+                                {{ \App\Support\Quantity::format((float)$row->quantity) }} {{ $row->medicine->unit?->name }}
                             </td>
                             <td class="p-4 text-slate-600 font-medium text-xs">{{ $row->creator->name }}</td>
+                            <td class="p-4">
+                                @can('view-stock-card')
+                                    <div class="flex justify-end gap-2">
+                                        <a class="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600 hover:bg-slate-50" href="{{ route('stock-card.index', $baseCardParams + ['location_id' => $row->source_location_id]) }}">Asal</a>
+                                        <a class="rounded-lg border border-[#b2d4ee] bg-[#edf5fb] px-2.5 py-1 text-xs font-bold text-[#266194] hover:bg-[#dcecf8]" href="{{ route('stock-card.index', $baseCardParams + ['location_id' => $row->destination_location_id]) }}">Tujuan</a>
+                                    </div>
+                                @else
+                                    <span class="block text-right text-xs font-medium text-slate-400">-</span>
+                                @endcan
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="p-8 text-center text-slate-500 font-medium">Belum ada transfer yang diposting.</td>
+                            <td colspan="7" class="p-8 text-center text-slate-500 font-medium">Belum ada transfer yang diposting.</td>
                         </tr>
                     @endforelse
                 </tbody>

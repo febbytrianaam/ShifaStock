@@ -62,27 +62,12 @@
                         @error('unit_id')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
-                        <label for="stock_unit_suggestion" class="label">Satuan stok usulan</label>
-                        <input id="stock_unit_suggestion" wire:model="stock_unit_suggestion" class="field" maxlength="100" placeholder="Satuan dari riset">
-                        @error('stock_unit_suggestion')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label for="purchase_unit_name" class="label">Satuan beli</label>
-                        <input id="purchase_unit_name" wire:model="purchase_unit_name" class="field" maxlength="100" placeholder="Box / Strip / Botol">
-                        @error('purchase_unit_name')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label for="conversion_candidate" class="label">Konversi kandidat</label>
-                        <input id="conversion_candidate" wire:model="conversion_candidate" class="field" type="number" step="0.01" min="0.01" placeholder="Isi kalau sudah pasti">
-                        @error('conversion_candidate')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
-                    </div>
-                    <div>
-                        <label for="package_name" class="label">Kemasan operasional</label>
+                        <label for="package_name" class="label">Kemasan pembelian</label>
                         <input id="package_name" wire:model="package_name" class="field" maxlength="100" placeholder="Nama kemasan">
                         @error('package_name')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                     </div>
                     <div>
-                        <label for="package_conversion" class="label">Isi per kemasan</label>
+                        <label for="package_conversion" class="label">Jumlah satuan stok dalam 1 kemasan</label>
                         <input id="package_conversion" wire:model="package_conversion" class="field" type="number" step="0.01" min="0.01" placeholder="Contoh: 10">
                         @error('package_conversion')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                     </div>
@@ -100,6 +85,26 @@
                         <textarea id="package_reference" wire:model="package_reference" class="field min-h-20" maxlength="2000" placeholder="Catatan kemasan dari referensi"></textarea>
                         @error('package_reference')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
                     </div>
+                    <details class="lg:col-span-2 border-t border-slate-200 pt-3" @if($errors->has('stock_unit_suggestion') || $errors->has('purchase_unit_name') || $errors->has('conversion_candidate')) open @endif>
+                        <summary class="cursor-pointer text-xs font-semibold text-slate-500">Data usulan dari impor / riset</summary>
+                        <div class="mt-3 grid gap-4 lg:grid-cols-2">
+                    <div>
+                        <label for="stock_unit_suggestion" class="label">Satuan stok usulan</label>
+                        <input id="stock_unit_suggestion" wire:model="stock_unit_suggestion" class="field" maxlength="100" placeholder="Satuan dari riset">
+                        @error('stock_unit_suggestion')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label for="purchase_unit_name" class="label">Satuan beli</label>
+                        <input id="purchase_unit_name" wire:model="purchase_unit_name" class="field" maxlength="100" placeholder="Box / Strip / Botol">
+                        @error('purchase_unit_name')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <label for="conversion_candidate" class="label">Konversi kandidat</label>
+                        <input id="conversion_candidate" wire:model="conversion_candidate" class="field" type="number" step="0.01" min="0.01" placeholder="Isi kalau sudah pasti">
+                        @error('conversion_candidate')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                    </div>
+                        </div>
+                    </details>
                     <div class="lg:col-span-2">
                         <label for="verification_note" class="label">Catatan verifikasi</label>
                         <textarea id="verification_note" wire:model="verification_note" class="field min-h-20" maxlength="4000" placeholder="Catatan bila perlu revisi atau klarifikasi"></textarea>
@@ -182,7 +187,7 @@
         ] as $stat)
             <div class="rounded-lg border border-slate-200 bg-white p-4 shadow-xs">
                 <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ $stat['label'] }}</p>
-                <p class="mt-1 text-2xl font-extrabold tabular-nums {{ $stat['tone'] }}">{{ number_format($stat['value'], 0, ',', '.') }}</p>
+                <p class="mt-1 text-2xl font-extrabold tabular-nums {{ $stat['tone'] }}">{{ \App\Support\Quantity::format($stat['value']) }}</p>
             </div>
         @endforeach
     </div>
@@ -268,7 +273,7 @@
                             <td class="p-4 text-slate-600">
                                 <p class="font-semibold">{{ $package?->name ?: ($medicine->purchase_unit_name ?: 'Belum diatur') }}</p>
                                 <p class="mt-1 text-xs text-slate-400">
-                                    {{ $package ? 'Isi '.$package->conversion_factor.' '.$medicine->unit?->name : ($medicine->conversion_candidate ? 'Kandidat isi '.$medicine->conversion_candidate : 'Konversi belum pasti') }}
+                                    {{ $package ? 'Isi '.\App\Support\Quantity::format($package->conversion_factor).' '.$medicine->unit?->name : ($medicine->conversion_candidate ? 'Kandidat isi '.\App\Support\Quantity::format($medicine->conversion_candidate) : 'Konversi belum pasti') }}
                                 </p>
                             </td>
                             <td class="p-4">
@@ -284,7 +289,7 @@
                                 </div>
                             </td>
                             <td class="p-4 font-bold tabular-nums text-slate-900">
-                                {{ $medicine->balances->isEmpty() ? 'Belum ada stok' : number_format($stock, 0, ',', '.').' '.$medicine->unit?->name }}
+                                {{ $medicine->balances->isEmpty() ? 'Belum ada stok' : \App\Support\Quantity::format($stock).' '.$medicine->unit?->name }}
                                 @if($low)
                                     <p class="mt-1 text-xs font-semibold text-rose-600">Stok menipis</p>
                                 @endif

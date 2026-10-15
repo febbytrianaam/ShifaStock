@@ -10,6 +10,8 @@
         </div>
     @endif
 
+    @php($canPrintStockCard = !empty($filters['medicine_id']) && !empty($filters['location_id']) && !empty($filters['start']) && !empty($filters['end']))
+
     <form method="GET" action="{{ route('stock-card.index') }}" class="card mb-5 grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-5" data-required-alert="Lengkapi filter kartu stok" data-date-range-start="#card-start" data-date-range-end="#card-end" novalidate>
         <div class="xl:col-span-2">
             <label class="label" for="card-medicine">Obat</label>
@@ -43,7 +45,7 @@
                 <option value="">Semua batch</option>
                 @foreach($batchBalances as $balance)
                     <option value="{{ $balance->batch_id }}" data-depends-values="{{ $balance->medicine_id }}|{{ $balance->location_id }}" @selected(($filters['batch_id'] ?? null)==$balance->batch_id)>
-                        {{ $balance->medicine?->code }} · {{ $balance->batch?->number }} · {{ $balance->location?->name }} · ED {{ $balance->batch?->expiry_date?->format('d/m/Y') }} · {{ number_format((float)$balance->quantity,0,',','.') }} {{ $balance->medicine?->unit?->name }}
+                        {{ $balance->medicine?->code }} · {{ $balance->batch?->number }} · {{ $balance->location?->name }} · ED {{ $balance->batch?->expiry_date?->format('d/m/Y') }} · {{ \App\Support\Quantity::format((float)$balance->quantity) }} {{ $balance->medicine?->unit?->name }}
                     </option>
                 @endforeach
             </select>
@@ -54,9 +56,23 @@
         </div>
     </form>
 
+    @if($canPrintStockCard)
+        <div class="mb-5 flex flex-col justify-between gap-3 rounded-lg border border-[#b2d4ee] bg-[#edf5fb] px-4 py-3 text-sm text-[#1f4f78] sm:flex-row sm:items-center">
+            <div>
+                <p class="font-bold text-[#266194]">Kartu stok siap dicetak</p>
+                <p class="mt-0.5 text-xs">Buka format kartu fisik klinik berdasarkan filter obat, lokasi, batch, dan periode di atas.</p>
+            </div>
+            <a class="btn bg-[#3277B2] text-xs font-bold text-white hover:bg-[#266194]" target="_blank" rel="noopener" href="{{ route('stock-card.print', $filters) }}">Cetak Kartu Fisik</a>
+        </div>
+    @else
+        <div class="mb-5 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+            Tombol cetak akan muncul setelah obat, lokasi, dan periode kartu stok dipilih lalu diterapkan.
+        </div>
+    @endif
+
     @if(!empty($filters['location_id']) && !empty($filters['start']))
         <div class="mb-4 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700">
-            Stok awal periode: <span class="tabular-nums text-slate-950">{{ number_format((float)$opening,0,',','.') }}</span>
+            Stok awal periode: <span class="tabular-nums text-slate-950">{{ \App\Support\Quantity::format((float)$opening) }}</span>
         </div>
     @endif
 
@@ -92,16 +108,16 @@
                             <td class="p-4"><b>{{ $row->medicine->name }}</b><br><span class="text-xs text-slate-500">{{ $row->batch?->number ?? 'Tanpa batch' }}</span></td>
                             <td class="p-4 text-xs font-medium text-slate-600">{{ $row->sourceLocation?->name ?? '—' }}</td>
                             <td class="p-4 text-xs font-medium text-slate-600">{{ $row->destinationLocation?->name ?? '—' }}</td>
-                            <td class="p-4 font-bold tabular-nums text-emerald-700">{{ $delta > 0 ? number_format($delta,0,',','.') : '—' }}</td>
-                            <td class="p-4 font-bold tabular-nums text-rose-700">{{ $delta < 0 ? number_format(abs($delta),0,',','.') : '—' }}</td>
-                            <td class="p-4 font-bold tabular-nums text-slate-900">{{ $row->getAttribute('card_running_balance') === null ? 'Pilih lokasi' : number_format((float)$row->getAttribute('card_running_balance'),0,',','.') }}</td>
+                            <td class="p-4 font-bold tabular-nums text-emerald-700">{{ $delta > 0 ? \App\Support\Quantity::format($delta) : '—' }}</td>
+                            <td class="p-4 font-bold tabular-nums text-rose-700">{{ $delta < 0 ? \App\Support\Quantity::format(abs($delta)) : '—' }}</td>
+                            <td class="p-4 font-bold tabular-nums text-slate-900">{{ $row->getAttribute('card_running_balance') === null ? 'Pilih lokasi' : \App\Support\Quantity::format((float)$row->getAttribute('card_running_balance')) }}</td>
                             <td class="p-4 text-right">
                                 @can('reverse-inventory-movements')
                                     @if($row->type !== 'reversal' && ! $row->reversed_movement_id && ! $alreadyReversed)
-                                        <form method="POST" action="{{ route('movements.reverse', $row) }}" class="inline-flex items-center gap-2" data-confirm-action data-confirm-title="Balik mutasi final?" data-confirm-text="Sistem akan membuat mutasi reversal yang terhubung ke transaksi asal. Stok akan ikut dikembalikan." data-confirm-button="Ya, reversal">
+                                        <form method="POST" action="{{ route('movements.reverse', $row) }}" class="inline-flex items-center gap-2" data-confirm-action data-confirm-title="Batalkan transaksi ini?" data-confirm-text="Sistem mencatat transaksi pembalik yang terhubung ke transaksi asal. Stok akan disesuaikan kembali; riwayat asli tetap tersimpan." data-confirm-button="Ya, batalkan transaksi">
                                             @csrf
                                             <input type="hidden" name="reason" value="Koreksi transaksi final dari kartu stok">
-                                            <button class="rounded-lg px-2.5 py-1 text-xs font-bold text-rose-700 hover:bg-rose-50">Reversal</button>
+                                            <button class="rounded-lg px-2.5 py-1 text-xs font-bold text-rose-700 hover:bg-rose-50">Batalkan Transaksi</button>
                                         </form>
                                     @else
                                         <span class="text-xs font-medium text-slate-400">{{ $alreadyReversed ? 'Sudah dibalik' : '—' }}</span>

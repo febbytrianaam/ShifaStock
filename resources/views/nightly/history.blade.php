@@ -61,7 +61,7 @@
                                 <b class="font-bold text-slate-900 tracking-tight">{{ $row->name }}</b><br>
                                 <span class="inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500 mt-0.5">{{ $row->code }}</span>
                             </td>
-                            <td class="p-4 font-bold tabular-nums text-slate-900">{{ $row->quantity }} {{ $row->unit }}</td>
+                            <td class="p-4 font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format($row->quantity) }} {{ $row->unit }}</td>
                             <td class="p-4 text-right">
                                 <a class="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold text-[#3277B2] hover:bg-[#edf5fb] transition" href="{{ route('nightly.show',$row->nightly_check_id) }}">
                                     Lihat pemeriksaan →

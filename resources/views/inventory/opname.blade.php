@@ -35,6 +35,7 @@
         </div>
     </div>
 
+    <p class="mb-4 text-xs text-slate-600">Opname bulanan membandingkan hitungan fisik dengan stok pada batas waktu pencatatan. Simpan isian terlebih dahulu; finalisasi mencatat penyesuaian selisih. Rekap harian di bawah hanya menampilkan laporan yang sudah disetujui, bukan isian sesi bulanan.</p>
     @can('operate-inventory')
     <form method="POST" action="{{ route('opname.store') }}" class="card mb-5 grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-5" data-required-alert="Lengkapi sesi stock opname" novalidate>
         @csrf
@@ -51,7 +52,7 @@
             </select>
         </div>
         <div>
-            <label class="label" for="session-cutoff">Cut-off stok</label>
+            <label class="label" for="session-cutoff">Batas waktu pencatatan stok</label>
             <input class="field text-xs" id="session-cutoff" name="cutoff_at" type="datetime-local" value="{{ old('cutoff_at',now('Asia/Jakarta')->format('Y-m-d\\TH:i')) }}" required>
         </div>
         <div class="xl:col-span-2">
@@ -107,12 +108,12 @@
                                         <b class="font-bold text-slate-900">{{ $item->medicine->name }}</b><br>
                                         <span class="text-xs text-slate-500">{{ $item->batch?->number ?? 'Tanpa batch' }} · {{ $item->unit_name }}</span>
                                     </td>
-                                    <td class="p-4 font-bold tabular-nums text-slate-900">{{ number_format((float)$item->system_quantity,0,',','.') }}</td>
+                                    <td class="p-4 font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format((float)$item->system_quantity) }}</td>
                                     <td class="p-4">
                                         <input class="field w-32 text-xs" name="items[{{ $item->id }}][physical_quantity]" type="number" min="0" step="0.0001" value="{{ old('items.'.$item->id.'.physical_quantity', $item->physical_quantity !== null ? rtrim(rtrim((string)$item->physical_quantity, '0'), '.') : '') }}" @disabled($selectedSession->status === 'finalized')>
                                     </td>
                                     <td class="p-4 font-bold tabular-nums {{ $difference === null ? 'text-slate-400' : ($difference < 0 ? 'text-rose-700' : ($difference > 0 ? 'text-emerald-700' : 'text-slate-700')) }}">
-                                        {{ $difference === null ? 'Belum diisi' : ($difference > 0 ? '+' : '').number_format($difference,0,',','.') }}
+                                        {{ $difference === null ? 'Belum diisi' : ($difference > 0 ? '+' : '').\App\Support\Quantity::format($difference) }}
                                     </td>
                                     <td class="p-4">
                                         <input class="field w-72 text-xs" name="items[{{ $item->id }}][reason]" value="{{ old('items.'.$item->id.'.reason', $item->reason) }}" placeholder="Penyebab selisih jika ada" maxlength="1000" @disabled($selectedSession->status === 'finalized')>
@@ -164,7 +165,7 @@
                                 <td class="p-4 text-xs font-medium text-slate-600 tabular-nums">{{ $row->date }}</td>
                                 <td class="p-4"><span class="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">{{ $row->location }}</span></td>
                                 <td class="p-4"><b class="font-bold text-slate-900 tracking-tight">{{ $row->name }}</b><br><span class="inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500 mt-0.5">{{ $row->code }}</span></td>
-                                <td class="p-4 font-bold tabular-nums text-slate-900">{{ $row->quantity }} {{ $row->unit }}</td>
+                                <td class="p-4 font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format($row->quantity) }} {{ $row->unit }}</td>
                                 <td class="p-4"><span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $row->quantity===0 ? 'bg-rose-100 text-rose-800 border border-rose-300' : ($row->is_low ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-[#edf5fb] text-[#266194] border border-[#b2d4ee]') }}">{{ $row->quantity===0 ? 'Kosong' : ($row->is_low ? 'Menipis' : 'Cukup') }}</span></td>
                                 <td class="p-4 text-right"><a class="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold text-[#3277B2] hover:bg-[#edf5fb] transition" href="{{ route('nightly.show', $row->check_id) }}">Lihat sumber →</a></td>
                             </tr>

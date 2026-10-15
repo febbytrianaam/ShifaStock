@@ -51,7 +51,7 @@
 @endif
 
 <div class="mb-5 rounded-lg border border-[#d6e8f6] bg-[#edf5fb] p-3 text-xs text-[#1f4f78] leading-relaxed">
-    Kosongkan jumlah jika belum diperiksa; isi 0 jika stok kosong. Satuan harus sesuai hitungan fisik. Jika berbeda satuan dari pemeriksaan sebelumnya, selisih tidak dihitung. Tandai menipis berdasarkan pengecekan petugas; batas minimum otomatis belum ditetapkan.
+    Kosongkan jumlah jika belum diperiksa; isi 0 jika stok kosong. Gunakan satuan stok obat yang tercatat. Simpan draf untuk melanjutkan nanti; kirim untuk ditinjau kepala apoteker. Persetujuan akan menyesuaikan stok sistem ke hasil hitung. Tanda menipis pada laporan ini diisi petugas; monitoring minimum dihitung terpisah dari stok sistem.
 </div>
 
 <form method="POST" action="{{ route('nightly.save',$check->id) }}">
@@ -174,10 +174,22 @@
     @can('finalize-opname')
         <form class="no-print card my-6 p-4" method="POST" action="{{ route('nightly.review',$check->id) }}">
             @csrf
+            <p class="mb-3 text-xs text-slate-600">Persetujuan mengubah stok sistem. Periksa transaksi yang terjadi setelah penghitungan sebelum menyetujui.</p>
+            <div class="mb-4 max-h-64 overflow-auto">
+                <table class="w-full text-left text-xs">
+                    <thead><tr><th class="p-2">Obat</th><th class="p-2">Stok sistem sekarang</th><th class="p-2">Hasil hitung</th><th class="p-2">Perubahan jika disetujui</th></tr></thead>
+                    <tbody>
+                        @foreach($items->whereNotNull('quantity') as $item)
+                            @php($systemQuantity = (float) ($systemBalances[$item->medicine_id] ?? 0))
+                            <tr class="border-t border-slate-100"><td class="p-2">{{ $item->name }}</td><td class="p-2">{{ \App\Support\Quantity::format($systemQuantity) }} {{ $item->unit }}</td><td class="p-2">{{ \App\Support\Quantity::format($item->quantity) }} {{ $item->unit }}</td><td class="p-2">{{ \App\Support\Quantity::format($item->quantity - $systemQuantity) }} {{ $item->unit }}</td></tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
             <label class="label text-xs font-semibold text-slate-700" for="review">Catatan tinjauan (wajib jika dikembalikan)</label>
             <textarea class="field w-full text-xs" id="review" name="review_note" maxlength="2000" rows="3" placeholder="Tuliskan catatan arahan atau alasan koreksi..."></textarea>
             <div class="mt-4 flex gap-3">
-                <button class="btn bg-[#3277B2] hover:bg-[#266194] text-white font-bold text-xs" name="action" value="approve">Setujui Laporan</button>
+                <button class="btn bg-[#3277B2] hover:bg-[#266194] text-white font-bold text-xs" name="action" value="approve" data-confirm-stock-review>Setujui &amp; Sesuaikan Stok</button>
                 <button class="btn bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-bold text-xs" name="action" value="return">Kembalikan untuk Koreksi</button>
             </div>
         </form>

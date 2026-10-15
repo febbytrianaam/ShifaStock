@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InventoryReceipt extends Model
 {
-    protected $fillable = ['reference', 'status', 'counterparty', 'destination_location_id', 'received_at', 'posted_at', 'notes', 'created_by', 'posted_by'];
+    protected $fillable = ['reference', 'supplier_invoice_number', 'status', 'counterparty', 'destination_location_id', 'received_at', 'posted_at', 'notes', 'created_by', 'posted_by'];
 
     protected function casts(): array
     {

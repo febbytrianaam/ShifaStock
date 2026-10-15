@@ -2,6 +2,8 @@
 
 ## What Exists Now
 
+- Inventory usability revision (2026-10-15): separate supplier invoice field and receipt history, operational medicine packaging, stock-unit/availability context, FEFO estimates, clearer stock-changing actions, daily approval comparisons, monitoring source labels, and quantity formatting without trailing decimal zeroes. Details: `docs/30_implemented/2026-10-15-inventory-usability/implementation_report.md`.
+
 - Laravel 13 application with Livewire 3, Tailwind CSS 4, Vite, Chart.js, and SweetAlert2.
 - Username/password authentication with active-account middleware.
 - Roles: administrator, petugas farmasi, kepala apoteker, guest.
