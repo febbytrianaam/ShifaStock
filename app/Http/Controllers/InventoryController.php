@@ -26,8 +26,21 @@ class InventoryController extends Controller
 {
     public function receipts(Request $request)
     {
+        return $this->receiptPage($request);
+    }
+
+    public function editReceipt(Request $request, InventoryReceipt $receipt)
+    {
+        abort_unless($receipt->status === 'draft', 422, 'Penerimaan yang sudah menambah stok tidak bisa diedit.');
+
+        return $this->receiptPage($request, $receipt->load('items'));
+    }
+
+    private function receiptPage(Request $request, ?InventoryReceipt $editingReceipt = null)
+    {
         return view('inventory.receipts', [
-            'receiptHistory' => $request->query('tab') === 'riwayat',
+            'editingReceipt' => $editingReceipt,
+            'receiptHistory' => ! $editingReceipt && $request->query('tab') === 'riwayat',
             'medicines' => $this->operationalMedicines()->with(['unit', 'packages'])->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
             'defaultReceiptLocationId' => $this->defaultReceiptLocationId(),
@@ -42,11 +55,24 @@ class InventoryController extends Controller
 
     public function storeReceipt(Request $request, InventoryStockService $stock)
     {
+        return $this->saveReceipt($request, $stock);
+    }
+
+    public function updateReceipt(Request $request, InventoryReceipt $receipt, InventoryStockService $stock)
+    {
+        abort_unless($receipt->status === 'draft', 422, 'Hanya draf penerimaan yang bisa diedit.');
+
+        return $this->saveReceipt($request, $stock, $receipt);
+    }
+
+    private function saveReceipt(Request $request, InventoryStockService $stock, ?InventoryReceipt $editingReceipt = null)
+    {
         $this->normalizeReceiptItems($request);
         $data = $request->validate([
             'action' => ['nullable', Rule::in(['draft', 'post'])],
             'supplier_invoice_number' => ['nullable', 'string', 'max:100'],
-            'reference' => ['required', 'string', 'max:100', Rule::unique('inventory_receipts', 'reference'), Rule::unique('inventory_movements', 'reference')],
+            'reference' => ['required', 'string', 'max:100', Rule::unique('inventory_receipts', 'reference')->ignore($editingReceipt?->id), Rule::unique('inventory_movements', 'reference'), ...($editingReceipt ? [Rule::in([$editingReceipt->reference])] : [])],
+            'duplicate_invoice_confirmed' => ['nullable', 'boolean'],
             'occurred_at' => ['required', 'date_format:Y-m-d\\TH:i'],
             'counterparty' => ['nullable', 'string', 'max:255'],
             'destination_location_id' => ['required', Rule::exists('locations', 'id')->where('is_active', true)],
@@ -56,16 +82,36 @@ class InventoryController extends Controller
             'items.*.batch_number' => ['required', 'string', 'max:100'],
             'items.*.expiry_date' => ['required', 'date_format:Y-m-d'],
             'items.*.quantity' => ['required', 'numeric', 'gt:0'],
-            'items.*.input_quantity' => ['nullable', 'numeric', 'gt:0'],
-            'items.*.input_unit_name' => ['nullable', 'string', 'max:100'],
-            'items.*.conversion_factor' => ['nullable', 'numeric', 'gt:0'],
+            'items.*.input_quantity' => ['nullable', 'required_with:items.*.input_unit_name', 'numeric', 'gt:0'],
+            'items.*.input_unit_name' => ['nullable', 'required_with:items.*.input_quantity', 'string', 'max:100'],
+            'items.*.conversion_factor' => ['nullable', 'required_with:items.*.input_quantity', 'numeric', 'gt:0'],
             'items.*.notes' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'items.required' => 'Isi minimal satu baris obat.',
+            'items.*.medicine_id.required' => 'Baris :position: pilih obat dari daftar.',
+            'items.*.medicine_id.exists' => 'Baris :position: obat tidak ditemukan.',
+            'items.*.batch_number.required' => 'Baris :position: isi nomor batch.',
+            'items.*.expiry_date.required' => 'Baris :position: isi tanggal kedaluwarsa.',
+            'items.*.expiry_date.date_format' => 'Baris :position: tanggal kedaluwarsa tidak valid.',
+            'items.*.quantity.required' => 'Baris :position: lengkapi jumlah faktur dan isi kemasan.',
+            'items.*.quantity.gt' => 'Baris :position: jumlah stok harus lebih dari 0.',
+            'items.*.quantity.numeric' => 'Baris :position: jumlah stok harus berupa angka.',
+            'items.*.input_quantity.required_with' => 'Baris :position: isi jumlah faktur.',
+            'items.*.input_unit_name.required_with' => 'Baris :position: pilih satuan faktur.',
+            'items.*.conversion_factor.required_with' => 'Baris :position: isi jumlah satuan stok dalam 1 kemasan.',
+            'items.*.input_quantity.gt' => 'Baris :position: jumlah faktur harus lebih dari 0.',
+            'items.*.input_quantity.numeric' => 'Baris :position: jumlah faktur harus berupa angka.',
+            'items.*.conversion_factor.gt' => 'Baris :position: isi kemasan harus lebih dari 0.',
+            'items.*.conversion_factor.numeric' => 'Baris :position: isi kemasan harus berupa angka.',
         ]);
         $this->assertReceiptItemsAreOperational($data['items']);
+        $this->assertReceiptInvoiceConfirmed($data, $editingReceipt?->id);
         $status = ($data['action'] ?? 'post') === 'draft' ? 'draft' : 'posted';
 
-        $receipt = DB::transaction(function () use ($data, $request, $stock, $status) {
-            $receipt = InventoryReceipt::create([
+        $receipt = DB::transaction(function () use ($data, $request, $stock, $status, $editingReceipt) {
+            $receipt = $editingReceipt ? InventoryReceipt::whereKey($editingReceipt->id)->lockForUpdate()->firstOrFail() : new InventoryReceipt;
+            abort_if($receipt->exists && $receipt->status !== 'draft', 422, 'Draf sudah diproses. Muat ulang daftar penerimaan.');
+            $receipt->fill([
                 'reference' => $data['reference'],
                 'status' => 'draft',
                 'supplier_invoice_number' => $data['supplier_invoice_number'] ?? null,
@@ -73,8 +119,10 @@ class InventoryController extends Controller
                 'destination_location_id' => $data['destination_location_id'],
                 'received_at' => Carbon::parse($data['occurred_at'], 'Asia/Jakarta'),
                 'notes' => $data['notes'] ?? null,
-                'created_by' => $request->user()->id,
             ]);
+            if (! $receipt->exists) $receipt->created_by = $request->user()->id;
+            $receipt->save();
+            if ($editingReceipt) $receipt->items()->delete();
 
             foreach ($data['items'] as $item) {
                 $receipt->items()->create([
@@ -92,7 +140,7 @@ class InventoryController extends Controller
             if ($status === 'posted') {
                 $this->postReceiptDocument($receipt, $request, $stock);
             } else {
-                AuditLogger::record('inventory.receipt.drafted', 'Draft penerimaan '.$receipt->reference.' disimpan.', $receipt, [
+                AuditLogger::record($editingReceipt ? 'inventory.receipt.updated' : 'inventory.receipt.drafted', 'Draf penerimaan '.$receipt->reference.' disimpan.', $receipt, [
                     'reference' => $receipt->reference,
                     'item_count' => $receipt->items()->count(),
                 ], $request);
@@ -105,14 +153,21 @@ class InventoryController extends Controller
 
         return redirect()->route('preview.receipts', ['tab' => 'riwayat'])->with('status', $receipt->status === 'posted'
             ? 'Penerimaan multi-item diposting. Stok '.$destinationName.' bertambah.'
-            : 'Draft penerimaan tersimpan. Final posting bisa dilakukan dari daftar dokumen.');
+            : 'Draf penerimaan tersimpan. Buka Edit Draf untuk melanjutkan atau Tambah ke Stok jika sudah benar.');
     }
 
     public function postReceipt(Request $request, InventoryReceipt $receipt, InventoryStockService $stock)
     {
-        abort_unless($receipt->status === 'draft', 422, 'Penerimaan ini sudah diposting atau tidak bisa diproses.');
-
-        DB::transaction(fn () => $this->postReceiptDocument($receipt, $request, $stock));
+        DB::transaction(function () use ($request, $receipt, $stock) {
+            $receipt = InventoryReceipt::whereKey($receipt->id)->lockForUpdate()->firstOrFail();
+            abort_unless($receipt->status === 'draft', 422, 'Penerimaan ini sudah diproses.');
+            try {
+                $this->assertReceiptInvoiceConfirmed($receipt->toArray(), $receipt->id);
+            } catch (ValidationException $exception) {
+                throw $exception->redirectTo(route('receipts.edit', $receipt));
+            }
+            $this->postReceiptDocument($receipt, $request, $stock);
+        });
 
         return back()->with('status', 'Draft penerimaan '.$receipt->reference.' berhasil diposting.');
     }
@@ -122,6 +177,8 @@ class InventoryController extends Controller
         abort_unless($receipt->status === 'draft', 422, 'Hanya draft penerimaan yang bisa dibatalkan.');
 
         DB::transaction(function () use ($receipt, $request) {
+            $receipt = InventoryReceipt::whereKey($receipt->id)->lockForUpdate()->firstOrFail();
+            abort_unless($receipt->status === 'draft', 422, 'Penerimaan ini sudah diproses.');
             AuditLogger::record('inventory.receipt.cancelled', 'Draft penerimaan '.$receipt->reference.' dibatalkan.', $receipt, [
                 'reference' => $receipt->reference,
                 'item_count' => $receipt->items()->count(),
@@ -130,6 +187,42 @@ class InventoryController extends Controller
         });
 
         return back()->with('status', 'Draft penerimaan dibatalkan.');
+    }
+
+    public function checkReceiptInvoice(Request $request)
+    {
+        $data = $request->validate([
+            'supplier_invoice_number' => ['nullable', 'string', 'max:100'],
+            'counterparty' => ['nullable', 'string', 'max:255'],
+            'receipt_id' => ['nullable', 'integer'],
+        ]);
+
+        return response()->json(['matches' => $this->duplicateReceiptInvoices($data, $data['receipt_id'] ?? null)
+            ->limit(5)->get(['id', 'reference', 'status'])->map(fn ($receipt) => [
+                'reference' => $receipt->reference,
+                'status' => $receipt->status === 'posted' ? 'Stok ditambahkan' : 'Draf',
+            ])]);
+    }
+
+    private function duplicateReceiptInvoices(array $data, ?int $excludeId = null)
+    {
+        $supplier = mb_strtolower(trim((string) ($data['counterparty'] ?? '')));
+        $invoice = mb_strtolower(trim((string) ($data['supplier_invoice_number'] ?? '')));
+
+        return InventoryReceipt::query()->whereIn('status', ['draft', 'posted'])
+            ->when($excludeId, fn ($query) => $query->where('id', '<>', $excludeId))
+            ->whereRaw('LOWER(TRIM(counterparty)) = ?', [$supplier])
+            ->whereRaw('LOWER(TRIM(supplier_invoice_number)) = ?', [$invoice])
+            ->when($supplier === '' || $invoice === '', fn ($query) => $query->whereRaw('1 = 0'));
+    }
+
+    private function assertReceiptInvoiceConfirmed(array $data, ?int $excludeId = null): void
+    {
+        if (empty($data['duplicate_invoice_confirmed']) && $this->duplicateReceiptInvoices($data, $excludeId)->exists()) {
+            throw ValidationException::withMessages([
+                'duplicate_invoice' => 'Supplier dan nomor faktur ini sudah tercatat. Periksa riwayat sebelum melanjutkan agar stok tidak terhitung dua kali.',
+            ]);
+        }
     }
 
     private function postReceiptDocument(InventoryReceipt $receipt, Request $request, InventoryStockService $stock): void
@@ -187,9 +280,10 @@ class InventoryController extends Controller
         ], $request);
     }
 
-    public function transfers()
+    public function transfers(Request $request)
     {
         return view('inventory.transfers', [
+            'prefill' => $this->transactionPrefill($request),
             'medicines' => $this->operationalMedicines()->with(['unit', 'batches'])->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
             'nextReference' => $this->nextReference('transfer', 'TRF'),
@@ -410,9 +504,10 @@ class InventoryController extends Controller
         return back()->with('status', 'Stok awal dicatat dan dapat ditelusuri di kartu stok.');
     }
 
-    public function returns()
+    public function returns(Request $request)
     {
         return view('inventory.returns', [
+            'prefill' => $this->transactionPrefill($request),
             'medicines' => $this->operationalMedicines()->with('unit')->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
             'batchBalances' => BatchStockBalance::with(['medicine.unit', 'batch', 'location'])
@@ -471,9 +566,10 @@ class InventoryController extends Controller
         return back()->with('status', 'Retur PBF diposting. Stok sumber sudah berkurang.');
     }
 
-    public function specialAdjustments()
+    public function specialAdjustments(Request $request)
     {
         return view('inventory.special-adjustments', [
+            'prefill' => $this->transactionPrefill($request),
             'medicines' => $this->operationalMedicines()->with('unit')->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
             'batchBalances' => BatchStockBalance::with(['medicine.unit', 'batch', 'location'])
@@ -999,6 +1095,23 @@ class InventoryController extends Controller
         return $medicine->is_active && filled($medicine->unit_id) && filled($medicine->dosage_form);
     }
 
+    private function transactionPrefill(Request $request): array
+    {
+        $data = $request->validate([
+            'medicine_id' => ['nullable', 'integer', 'exists:medicines,id'],
+            'batch_id' => ['nullable', 'integer', 'exists:batches,id'],
+            'location_id' => ['nullable', 'integer', Rule::exists('locations', 'id')->where('is_active', true)],
+            'source_location_id' => ['nullable', 'integer', Rule::exists('locations', 'id')->where('is_active', true)],
+            'destination_location_id' => ['nullable', 'integer', Rule::exists('locations', 'id')->where('is_active', true)],
+            'condition' => ['nullable', Rule::in(array_keys($this->conditionLabels()))],
+        ]);
+        if (! empty($data['batch_id']) && ! Batch::whereKey($data['batch_id'])->where('medicine_id', $data['medicine_id'] ?? 0)->exists()) {
+            throw ValidationException::withMessages(['batch_id' => 'Batch pada pintasan tidak sesuai dengan obat.']);
+        }
+
+        return $data;
+    }
+
     private function normalizeReceiptItems(Request $request): void
     {
         $items = $request->input('items');
@@ -1031,7 +1144,6 @@ class InventoryController extends Controller
                 return $item;
             })
             ->filter(fn (array $item) => collect($item)->filter(fn ($value) => filled($value))->isNotEmpty())
-            ->values()
             ->all();
 
         $request->merge(['items' => $items]);

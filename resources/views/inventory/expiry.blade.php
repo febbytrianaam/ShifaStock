@@ -105,6 +105,18 @@
                                             {{ $balance->location?->name ?? 'Lokasi tidak diketahui' }}
                                             <span class="font-mono text-[11px] text-slate-400">{{ \App\Support\Quantity::format((float)$balance->quantity) }}</span>
                                         </span>
+                                        @can('operate-inventory')
+                                            @if($balance->location?->is_active && $batch->medicine->is_active && $batch->medicine->unit_id && filled($batch->medicine->dosage_form))
+                                                <div class="flex w-full flex-wrap gap-3 text-xs font-semibold text-blue-700">
+                                                    @can('view-returns')
+                                                        <a class="hover:underline" href="{{ route('preview.returns', ['medicine_id' => $batch->medicine_id, 'batch_id' => $batch->id, 'source_location_id' => $balance->location_id]) }}">Retur dari {{ $balance->location->name }}</a>
+                                                    @endcan
+                                                    @can('view-special-adjustments')
+                                                        <a class="hover:underline" href="{{ route('special-adjustments.index', ['medicine_id' => $batch->medicine_id, 'batch_id' => $batch->id, 'location_id' => $balance->location_id, 'condition' => $days < 0 ? 'expired' : 'lainnya']) }}">Catat Kondisi</a>
+                                                    @endcan
+                                                </div>
+                                            @endif
+                                        @endcan
                                     @empty
                                         <span class="text-xs text-slate-400">Belum ada stok lokasi</span>
                                     @endforelse

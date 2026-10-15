@@ -22,7 +22,7 @@
             <select class="field w-full text-xs" id="transfer-medicine" name="medicine_id" data-searchable-select data-search-placeholder="Cari kode atau nama obat..." required>
                 <option value="">Pilih obat</option>
                 @foreach($medicines as $medicine)
-                    <option value="{{ $medicine->id }}" @selected(old('medicine_id')==$medicine->id)>{{ $medicine->code }} — {{ $medicine->name }} ({{ $medicine->unit->name }})</option>
+                    <option value="{{ $medicine->id }}" @selected(old('medicine_id', $prefill['medicine_id'] ?? null)==$medicine->id)>{{ $medicine->code }} — {{ $medicine->name }} ({{ $medicine->unit->name }})</option>
                 @endforeach
             </select>
         </div>
@@ -31,7 +31,7 @@
             <select class="field w-full text-xs" id="transfer-batch" name="batch_id" data-searchable-select data-empty-label="Otomatis: kedaluwarsa terdekat" data-search-placeholder="Cari batch..." data-depends-on="#transfer-medicine,#transfer-source" data-depends-empty="Pilih obat dan lokasi sumber dulu">
                 <option value="">Otomatis: kedaluwarsa terdekat</option>
                 @foreach($batchBalances as $balance)
-                    <option value="{{ $balance->batch_id }}" data-depends-values="{{ $balance->medicine_id }}|{{ $balance->location_id }}" @selected(old('batch_id')==$balance->batch_id)>
+                    <option value="{{ $balance->batch_id }}" data-depends-values="{{ $balance->medicine_id }}|{{ $balance->location_id }}" @selected(old('batch_id', $prefill['batch_id'] ?? null)==$balance->batch_id)>
                         {{ $balance->medicine->code }} · {{ $balance->batch->number }} · {{ $balance->location->name }} · {{ \App\Support\Quantity::format((float)$balance->quantity) }} {{ $balance->medicine->unit?->name }}
                     </option>
                 @endforeach
@@ -41,7 +41,7 @@
             <label class="label text-xs font-semibold text-slate-700" for="transfer-source">Lokasi sumber</label>
             <select class="field w-full text-xs" id="transfer-source" name="source_location_id" required>
                 @foreach($locations as $location)
-                    <option value="{{ $location->id }}" @selected(old('source_location_id')==$location->id)>{{ $location->name }}</option>
+                    <option value="{{ $location->id }}" @selected(old('source_location_id', $prefill['source_location_id'] ?? $locations->first(fn ($item) => $item->id != ($prefill['destination_location_id'] ?? null))?->id)==$location->id)>{{ $location->name }}</option>
                 @endforeach
             </select>
         </div>
@@ -49,7 +49,7 @@
             <label class="label text-xs font-semibold text-slate-700" for="transfer-target">Lokasi tujuan</label>
             <select class="field w-full text-xs" id="transfer-target" name="destination_location_id" required>
                 @foreach($locations as $location)
-                    <option value="{{ $location->id }}" @selected(old('destination_location_id')==$location->id)>{{ $location->name }}</option>
+                    <option value="{{ $location->id }}" @selected(old('destination_location_id', $prefill['destination_location_id'] ?? null)==$location->id)>{{ $location->name }}</option>
                 @endforeach
             </select>
         </div>

@@ -72,7 +72,7 @@ class FoundationTest extends TestCase
             'unit_id' => null, 'dosage_form' => null, 'is_active' => false,
             'import_source' => ['file' => 'obat.xlsx', 'row' => 90],
         ]);
-        $this->actingAs($user)->get('/obat')->assertOk()->assertSee('ALLOPURINOL 100 MG')->assertSee('Perlu verifikasi');
+        $this->actingAs($user)->get('/obat')->assertOk()->assertSee('ALLOPURINOL 100 MG')->assertSee('Belum Diverifikasi');
         Livewire::actingAs($user)->test(MedicineIndex::class)->call('toggleActive', $medicine->id);
         $this->assertFalse($medicine->fresh()->is_active);
         $this->assertNull($medicine->fresh()->unit_id);

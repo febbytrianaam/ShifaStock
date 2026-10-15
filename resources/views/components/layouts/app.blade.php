@@ -26,7 +26,7 @@
         ['label' => 'DATA & PERGERAKAN', 'inventory' => false, 'anyCan' => ['view-medicines', 'view-opening-balances', 'view-receipts', 'view-transfers', 'view-issues', 'view-returns'], 'items' => [
             ['medicines.index', '▤', 'Data Obat', null, 'view-medicines'],
             ['opening-balances.index', '+', 'Stok Awal', null, 'view-opening-balances'],
-            ['preview.receipts', '↓', 'Penerimaan Obat', null, 'view-receipts'],
+            ['preview.receipts', '↓', 'Penerimaan Obat', null, 'view-receipts', ['preview.receipts', 'receipts.edit']],
             ['preview.transfers', '⇄', 'Transfer Gudang–Apotek', null, 'view-transfers'],
             ['preview.issues', '↑', 'Pengeluaran Obat', null, 'view-issues'],
             ['preview.returns', '↩', 'Retur PBF', null, 'view-returns'],
@@ -55,6 +55,7 @@
         'medicines.index' => 'Kelola master obat yang menjadi dasar semua transaksi stok. Obat perlu aktif, punya satuan, dan bentuk sediaan agar bisa dipakai pada penerimaan, transfer, pemeriksaan, monitoring, dan laporan.',
         'opening-balances.index' => 'Catat stok awal per obat, batch, dan lokasi ketika data awal persediaan mulai dimasukkan ke sistem. Setiap stok awal dibuat sebagai mutasi agar bisa ditelusuri di kartu stok.',
         'preview.receipts' => 'Catat obat masuk dari PBF berdasarkan faktur. Pilih lokasi tujuan, isi batch dan konversi satuan jika obat diterima per box/strip, lalu posting saat data sudah benar karena stok lokasi dan batch akan langsung bertambah.',
+        'receipts.edit' => 'Perbaiki draf penerimaan sebelum menambah stok. Simpan draf untuk melanjutkan nanti, atau simpan dan tambah stok setelah faktur, batch, serta jumlahnya sudah sesuai.',
         'preview.transfers' => 'Pindahkan stok dari satu lokasi ke lokasi lain, misalnya Gudang ke Apotek. Jika batch dikosongkan, sistem otomatis memakai FEFO dari batch dengan kedaluwarsa paling dekat dan bisa membagi jumlah ke beberapa batch.',
         'preview.issues' => 'Catat obat keluar dari persediaan berdasarkan referensi layanan, tindakan, atau catatan internal klinik. Jika batch dikosongkan, sistem memakai FEFO dan menolak batch yang sudah kedaluwarsa.',
         'preview.returns' => 'Catat obat yang dikembalikan ke PBF, misalnya karena rusak, recall, atau salah kirim. Setelah diposting, stok di lokasi sumber dan stok batch akan berkurang.',
@@ -94,6 +95,8 @@
         }
     }
 @endphp
+@php($restoredInputFields = array_keys(session()->getOldInput()))
+<script type="application/json" data-restored-input-fields>@json($restoredInputFields)</script>
 <div class="min-h-screen">
     <button type="button" id="sidebar-backdrop" hidden class="fixed inset-0 z-30 bg-slate-950/40 md:hidden" aria-label="Tutup menu"></button>
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-60 -translate-x-full overflow-y-auto border-r border-slate-200 bg-white p-4 transition-transform md:translate-x-0" aria-label="Navigasi aplikasi">

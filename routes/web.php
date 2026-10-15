@@ -57,7 +57,10 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::group([], function () {
         Route::get('/obat-masuk', [InventoryController::class, 'receipts'])->middleware('can:view-receipts')->name('preview.receipts');
+        Route::get('/obat-masuk/cek-faktur', [InventoryController::class, 'checkReceiptInvoice'])->middleware(['can:view-receipts', 'can:operate-inventory'])->name('receipts.check-invoice');
         Route::post('/obat-masuk', [InventoryController::class, 'storeReceipt'])->middleware(['can:view-receipts', 'can:operate-inventory'])->name('receipts.store');
+        Route::get('/obat-masuk/{receipt}/edit', [InventoryController::class, 'editReceipt'])->middleware(['can:view-receipts', 'can:operate-inventory'])->whereNumber('receipt')->name('receipts.edit');
+        Route::put('/obat-masuk/{receipt}', [InventoryController::class, 'updateReceipt'])->middleware(['can:view-receipts', 'can:operate-inventory'])->whereNumber('receipt')->name('receipts.update');
         Route::post('/obat-masuk/{receipt}/post', [InventoryController::class, 'postReceipt'])->middleware(['can:view-receipts', 'can:operate-inventory'])->whereNumber('receipt')->name('receipts.post');
         Route::delete('/obat-masuk/{receipt}', [InventoryController::class, 'destroyReceipt'])->middleware(['can:view-receipts', 'can:operate-inventory'])->whereNumber('receipt')->name('receipts.destroy');
         Route::get('/transfer', [InventoryController::class, 'transfers'])->middleware('can:view-transfers')->name('preview.transfers');

@@ -31,7 +31,7 @@ class NightlyCheckController extends Controller
             ->join('locations as l', 'l.id', '=', 'c.location_id')
             ->whereIn('c.id', $latestChecks->pluck('id'))
             ->where(fn ($q) => $q->where('i.quantity', 0)->orWhere('i.is_low', true))
-            ->select('i.*', 'c.date', 'l.name as location');
+            ->select('i.*', 'c.date', 'l.name as location', 'c.location_id');
 
         if (! empty($data['search'])) {
             $query->where(fn ($q) => $q
@@ -56,7 +56,7 @@ class NightlyCheckController extends Controller
             ->leftJoin('units as u', 'u.id', '=', 'm.unit_id')
             ->whereNotNull('p.minimum_quantity')
             ->whereRaw('COALESCE(b.quantity, 0) <= p.minimum_quantity')
-            ->selectRaw('m.code, m.name, l.name as location, COALESCE(b.quantity, 0) as quantity, p.minimum_quantity, u.name as unit, b.updated_at as stock_updated_at');
+            ->selectRaw('m.id as medicine_id, m.code, m.name, l.id as location_id, l.name as location, COALESCE(b.quantity, 0) as quantity, p.minimum_quantity, u.name as unit, b.updated_at as stock_updated_at');
 
         if (! empty($data['search'])) {
             $parameterQuery->where(fn ($q) => $q

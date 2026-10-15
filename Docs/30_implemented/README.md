@@ -17,4 +17,5 @@ This folder records shipped work as historical truth. Each feature folder contai
 - [2026-10-14 PRD gap completion](2026-10-14-prd-gap-completion/)
 - [2026-10-14 Superadmin controls](2026-10-14-superadmin-controls/)
 - [2026-10-15 Inventory usability](2026-10-15-inventory-usability/)
+- [2026-10-15 Receipt workflow safety](2026-10-15-receipt-workflow-safety/)
 

@@ -11,11 +11,11 @@ class PrototypeUiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_legacy_dummy_routes_are_not_exposed(): void
+    public function test_inventory_routes_are_live_and_legacy_document_preview_is_not_exposed(): void
     {
         $this->actingAs(User::factory()->create(['role' => Role::Pharmacy]));
-        $this->get('/obat-keluar')->assertNotFound();
-        $this->get('/kartu-stok')->assertNotFound();
+        $this->get('/obat-keluar')->assertOk()->assertSee('Pengeluaran Obat');
+        $this->get('/kartu-stok')->assertOk()->assertSee('Lengkapi filter kartu stok');
         $this->get('/preview-dokumen/permintaan-persediaan')->assertNotFound();
     }
 
@@ -31,8 +31,7 @@ class PrototypeUiTest extends TestCase
     {
         $this->actingAs(User::factory()->create(['role' => Role::Pharmacy]));
         $this->get('/dashboard')->assertOk()->assertSee('stockChart')->assertSee('Perlu Ditindaklanjuti')
-            ->assertSee('Pemeriksaan Harian')->assertSee('Kekurangan &amp; Permintaan', false)
-            ->assertDontSee('Obat Keluar')->assertDontSee('Kartu Stok');
+            ->assertSee('Pemeriksaan Harian')->assertSee('Monitoring')->assertSee('Pengeluaran Obat');
         foreach (['obat-masuk', 'transfer', 'stock-opname', 'kedaluwarsa', 'laporan'] as $path) {
             $this->get('/'.$path)->assertOk()->assertDontSee('PRATINJAU UI');
         }

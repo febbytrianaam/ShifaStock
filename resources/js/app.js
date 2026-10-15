@@ -2,6 +2,8 @@ import './bootstrap';
 import Chart from 'chart.js/auto';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
+import { initFormSafety, resetFormBaseline, allowFormNavigation } from './form-safety';
+import { initReceiptValidation, validateReceiptRows, checkReceiptInvoice } from './receipt-validation';
 
 let nightlyPage = 1;
 
@@ -106,8 +108,10 @@ function initialize() {
     initBalanceSearch();
     initSearchableSelects();
     initReceiptRows();
+    initReceiptValidation();
     initStockEntryContexts();
     initRolePreview();
+    initFormSafety();
 }
 
 function initBalanceSearch() {
@@ -204,7 +208,7 @@ function initSearchableSelects(root = document) {
         if (select.closest('.receipt-entry')) {
             window.addEventListener('resize', close);
             document.addEventListener('scroll', (event) => {
-                if (!menu.contains(event.target)) close();
+                if (event.target === document || event.target.contains?.(wrapper)) close();
             }, true);
         }
         const render = () => {
@@ -376,6 +380,7 @@ function initReceiptRows(root = document) {
     root.querySelectorAll('[data-receipt-row]:not([data-receipt-ready])').forEach((row) => {
         row.dataset.receiptReady = '1';
         const medicine = row.querySelector('[data-receipt-medicine]');
+        row.querySelector('[data-receipt-row-label]').textContent = `Baris ${Number(medicine.name.match(/items\[(\d+)\]/)?.[1] ?? 0) + 1}`;
         const inputQuantity = row.querySelector('[data-receipt-input-quantity]');
         const inputUnit = row.querySelector('[data-receipt-input-unit]');
         const conversion = row.querySelector('[data-receipt-conversion]');
@@ -546,7 +551,10 @@ document.addEventListener('click', (event) => {
             confirmButtonColor: confirmForm.dataset.confirmColor || '#e11d48',
             cancelButtonColor: '#64748b',
         }).then((result) => {
-            if (result.isConfirmed) confirmForm.submit();
+            if (result.isConfirmed) {
+                allowFormNavigation();
+                confirmForm.submit();
+            }
         });
         return;
     }
@@ -564,7 +572,10 @@ document.addEventListener('click', (event) => {
             confirmButtonColor: '#e11d48',
             cancelButtonColor: '#64748b',
         }).then((result) => {
-            if (result.isConfirmed) cancelDraftForm.submit();
+            if (result.isConfirmed) {
+                allowFormNavigation();
+                cancelDraftForm.submit();
+            }
         });
         return;
     }
@@ -582,7 +593,10 @@ document.addEventListener('click', (event) => {
             confirmButtonColor: '#e11d48',
             cancelButtonColor: '#64748b',
         }).then((result) => {
-            if (result.isConfirmed) cancelReceiptDraftForm.submit();
+            if (result.isConfirmed) {
+                allowFormNavigation();
+                cancelReceiptDraftForm.submit();
+            }
         });
         return;
     }
@@ -590,7 +604,7 @@ document.addEventListener('click', (event) => {
         const table = document.querySelector('[data-receipt-items]');
         const template = document.getElementById('receipt-row-template');
         if (!table || !template) return;
-        const index = table.querySelectorAll('[data-receipt-row]').length;
+        const index = Math.max(-1, ...[...table.querySelectorAll('[data-receipt-medicine]')].map((field) => Number(field.name.match(/items\[(\d+)\]/)?.[1] ?? -1))) + 1;
         const fragment = template.content.cloneNode(true);
         fragment.querySelectorAll('[data-name]').forEach((input) => {
             input.name = `items[${index}][${input.dataset.name}]`;
@@ -607,10 +621,13 @@ document.addEventListener('click', (event) => {
         if (!row || !table || table.querySelectorAll('[data-receipt-row]').length <= 1) return;
         row.remove();
         table.querySelectorAll('[data-receipt-row]').forEach((row, index) => {
+            row.querySelector('[data-receipt-row-label]').textContent = `Baris ${index + 1}`;
+            row.querySelectorAll('[data-receipt-field-error]').forEach((error) => error.remove());
             row.querySelectorAll('[name^="items["]').forEach((input) => {
                 input.name = input.name.replace(/items\[\d+]/, `items[${index}]`);
             });
         });
+        if (table.closest('form').dataset.receiptValidated) validateReceiptRows(table.closest('form'));
         return;
     }
     const userMenuButton = event.target.closest('[data-user-menu-toggle]');
@@ -704,6 +721,19 @@ document.addEventListener('submit', (event) => {
         }
     }
 
+    if (form.matches('.receipt-entry')) {
+        const errors = validateReceiptRows(form);
+        if (errors.length) {
+            event.preventDefault();
+            void Swal.fire({ title: 'Periksa baris penerimaan', text: errors.map((error) => error.message).join('\n'), icon: 'warning', confirmButtonText: 'Perbaiki isian' }).then(() => {
+                const field = errors[0].field;
+                (field.closest('.searchable-select')?.querySelector('.searchable-select-input') || field).focus();
+                field.closest('td')?.scrollIntoView({ block: 'center', inline: 'center' });
+            });
+            return;
+        }
+    }
+
     if (form.dataset.requiredAlert) {
         const requiredFields = [...form.querySelectorAll('[required]')];
         const invalidFields = requiredFields.filter((field) => !field.disabled && !field.checkValidity()).map((field) => {
@@ -751,12 +781,18 @@ document.addEventListener('submit', (event) => {
             break;
         }
     }
+    if (!event.defaultPrevented && form.dataset.checkInvoice && checkReceiptInvoice(form, event.submitter)) event.preventDefault();
 }, true);
 window.addEventListener('medicine-editing', () => {
     const dialog = document.getElementById('medicine-dialog');
+    resetFormBaseline(dialog?.querySelector('form'));
     if (dialog && !dialog.open) dialog.showModal();
 });
-window.addEventListener('medicine-saved', () => document.getElementById('medicine-dialog')?.close());
+window.addEventListener('medicine-saved', () => {
+    const dialog = document.getElementById('medicine-dialog');
+    resetFormBaseline(dialog?.querySelector('form'));
+    dialog?.close();
+});
 document.addEventListener('input', (event) => {
     if (event.target.matches('#nightly-search')) {
         nightlyPage = 1;

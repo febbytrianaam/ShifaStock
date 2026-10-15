@@ -43,5 +43,10 @@ foreach ([
     if ($method === 'receipts' && ! $query && str_contains($html, 'Item Terposting Terbaru')) {
         throw new RuntimeException('Receipt history is still shown on the input tab.');
     }
+    if (in_array('--fixtures', $argv, true)) {
+        $directory = storage_path('app/qa/inventory');
+        if (! is_dir($directory)) mkdir($directory, 0777, true);
+        file_put_contents($directory.'/'.$method.($query ? '-history' : '').'.html', $html);
+    }
     echo $routeName.($query ? ' (history)' : '').": render OK\n";
 }

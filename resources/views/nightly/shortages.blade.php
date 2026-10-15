@@ -87,6 +87,7 @@
                                 <a class="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold text-[#3277B2] hover:bg-[#edf5fb] transition" href="{{ route('nightly.show',$row->nightly_check_id) }}">
                                     Lihat pemeriksaan →
                                 </a>
+                                <x-shortage-action :medicine-id="$row->medicine_id" :location-id="$row->location_id" />
                             </td>
                         </tr>
                     @empty
@@ -121,7 +122,7 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse($parameterRows as $row)
                             <tr class="{{ (float)$row->quantity <= 0 ? 'attention-critical' : 'attention-warning' }}">
-                                <td class="p-4"><b class="font-bold text-slate-900">{{ $row->name }}</b><br><span class="font-mono text-[11px] text-slate-500">{{ $row->code }}</span></td>
+                                <td class="p-4"><b class="font-bold text-slate-900">{{ $row->name }}</b><br><span class="font-mono text-[11px] text-slate-500">{{ $row->code }}</span><br><x-shortage-action :medicine-id="$row->medicine_id" :location-id="$row->location_id" /></td>
                                 <td class="p-4 text-xs font-semibold text-slate-600">{{ $row->location }}</td>
                                 <td class="p-4 font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format((float)$row->quantity) }} {{ $row->unit }}</td>
                                 <td class="p-4 font-bold tabular-nums text-[#266194]">{{ \App\Support\Quantity::format((float)$row->minimum_quantity) }} {{ $row->unit }}</td>
