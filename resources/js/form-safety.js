@@ -7,8 +7,8 @@ let prompting = false;
 
 function snapshot(form) {
     return JSON.stringify([...form.elements]
-        .filter((field) => field.name && !['hidden', 'submit', 'button'].includes(field.type) && !field.disabled)
-        .map((field) => [field.name, ['checkbox', 'radio'].includes(field.type) ? field.checked : field.value]));
+        .filter((field) => (field.name || field.hasAttribute('data-nightly-batch-count')) && !['hidden', 'submit', 'button'].includes(field.type) && !field.disabled)
+        .map((field) => [field.name || `batch:${field.dataset.itemId}:${field.dataset.batchId}`, ['checkbox', 'radio'].includes(field.type) ? field.checked : field.value]));
 }
 
 export function initFormSafety() {

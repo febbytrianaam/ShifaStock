@@ -2,6 +2,9 @@
 
 ## What Exists Now
 
+- Daily batch reconciliation (2026-10-16): physical differences require explicit batch counts; approval updates totals, batches, and ledger atomically. Stale reports are rejected. Report: `Docs/30_implemented/2026-10-16-daily-batch-reconciliation/implementation_report.md`.
+- Automated inventory testing (2026-10-16): isolated test runner, full stock-cycle regression coverage, read-only total/batch/ledger audit, and an exact-fraction FEFO fix. The daily-count gap discovered by these tests has now been fixed. Report: `Docs/30_implemented/2026-10-16-automated-inventory-testing/implementation_report.md`.
+
 - Receipt workflow safety (2026-10-15): editable drafts, supplier invoice duplicate warnings, unsaved-form protection, row-level receipt validation, and monitoring shortcuts that prefill transfer/return/condition forms. Report: `Docs/30_implemented/2026-10-15-receipt-workflow-safety/implementation_report.md`.
 
 - Inventory usability revision (2026-10-15): separate supplier invoice field and receipt history, operational medicine packaging, stock-unit/availability context, FEFO estimates, clearer stock-changing actions, daily approval comparisons, monitoring source labels, and quantity formatting without trailing decimal zeroes. Details: `docs/30_implemented/2026-10-15-inventory-usability/implementation_report.md`.

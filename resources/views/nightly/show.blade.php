@@ -51,11 +51,13 @@
 @endif
 
 <div class="mb-5 rounded-lg border border-[#d6e8f6] bg-[#edf5fb] p-3 text-xs text-[#1f4f78] leading-relaxed">
-    Kosongkan jumlah jika belum diperiksa; isi 0 jika stok kosong. Gunakan satuan stok obat yang tercatat. Simpan draf untuk melanjutkan nanti; kirim untuk ditinjau kepala apoteker. Persetujuan akan menyesuaikan stok sistem ke hasil hitung. Tanda menipis pada laporan ini diisi petugas; monitoring minimum dihitung terpisah dari stok sistem.
+    Kosongkan jumlah jika belum diperiksa; isi 0 jika stok kosong. Jika ada selisih, buka Hasil hitung per batch dan isi tiap batch sesuai fisiknya. Jumlah fisik otomatis dijumlahkan; persetujuan memperbarui total stok dan batch bersama. Jika ada transaksi setelah laporan dikirim, laporan perlu dikembalikan untuk dihitung ulang.
 </div>
 
-<form method="POST" action="{{ route('nightly.save',$check->id) }}">
+<form method="POST" action="{{ route('nightly.save',$check->id) }}" data-nightly-count-form novalidate>
     @csrf
+    <input type="hidden" name="batch_counts_payload" data-nightly-batch-payload>
+    <input type="hidden" name="observed_revision" value="{{ old('observed_revision', $observedRevision) }}">
     <div class="no-print card mb-4 flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div class="flex-1">
             <label class="label text-xs font-semibold text-slate-700" for="nightly-search">Cari obat</label>
@@ -106,10 +108,11 @@
             <tbody class="divide-y divide-slate-100">
                 @foreach($items as $i)
                     @php($b=$baseline->get($i->medicine_id))
-                    <tr class="hover:bg-slate-50/70 transition-colors" data-nightly-row data-search="{{ Illuminate\Support\Str::lower($i->name.' '.$i->code) }}" data-quantity="{{ $i->quantity }}" data-low="{{ $i->is_low ? '1' : '0' }}">
+                    <tr class="hover:bg-slate-50/70 transition-colors" data-nightly-row data-search="{{ Illuminate\Support\Str::lower($i->name.' '.$i->code) }}" data-quantity="{{ $i->quantity }}" data-low="{{ $i->is_low ? '1' : '0' }}" data-system-quantity="{{ $systemBalances[$i->medicine_id] ?? 0 }}">
                         <td class="p-3">
                             <b class="font-bold text-slate-900 tracking-tight">{{ $i->name }}</b><br>
                             <span class="inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-500 mt-0.5">{{ $i->code }}</span>
+                            <x-nightly-batches :item="$i" :batches="$batchOptions->get($i->medicine_id, collect())" :balances="$batchBalances" :editable="$editable" />
                         </td>
                         <td class="p-3 text-xs font-medium text-slate-600 tabular-nums">{{ $b ? $b->quantity.' '.$b->unit : 'Belum tersedia' }}</td>
                         <td class="p-3">
@@ -174,7 +177,7 @@
     @can('finalize-opname')
         <form class="no-print card my-6 p-4" method="POST" action="{{ route('nightly.review',$check->id) }}">
             @csrf
-            <p class="mb-3 text-xs text-slate-600">Persetujuan mengubah stok sistem. Periksa transaksi yang terjadi setelah penghitungan sebelum menyetujui.</p>
+            <p class="mb-3 text-xs text-slate-600">Persetujuan memperbarui total dan batch sesuai hitungan petugas. Jika stok berubah setelah laporan dikirim, kembalikan untuk koreksi dan hitung ulang.</p>
             <div class="mb-4 max-h-64 overflow-auto">
                 <table class="w-full text-left text-xs">
                     <thead><tr><th class="p-2">Obat</th><th class="p-2">Stok sistem sekarang</th><th class="p-2">Hasil hitung</th><th class="p-2">Perubahan jika disetujui</th></tr></thead>

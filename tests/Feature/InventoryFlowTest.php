@@ -50,7 +50,7 @@ class InventoryFlowTest extends TestCase
         $check = DB::table('nightly_checks')->first();
         $item = DB::table('nightly_check_items')->first();
         $this->post('/pengecekan-malam/'.$check->id, ['action' => 'submit', 'items' => [
-            $item->id => ['quantity' => 25, 'unit' => 'Tablet', 'is_low' => 1, 'requested_quantity' => 20],
+            $item->id => ['quantity' => 25, 'unit' => 'Tablet', 'is_low' => 1, 'requested_quantity' => 20, 'batch_counts' => [$batchId => 25]],
         ]]);
         $this->actingAs($kepala)->post('/pengecekan-malam/'.$check->id.'/review', ['action' => 'approve'])->assertRedirect();
         $this->assertSame(25.0, (float) StockBalance::whereBelongsTo($medicine)->whereBelongsTo($apotek)->value('quantity'));

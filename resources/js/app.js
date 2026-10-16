@@ -4,6 +4,7 @@ import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import { initFormSafety, resetFormBaseline, allowFormNavigation } from './form-safety';
 import { initReceiptValidation, validateReceiptRows, checkReceiptInvoice } from './receipt-validation';
+import { initDailyCounts, prepareDailyCounts } from './daily-counts';
 
 let nightlyPage = 1;
 
@@ -111,6 +112,7 @@ function initialize() {
     initReceiptValidation();
     initStockEntryContexts();
     initRolePreview();
+    initDailyCounts();
     initFormSafety();
 }
 
@@ -697,6 +699,10 @@ document.addEventListener('keydown', (event) => {
 document.addEventListener('submit', (event) => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) return;
+    if (form.matches('[data-nightly-count-form]') && !prepareDailyCounts(form, event.submitter)) {
+        event.preventDefault();
+        return;
+    }
 
     for (const select of form.querySelectorAll('select[data-searchable-select]')) {
         const wrapper = select.closest('.searchable-select');

@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Medicine;
+use App\Models\Batch;
+use App\Models\InventoryMovement;
+use App\Services\DailyPhysicalCountService;
 use App\Services\InventoryStockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -160,17 +163,48 @@ class NightlyCheckController extends Controller
         }
 
         $systemBalances = DB::table('stock_balances')->where('location_id', $check->location_id)->pluck('quantity', 'medicine_id');
+        $batchOptions = Batch::whereIn('medicine_id', $items->pluck('medicine_id'))->orderBy('expiry_date')->orderBy('number')->get()->groupBy('medicine_id');
+        $batchBalances = DB::table('batch_stock_balances')->where('location_id', $check->location_id)->pluck('quantity', 'batch_id');
+        $observedRevision = (int) (InventoryMovement::where(fn ($query) => $query->where('source_location_id', $check->location_id)->orWhere('destination_location_id', $check->location_id))->max('id') ?? 0);
+        foreach ($items as $item) {
+            $item->saved_batch_counts = json_decode($item->batch_counts ?? '[]', true);
+        }
 
-        return view('nightly.show', compact('check', 'items', 'previous', 'baseline', 'shortages', 'summary', 'systemBalances'));
+        return view('nightly.show', compact('check', 'items', 'previous', 'baseline', 'shortages', 'summary', 'systemBalances', 'batchOptions', 'batchBalances', 'observedRevision'));
     }
 
-    public function save(Request $r, int $id)
+    public function save(Request $r, int $id, DailyPhysicalCountService $counts)
     {
+        $r->validate(['batch_counts_payload' => ['nullable', 'json', 'max:200000'], 'observed_revision' => ['nullable', 'integer', 'min:0']]);
+        if ($r->has('batch_counts_payload') && ! $r->filled('batch_counts_payload')) {
+            throw ValidationException::withMessages(['items' => 'Rincian hitungan belum siap dikirim. Aktifkan JavaScript lalu muat ulang halaman.']);
+        }
+        if ($r->filled('batch_counts_payload')) {
+            $payload = json_decode($r->input('batch_counts_payload'), true);
+            $items = $r->input('items', []);
+            if (! is_array($payload) || ! is_array($items)) {
+                throw ValidationException::withMessages(['items' => 'Format rincian batch tidak valid. Muat ulang halaman.']);
+            }
+            foreach ($payload as $itemId => $batchInput) {
+                if (! isset($items[$itemId]) || ! is_array($items[$itemId])) {
+                    throw ValidationException::withMessages(['items' => 'Rincian batch tidak sesuai dengan baris obat.']);
+                }
+                $items[$itemId]['batch_counts'] = $batchInput;
+            }
+            $r->merge(['items' => $items]);
+        }
         $d = $r->validate(['action' => ['required', 'in:save,submit'], 'items' => ['required', 'array'], 'items.*.quantity' => ['nullable', 'integer', 'min:0', 'max:2147483647'], 'items.*.unit' => ['nullable', 'string', 'max:100'], 'items.*.is_low' => ['nullable', 'boolean'], 'items.*.requested_quantity' => ['nullable', 'integer', 'min:0', 'max:2147483647'], 'items.*.note' => ['nullable', 'string', 'max:1000']]);
-        DB::transaction(function () use ($r, $id, $d) {
+        $batchData = $r->validate(['items.*.batch_counts' => ['nullable', 'array'], 'items.*.batch_counts.*' => ['nullable', 'integer', 'min:0', 'max:2147483647']]);
+        DB::transaction(function () use ($r, $id, $d, $batchData, $counts) {
             $c = DB::table('nightly_checks')->where('id', $id)->lockForUpdate()->first();
             abort_unless($c, 404);
             abort_unless($c->created_by === $r->user()->id && $c->status === 'draft', 403);
+            if ($d['action'] === 'submit' && $r->filled('observed_revision')) {
+                $latest = (int) (InventoryMovement::where(fn ($query) => $query->where('source_location_id', $c->location_id)->orWhere('destination_location_id', $c->location_id))->max('id') ?? 0);
+                if ((int) $r->input('observed_revision') !== $latest) {
+                    throw ValidationException::withMessages(['items' => 'Ada transaksi stok sejak halaman dibuka. Simpan draf, muat ulang halaman, dan periksa ulang hitungan sebelum mengirim.']);
+                }
+            }
             $items = DB::table('nightly_check_items')->where('nightly_check_id', $id)->get();
             foreach ($items as $i) {
                 $v = $d['items'][$i->id] ?? null;
@@ -185,6 +219,16 @@ class NightlyCheckController extends Controller
                 if ($d['action'] === 'submit' && $q === null) {
                     throw ValidationException::withMessages(['items' => 'Periksa semua obat sebelum mengirim. Isi 0 hanya jika benar-benar kosong.']);
                 }
+                $batchCounts = $counts->counts($i->medicine_id, $batchData['items'][$i->id]['batch_counts'] ?? []);
+                $snapshot = null;
+                if ($d['action'] === 'submit') {
+                    $snapshot = $counts->snapshot($i->medicine_id, $c->location_id);
+                    $counts->validateTarget($i, (int) $q, $unit, $batchCounts, $snapshot);
+                }
+                DB::table('nightly_check_items')->where('id', $i->id)->update([
+                    'batch_counts' => json_encode($batchCounts, JSON_THROW_ON_ERROR),
+                    'stock_snapshot' => $snapshot === null ? null : json_encode($snapshot, JSON_THROW_ON_ERROR),
+                ]);
                 DB::table('nightly_check_items')->where('id', $i->id)->update(['quantity' => $q, 'unit' => $unit ?: null, 'is_low' => ! empty($v['is_low']), 'requested_quantity' => $v['requested_quantity'] ?? null, 'note' => $v['note'] ?? null]);
             }
             DB::table('nightly_checks')->where('id', $id)->update(['status' => $d['action'] === 'submit' ? 'submitted' : 'draft', 'submitted_at' => $d['action'] === 'submit' ? now() : null, 'updated_at' => now()]);
@@ -220,8 +264,8 @@ class NightlyCheckController extends Controller
                 }
             }
             DB::table('nightly_checks')->where('id', $id)->update(['status' => $d['action'] === 'approve' ? 'approved' : 'draft', 'review_note' => $d['review_note'] ?? null, 'reviewed_by' => $r->user()->id, 'approved_at' => $d['action'] === 'approve' ? now() : null, 'updated_at' => now()]);
-        });
+        }, 3);
 
-        return back()->with('status', $d['action'] === 'approve' ? 'Disetujui. Hasil hitung menjadi catatan stok pada tanggal pemeriksaan.' : 'Dikembalikan kepada petugas untuk dikoreksi.');
+        return back()->with('status', $d['action'] === 'approve' ? 'Disetujui. Total stok dan rincian batch diperbarui sesuai hasil hitung.' : 'Dikembalikan kepada petugas untuk dikoreksi.');
     }
 }
