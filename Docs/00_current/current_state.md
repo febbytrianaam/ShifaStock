@@ -2,6 +2,8 @@
 
 ## What Exists Now
 
+- README refresh (2026-10-18): public-facing setup, features, inventory safeguards, isolated tests, deployment steps, and documentation links now reflect the current implementation. Credential-pattern checks were limited to README content, not a repository-wide security certification. Report: `Docs/30_implemented/2026-10-18-readme-refresh/implementation_report.md`.
+
 - Unit/history and concurrency protection (2026-10-18): stock writes, snapshots, medicine edits, and unit renames share a database transaction mutex; historical stock units cannot be changed. MySQL snapshot comparison tolerates JSON key reordering without ignoring value/type differences. Seven real MySQL parallel-worker scenarios and the isolated 58-test suite passed. Report: `Docs/30_implemented/2026-10-18-unit-and-concurrency-protection/implementation_report.md`.
 
 - Audit continuation (2026-10-18): monthly opname snapshots detect net-zero transactions, new batches, and unit changes; audited recount resets stale input safely. Receipt drafts no longer silently change inactive destination locations. Stock-entry quantities are limited to four-decimal database precision. Report: `Docs/30_implemented/2026-10-18-opname-audit/implementation_report.md`.

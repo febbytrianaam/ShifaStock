@@ -23,4 +23,5 @@ This folder records shipped work as historical truth. Each feature folder contai
 - [2026-10-16 Inventory flow safeguards](2026-10-16-inventory-flow-safeguards/)
 - [2026-10-18 Opname audit and recount](2026-10-18-opname-audit/)
 - [2026-10-18 Unit and concurrency protection](2026-10-18-unit-and-concurrency-protection/)
+- [2026-10-18 README refresh](2026-10-18-readme-refresh/)
 
