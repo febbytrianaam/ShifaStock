@@ -155,25 +155,27 @@ class MedicineIndex extends Component
             $payload['verified_at'] = now();
         }
 
-        $medicine = $this->editingId ? Medicine::findOrFail($this->editingId) : new Medicine(['is_active' => false]);
-        $before = $medicine->exists ? $medicine->replicate()->toArray() : null;
-        $medicine->fill($payload);
-        $medicine->save();
+        \App\Services\InventoryTransaction::run(function () use ($payload, $data) {
+            $medicine = $this->editingId ? Medicine::findOrFail($this->editingId) : new Medicine(['is_active' => false]);
+            $before = $medicine->exists ? $medicine->replicate()->toArray() : null;
+            $medicine->fill($payload);
+            $medicine->save();
 
-        if (filled($data['package_name']) && filled($data['package_conversion'])) {
-            $package = $medicine->packages()->where('name', trim($data['package_name']))->first()
-                ?? $medicine->packages()->orderBy('id')->first()
-                ?? new MedicinePackage(['medicine_id' => $medicine->id]);
-            $package->fill(['name' => trim($data['package_name']), 'conversion_factor' => (float) $data['package_conversion']])->save();
-        }
+            if (filled($data['package_name']) && filled($data['package_conversion'])) {
+                $package = $medicine->packages()->where('name', trim($data['package_name']))->first()
+                    ?? $medicine->packages()->orderBy('id')->first()
+                    ?? new MedicinePackage(['medicine_id' => $medicine->id]);
+                $package->fill(['name' => trim($data['package_name']), 'conversion_factor' => (float) $data['package_conversion']])->save();
+            }
 
-        MedicineAudit::create([
-            'medicine_id' => $medicine->id,
-            'user_id' => auth()->id(),
-            'action' => $this->editingId ? 'updated' : 'created',
-            'before' => $before,
-            'after' => $medicine->fresh()->toArray(),
-        ]);
+            MedicineAudit::create([
+                'medicine_id' => $medicine->id,
+                'user_id' => auth()->id(),
+                'action' => $this->editingId ? 'updated' : 'created',
+                'before' => $before,
+                'after' => $medicine->fresh()->toArray(),
+            ]);
+        });
 
         $this->resetForm();
         $this->dispatch('medicine-saved');

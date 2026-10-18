@@ -81,10 +81,10 @@ class InventoryController extends Controller
             'items.*.medicine_id' => ['required', 'exists:medicines,id'],
             'items.*.batch_number' => ['required', 'string', 'max:100'],
             'items.*.expiry_date' => ['required', 'date_format:Y-m-d'],
-            'items.*.quantity' => ['required', 'numeric', 'gt:0'],
-            'items.*.input_quantity' => ['nullable', 'required_with:items.*.input_unit_name', 'numeric', 'gt:0'],
+            'items.*.quantity' => ['required', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
+            'items.*.input_quantity' => ['nullable', 'required_with:items.*.input_unit_name', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
             'items.*.input_unit_name' => ['nullable', 'required_with:items.*.input_quantity', 'string', 'max:100'],
-            'items.*.conversion_factor' => ['nullable', 'required_with:items.*.input_quantity', 'numeric', 'gt:0'],
+            'items.*.conversion_factor' => ['nullable', 'required_with:items.*.input_quantity', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
             'items.*.notes' => ['nullable', 'string', 'max:1000'],
         ], [
             'items.required' => 'Isi minimal satu baris obat.',
@@ -108,7 +108,11 @@ class InventoryController extends Controller
         $this->assertReceiptInvoiceConfirmed($data, $editingReceipt?->id);
         $status = ($data['action'] ?? 'post') === 'draft' ? 'draft' : 'posted';
 
-        $receipt = DB::transaction(function () use ($data, $request, $stock, $status, $editingReceipt) {
+        $receipt = \App\Services\InventoryTransaction::run(function () use ($data, $request, $stock, $status, $editingReceipt) {
+            $this->assertMovementReferenceAvailable($data['reference']);
+            if (InventoryReceipt::where('reference', $data['reference'])->when($editingReceipt, fn ($q) => $q->whereKeyNot($editingReceipt->id))->exists()) {
+                throw ValidationException::withMessages(['reference' => 'Referensi penerimaan sudah digunakan. Muat ulang halaman sebelum mengirim ulang.']);
+            }
             $receipt = $editingReceipt ? InventoryReceipt::whereKey($editingReceipt->id)->lockForUpdate()->firstOrFail() : new InventoryReceipt;
             abort_if($receipt->exists && $receipt->status !== 'draft', 422, 'Draf sudah diproses. Muat ulang daftar penerimaan.');
             $receipt->fill([
@@ -158,7 +162,7 @@ class InventoryController extends Controller
 
     public function postReceipt(Request $request, InventoryReceipt $receipt, InventoryStockService $stock)
     {
-        DB::transaction(function () use ($request, $receipt, $stock) {
+        \App\Services\InventoryTransaction::run(function () use ($request, $receipt, $stock) {
             $receipt = InventoryReceipt::whereKey($receipt->id)->lockForUpdate()->firstOrFail();
             abort_unless($receipt->status === 'draft', 422, 'Penerimaan ini sudah diproses.');
             try {
@@ -176,7 +180,7 @@ class InventoryController extends Controller
     {
         abort_unless($receipt->status === 'draft', 422, 'Hanya draft penerimaan yang bisa dibatalkan.');
 
-        DB::transaction(function () use ($receipt, $request) {
+        \App\Services\InventoryTransaction::run(function () use ($receipt, $request) {
             $receipt = InventoryReceipt::whereKey($receipt->id)->lockForUpdate()->firstOrFail();
             abort_unless($receipt->status === 'draft', 422, 'Penerimaan ini sudah diproses.');
             AuditLogger::record('inventory.receipt.cancelled', 'Draft penerimaan '.$receipt->reference.' dibatalkan.', $receipt, [
@@ -230,10 +234,7 @@ class InventoryController extends Controller
         $receipt->load(['items.medicine', 'destinationLocation']);
         $destination = $receipt->destinationLocation;
         if (! $destination || ! $destination->is_active) {
-            $destination = Location::whereKey($this->defaultReceiptLocationId())->where('is_active', true)->first()
-                ?? Location::where('code', 'GDG')->where('is_active', true)->first()
-                ?? Location::where('is_active', true)->firstOrFail();
-            $receipt->update(['destination_location_id' => $destination->id]);
+            throw ValidationException::withMessages(['destination_location_id' => 'Lokasi tujuan draf sudah tidak aktif. Edit draf dan pilih lokasi tujuan aktif sebelum menambah stok.']);
         }
 
         foreach ($receipt->items as $item) {
@@ -310,7 +311,7 @@ class InventoryController extends Controller
             'source_location_id' => ['required', 'exists:locations,id'],
             'destination_location_id' => ['required', 'different:source_location_id', 'exists:locations,id'],
             'batch_id' => ['nullable', 'exists:batches,id'],
-            'quantity' => ['required', 'numeric', 'gt:0'],
+            'quantity' => ['required', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
             'occurred_at' => ['required', 'date_format:Y-m-d\\TH:i'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
@@ -326,7 +327,8 @@ class InventoryController extends Controller
             $this->ensureBatchHasStock($medicine->id, (int) $data['batch_id'], (int) $data['source_location_id'], (float) $data['quantity']);
         }
 
-        DB::transaction(function () use ($data, $medicine, $request, $stock) {
+        \App\Services\InventoryTransaction::run(function () use ($data, $medicine, $request, $stock) {
+            $this->assertMovementReferenceAvailable($data['reference']);
             $allocations = ! empty($data['batch_id'])
                 ? [['batch_id' => (int) $data['batch_id'], 'quantity' => (float) $data['quantity']]]
                 : $stock->fefoAllocations($medicine->id, (int) $data['source_location_id'], (float) $data['quantity']);
@@ -387,7 +389,7 @@ class InventoryController extends Controller
             'medicine_id' => ['required', 'exists:medicines,id'],
             'source_location_id' => ['required', 'exists:locations,id'],
             'batch_id' => ['nullable', 'exists:batches,id'],
-            'quantity' => ['required', 'numeric', 'gt:0'],
+            'quantity' => ['required', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
             'occurred_at' => ['required', 'date_format:Y-m-d\\TH:i'],
             'source_reference' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -404,7 +406,8 @@ class InventoryController extends Controller
             $this->ensureBatchHasStock($medicine->id, (int) $data['batch_id'], (int) $data['source_location_id'], (float) $data['quantity']);
         }
 
-        DB::transaction(function () use ($data, $medicine, $request, $stock) {
+        \App\Services\InventoryTransaction::run(function () use ($data, $medicine, $request, $stock) {
+            $this->assertMovementReferenceAvailable($data['reference']);
             $allocations = ! empty($data['batch_id'])
                 ? [['batch_id' => (int) $data['batch_id'], 'quantity' => (float) $data['quantity']]]
                 : $stock->fefoAllocations($medicine->id, (int) $data['source_location_id'], (float) $data['quantity']);
@@ -461,7 +464,7 @@ class InventoryController extends Controller
             'location_id' => ['required', 'exists:locations,id'],
             'batch_number' => ['required', 'string', 'max:100'],
             'expiry_date' => ['required', 'date_format:Y-m-d'],
-            'quantity' => ['required', 'numeric', 'gt:0'],
+            'quantity' => ['required', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
             'occurred_at' => ['required', 'date_format:Y-m-d\\TH:i'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
@@ -470,7 +473,8 @@ class InventoryController extends Controller
             throw ValidationException::withMessages(['medicine_id' => 'Obat harus aktif, punya bentuk sediaan, dan satuan dasar sebelum stok awal dicatat.']);
         }
 
-        DB::transaction(function () use ($data, $medicine, $request, $stock) {
+        \App\Services\InventoryTransaction::run(function () use ($data, $medicine, $request, $stock) {
+            $this->assertMovementReferenceAvailable($data['reference']);
             $batch = Batch::firstOrCreate(
                 ['medicine_id' => $medicine->id, 'number' => trim($data['batch_number'])],
                 ['expiry_date' => $data['expiry_date'], 'expiry_precision' => 'day'],
@@ -527,7 +531,7 @@ class InventoryController extends Controller
             'medicine_id' => ['required', 'exists:medicines,id'],
             'batch_id' => ['required', 'exists:batches,id'],
             'source_location_id' => ['required', 'exists:locations,id'],
-            'quantity' => ['required', 'numeric', 'gt:0'],
+            'quantity' => ['required', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
             'occurred_at' => ['required', 'date_format:Y-m-d\\TH:i'],
             'counterparty' => ['nullable', 'string', 'max:255'],
             'reason' => ['required', 'string', 'max:255'],
@@ -539,7 +543,8 @@ class InventoryController extends Controller
         }
         $this->ensureBatchHasStock($medicine->id, (int) $data['batch_id'], (int) $data['source_location_id'], (float) $data['quantity']);
 
-        DB::transaction(function () use ($data, $medicine, $request, $stock) {
+        \App\Services\InventoryTransaction::run(function () use ($data, $medicine, $request, $stock) {
+            $this->assertMovementReferenceAvailable($data['reference']);
             $stock->add($medicine->id, (int) $data['source_location_id'], -(float) $data['quantity']);
             $stock->addBatch($medicine->id, (int) $data['batch_id'], (int) $data['source_location_id'], -(float) $data['quantity']);
             InventoryMovement::create([
@@ -573,7 +578,7 @@ class InventoryController extends Controller
             'medicines' => $this->operationalMedicines()->with('unit')->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
             'batchBalances' => BatchStockBalance::with(['medicine.unit', 'batch', 'location'])
-                ->where('quantity', '>', 0)
+                ->where('quantity', '>=', 0)
                 ->orderBy('medicine_id')
                 ->get(),
             'nextReference' => $this->nextReference('special_adjustment', 'ADJ'),
@@ -587,11 +592,11 @@ class InventoryController extends Controller
         $data = $request->validate([
             'reference' => ['required', 'string', 'max:100', Rule::unique('inventory_movements', 'reference')],
             'medicine_id' => ['required', 'exists:medicines,id'],
-            'batch_id' => ['nullable', 'exists:batches,id'],
+            'batch_id' => ['required', 'exists:batches,id'],
             'location_id' => ['required', 'exists:locations,id'],
             'direction' => ['required', Rule::in(['decrease', 'increase'])],
             'condition' => ['required', Rule::in(['rusak', 'hilang', 'terjatuh', 'tidak_diambil', 'expired', 'lainnya'])],
-            'quantity' => ['required', 'numeric', 'gt:0'],
+            'quantity' => ['required', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
             'occurred_at' => ['required', 'date_format:Y-m-d\\TH:i'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
@@ -606,13 +611,12 @@ class InventoryController extends Controller
             $this->ensureBatchHasStock($medicine->id, (int) $data['batch_id'], (int) $data['location_id'], (float) $data['quantity']);
         }
 
-        DB::transaction(function () use ($data, $medicine, $request, $stock) {
+        \App\Services\InventoryTransaction::run(function () use ($data, $medicine, $request, $stock) {
+            $this->assertMovementReferenceAvailable($data['reference']);
             $multiplier = $data['direction'] === 'decrease' ? -1 : 1;
             $quantity = (float) $data['quantity'] * $multiplier;
             $stock->add($medicine->id, (int) $data['location_id'], $quantity);
-            if (! empty($data['batch_id'])) {
-                $stock->addBatch($medicine->id, (int) $data['batch_id'], (int) $data['location_id'], $quantity);
-            }
+            $stock->addBatch($medicine->id, (int) $data['batch_id'], (int) $data['location_id'], $quantity);
             InventoryMovement::create([
                 'type' => 'special_adjustment',
                 'reference' => $data['reference'],
@@ -656,7 +660,7 @@ class InventoryController extends Controller
             'minimums.*.*' => ['nullable', 'numeric', 'gte:0'],
         ]);
 
-        DB::transaction(function () use ($data, $request) {
+        \App\Services\InventoryTransaction::run(function () use ($data, $request) {
             SystemSetting::put('expiry_warning_months', $data['expiry_warning_months']);
 
             foreach ($data['minimums'] ?? [] as $medicineId => $locations) {
@@ -741,7 +745,11 @@ class InventoryController extends Controller
             'reason' => ['required', 'string', 'max:1000'],
         ]);
 
-        DB::transaction(function () use ($movement, $request, $stock, $data) {
+        \App\Services\InventoryTransaction::run(function () use ($movement, $request, $stock, $data) {
+            $movement = InventoryMovement::whereKey($movement->id)->lockForUpdate()->firstOrFail();
+            if (InventoryMovement::where('reversed_movement_id', $movement->id)->exists()) {
+                throw ValidationException::withMessages(['movement' => 'Mutasi ini sudah pernah dibalik.']);
+            }
             $quantity = (float) $movement->quantity;
 
             if ($movement->destination_location_id) {
@@ -931,7 +939,7 @@ class InventoryController extends Controller
             'location_id.unique' => 'Sesi stock opname untuk periode dan lokasi ini sudah ada.',
         ]);
 
-        $session = DB::transaction(function () use ($data, $request) {
+        $session = \App\Services\InventoryTransaction::run(function () use ($data, $request) {
             $session = StockOpnameSession::create([
                 'reference' => $this->nextReference('stock_opname_adjustment', 'OPN'),
                 'period' => $data['period'],
@@ -941,33 +949,7 @@ class InventoryController extends Controller
                 'created_by' => $request->user()->id,
             ]);
 
-            $batchRows = BatchStockBalance::with(['medicine.unit', 'batch'])
-                ->where('location_id', $data['location_id'])
-                ->where('quantity', '>', 0)
-                ->orderBy('medicine_id')
-                ->get();
-
-            foreach ($batchRows as $balance) {
-                $session->items()->create([
-                    'medicine_id' => $balance->medicine_id,
-                    'batch_id' => $balance->batch_id,
-                    'system_quantity' => $balance->quantity,
-                    'unit_name' => $balance->medicine->unit?->name,
-                ]);
-            }
-
-            if ($batchRows->isEmpty()) {
-                StockBalance::with(['medicine.unit'])
-                    ->where('location_id', $data['location_id'])
-                    ->where('quantity', '>', 0)
-                    ->orderBy('medicine_id')
-                    ->get()
-                    ->each(fn (StockBalance $balance) => $session->items()->create([
-                        'medicine_id' => $balance->medicine_id,
-                        'system_quantity' => $balance->quantity,
-                        'unit_name' => $balance->medicine->unit?->name,
-                    ]));
-            }
+            app(\App\Services\OpnameSnapshotService::class)->resetItems($session);
 
             AuditLogger::record('inventory.opname_session.created', 'Sesi stock opname '.$session->reference.' dibuat.', $session, [
                 'period' => $session->period,
@@ -987,16 +969,18 @@ class InventoryController extends Controller
         abort_unless($session->status === 'draft', 422, 'Sesi yang sudah final tidak bisa diedit.');
         $data = $request->validate([
             'items' => ['required', 'array'],
-            'items.*.physical_quantity' => ['nullable', 'numeric', 'gte:0'],
+            'items.*.physical_quantity' => ['nullable', 'numeric', 'gte:0', 'decimal:0,4', 'max:999999999999.9999'],
             'items.*.reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        DB::transaction(function () use ($data, $session, $request) {
+        \App\Services\InventoryTransaction::run(function () use ($data, $session, $request) {
+            $session = StockOpnameSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
+            abort_unless($session->status === 'draft', 422, 'Sesi yang sudah final tidak bisa diedit.');
             $items = $session->items()->get()->keyBy('id');
             foreach ($data['items'] as $itemId => $payload) {
                 $item = $items->get((int) $itemId);
                 if (! $item) {
-                    continue;
+                    throw ValidationException::withMessages(['items' => 'Isian tidak sesuai dengan sesi terbaru. Muat ulang halaman dan isi kembali hasil hitung.']);
                 }
                 $physical = $payload['physical_quantity'] ?? null;
                 $physical = $physical === '' || $physical === null ? null : (float) $physical;
@@ -1023,7 +1007,25 @@ class InventoryController extends Controller
             throw ValidationException::withMessages(['items' => 'Isi jumlah fisik semua item sebelum finalisasi.']);
         }
 
-        DB::transaction(function () use ($session, $request, $stock) {
+        \App\Services\InventoryTransaction::run(function () use ($session, $request, $stock) {
+            $session = StockOpnameSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
+            abort_unless($session->status === 'draft', 422, 'Sesi ini sudah difinalisasi.');
+            app(\App\Services\OpnameSnapshotService::class)->assertUnchanged($session);
+            $session->load('items');
+            if ($session->items->isEmpty()) {
+                throw ValidationException::withMessages(['items' => 'Sesi belum memiliki stok batch untuk dihitung. Catat stok terlebih dahulu lalu pilih Mulai Hitung Ulang.']);
+            }
+            foreach ($session->items as $item) {
+                if ($item->physical_quantity === null || ! $item->batch_id) {
+                    throw ValidationException::withMessages(['items' => 'Lengkapi jumlah fisik dan rincian batch sebelum finalisasi.']);
+                }
+                $current = BatchStockBalance::where('batch_id', $item->batch_id)
+                    ->where('medicine_id', $item->medicine_id)->where('location_id', $session->location_id)
+                    ->lockForUpdate()->value('quantity');
+                if ($current === null || round((float) $current, 4) !== round((float) $item->system_quantity, 4)) {
+                    throw ValidationException::withMessages(['items' => 'Stok batch berubah sejak sesi dibuat. Jangan finalisasi sebelum stok dan hasil hitung ditinjau ulang.']);
+                }
+            }
             foreach ($session->items as $item) {
                 $difference = (float) $item->physical_quantity - (float) $item->system_quantity;
                 if ($difference == 0.0) {
@@ -1065,9 +1067,32 @@ class InventoryController extends Controller
         return back()->with('status', 'Stock opname difinalisasi. Selisih sudah dicatat sebagai mutasi penyesuaian.');
     }
 
+    public function recountOpnameSession(Request $request, StockOpnameSession $session)
+    {
+        \App\Services\InventoryTransaction::run(function () use ($session, $request) {
+            $session = StockOpnameSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
+            abort_unless($session->status === 'draft', 422, 'Sesi yang sudah final tidak bisa dihitung ulang.');
+            $before = ['snapshot' => $session->stock_snapshot, 'items' => $session->items()->get()->toArray(), 'cutoff_at' => $session->cutoff_at];
+            app(\App\Services\OpnameSnapshotService::class)->resetItems($session);
+            $session->update(['cutoff_at' => now('Asia/Jakarta')]);
+            AuditLogger::record('inventory.opname_session.recounted', 'Hitung ulang opname '.$session->reference.' dimulai.', $session,
+                ['before' => $before, 'item_count' => $session->items()->count()], $request);
+        });
+
+        return redirect()->route('preview.opname', ['period' => $session->period, 'session' => $session->id])
+            ->with('status', 'Snapshot diperbarui. Isian sebelumnya tersimpan di audit log; hitung dan isi ulang seluruh jumlah fisik.');
+    }
+
     private function operationalMedicines()
     {
         return $this->applyOperationalMedicineScope(Medicine::query());
+    }
+
+    private function assertMovementReferenceAvailable(string $reference): void
+    {
+        if (InventoryMovement::where('reference', $reference)->exists()) {
+            throw ValidationException::withMessages(['reference' => 'Referensi transaksi sudah digunakan. Periksa riwayat agar stok tidak tercatat dua kali.']);
+        }
     }
 
     private function defaultReceiptLocationId(): ?int
@@ -1138,7 +1163,7 @@ class InventoryController extends Controller
                     }
                 }
                 if (filled($item['input_quantity'] ?? null) && is_numeric($item['input_quantity']) && filled($item['conversion_factor'] ?? null) && is_numeric($item['conversion_factor'])) {
-                    $item['quantity'] = (float) $item['input_quantity'] * (float) $item['conversion_factor'];
+                    $item['quantity'] = round((float) $item['input_quantity'] * (float) $item['conversion_factor'], 4);
                 }
 
                 return $item;

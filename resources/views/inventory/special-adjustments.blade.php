@@ -54,15 +54,16 @@
             <input class="field text-xs" id="adjust-quantity" name="quantity" type="number" min="0.0001" step="0.0001" value="{{ old('quantity') }}" required>
         </div>
         <div class="md:col-span-2">
-            <label class="label" for="adjust-batch">Batch (opsional)</label>
-            <select class="field text-xs" id="adjust-batch" name="batch_id" data-searchable-select data-search-placeholder="Cari batch..." data-depends-on="#adjust-medicine,#adjust-location" data-depends-empty="Pilih obat dan lokasi dulu">
-                <option value="">Tanpa rincian batch</option>
+            <label class="label" for="adjust-batch">Batch</label>
+            <select class="field text-xs" id="adjust-batch" name="batch_id" required data-searchable-select data-search-placeholder="Cari batch..." data-depends-on="#adjust-medicine,#adjust-location,#adjust-direction" data-depends-empty="Pilih obat dan lokasi dulu">
+                <option value="">Pilih batch yang diperiksa</option>
                 @foreach($batchBalances as $balance)
-                    <option value="{{ $balance->batch_id }}" data-depends-values="{{ $balance->medicine_id }}|{{ $balance->location_id }}" @selected(old('batch_id', $prefill['batch_id'] ?? null)==$balance->batch_id)>
+                    <option value="{{ $balance->batch_id }}" data-depends-values="{{ $balance->medicine_id }}|{{ $balance->location_id }}|{{ (float) $balance->quantity > 0 ? '' : 'increase' }}" @selected(old('batch_id', $prefill['batch_id'] ?? null)==$balance->batch_id)>
                         {{ $balance->medicine->code }} · {{ $balance->batch->number }} · {{ $balance->location->name }} · {{ \App\Support\Quantity::format((float)$balance->quantity) }} {{ $balance->medicine->unit?->name }}
                     </option>
                 @endforeach
             </select>
+            <p class="mt-1 text-xs text-slate-500">Pilih batch sesuai obat dan lokasi. Batch dengan stok kosong hanya dapat ditambah melalui koreksi; batch baru dicatat melalui penerimaan atau stok awal.</p>
         </div>
         <div class="md:col-span-2 xl:col-span-3">
             <label class="label" for="adjust-notes">Catatan</label>

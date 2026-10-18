@@ -76,5 +76,21 @@ if (in_array('--fixtures', $argv, true)) {
         ])->render();
         file_put_contents(storage_path('app/qa/inventory/nightly.html'), $html);
         echo "Synthetic nightly batch-count fixture: render OK\n";
+        $session = new App\Models\StockOpnameSession(['reference' => 'QA-OPNAME', 'period' => now()->format('Y-m'),
+            'location_id' => $balance->location_id, 'status' => 'draft', 'cutoff_at' => now()]);
+        $session->id = 999998;
+        $session->setRelation('location', $balance->location);
+        $batch = $balance->medicine->batches()->first();
+        $opnameItem = new App\Models\StockOpnameItem(['medicine_id' => $balance->medicine_id, 'batch_id' => $batch->id,
+            'system_quantity' => $balance->quantity, 'unit_name' => $balance->medicine->unit->name]);
+        $opnameItem->id = 999998;
+        $opnameItem->setRelation('medicine', $balance->medicine)->setRelation('batch', $batch);
+        $session->setRelation('items', collect([$opnameItem]));
+        $html = view('inventory.opname', ['selectedSession' => $session, 'sessions' => collect([$session]),
+            'locations' => collect([$balance->location]), 'period' => $session->period, 'periodLabel' => now()->format('F Y'),
+            'rows' => new Illuminate\Pagination\LengthAwarePaginator([], 0, 30),
+        ])->render();
+        file_put_contents(storage_path('app/qa/inventory/opname.html'), $html);
+        echo "Synthetic opname recount fixture: render OK\n";
     }
 }

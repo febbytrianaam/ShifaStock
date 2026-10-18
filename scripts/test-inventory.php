@@ -23,7 +23,7 @@ $process = new Process([...$php, $root.'/vendor/bin/phpunit', '--configuration',
     'APP_CONFIG_CACHE' => $directory.'/unused-test-config-'.bin2hex(random_bytes(8)).'.php',
     'SESSION_DRIVER' => 'array', 'CACHE_STORE' => 'array',
 ]);
-$process->setTimeout(180);
+$process->setTimeout(max(60, min(1800, (int) (getenv('INVENTORY_TEST_TIMEOUT') ?: 180))));
 echo "Menjalankan tes pada SQLite :memory:; database klinik tidak dipakai.\n";
 $exitCode = $process->run(fn ($type, $output) => fwrite($type === Process::ERR ? STDERR : STDOUT, $output));
 echo "Laporan: storage/app/qa/inventory/phpunit-results.xml\n";

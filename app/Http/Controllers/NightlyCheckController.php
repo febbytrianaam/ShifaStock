@@ -123,7 +123,7 @@ class NightlyCheckController extends Controller
     public function store(Request $r)
     {
         $d = $r->validate(['date' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.now('Asia/Jakarta')->toDateString()], 'location_id' => ['required', 'exists:locations,id']]);
-        $id = DB::transaction(function () use ($r, $d) {
+        $id = \App\Services\InventoryTransaction::run(function () use ($r, $d) {
             abort_unless(DB::table('locations')->where('id', $d['location_id'])->where('is_active', true)->exists(), 422);
             // Lock the location to serialize creation of a daily report.
             DB::table('locations')->where('id', $d['location_id'])->lockForUpdate()->first();
@@ -195,7 +195,7 @@ class NightlyCheckController extends Controller
         }
         $d = $r->validate(['action' => ['required', 'in:save,submit'], 'items' => ['required', 'array'], 'items.*.quantity' => ['nullable', 'integer', 'min:0', 'max:2147483647'], 'items.*.unit' => ['nullable', 'string', 'max:100'], 'items.*.is_low' => ['nullable', 'boolean'], 'items.*.requested_quantity' => ['nullable', 'integer', 'min:0', 'max:2147483647'], 'items.*.note' => ['nullable', 'string', 'max:1000']]);
         $batchData = $r->validate(['items.*.batch_counts' => ['nullable', 'array'], 'items.*.batch_counts.*' => ['nullable', 'integer', 'min:0', 'max:2147483647']]);
-        DB::transaction(function () use ($r, $id, $d, $batchData, $counts) {
+        \App\Services\InventoryTransaction::run(function () use ($r, $id, $d, $batchData, $counts) {
             $c = DB::table('nightly_checks')->where('id', $id)->lockForUpdate()->first();
             abort_unless($c, 404);
             abort_unless($c->created_by === $r->user()->id && $c->status === 'draft', 403);
@@ -239,7 +239,7 @@ class NightlyCheckController extends Controller
 
     public function destroy(Request $r, int $id)
     {
-        DB::transaction(function () use ($r, $id) {
+        \App\Services\InventoryTransaction::run(function () use ($r, $id) {
             $c = DB::table('nightly_checks')->where('id', $id)->lockForUpdate()->first();
             abort_unless($c, 404);
             abort_unless($c->created_by === $r->user()->id && $c->status === 'draft', 403);
@@ -254,7 +254,7 @@ class NightlyCheckController extends Controller
     {
         Gate::authorize('finalize-opname');
         $d = $r->validate(['action' => ['required', 'in:approve,return'], 'review_note' => ['nullable', 'string', 'max:2000', 'required_if:action,return']]);
-        DB::transaction(function () use ($r, $id, $d, $stock) {
+        \App\Services\InventoryTransaction::run(function () use ($r, $id, $d, $stock) {
             $c = DB::table('nightly_checks')->where('id', $id)->lockForUpdate()->first();
             abort_unless($c, 404);
             abort_unless($c->status === 'submitted', 409);

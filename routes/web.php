@@ -83,6 +83,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/stock-opname', [InventoryController::class, 'opname'])->middleware('can:view-opname')->name('preview.opname');
         Route::post('/stock-opname', [InventoryController::class, 'storeOpnameSession'])->middleware(['can:view-opname', 'can:operate-inventory'])->name('opname.store');
         Route::post('/stock-opname/{session}/save', [InventoryController::class, 'saveOpnameSession'])->middleware(['can:view-opname', 'can:operate-inventory'])->whereNumber('session')->name('opname.save');
+        Route::post('/stock-opname/{session}/recount', [InventoryController::class, 'recountOpnameSession'])->middleware(['can:view-opname', 'can:operate-inventory'])->whereNumber('session')->name('opname.recount');
         Route::post('/stock-opname/{session}/finalize', [InventoryController::class, 'finalizeOpnameSession'])->middleware(['can:view-opname', 'can:finalize-opname'])->whereNumber('session')->name('opname.finalize');
         Route::get('/kedaluwarsa', [InventoryController::class, 'expiry'])->middleware('can:view-expiry')->name('preview.expiry');
         Route::get('/laporan', [InventoryController::class, 'reports'])->middleware('can:view-reports')->name('preview.reports');

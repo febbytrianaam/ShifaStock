@@ -91,7 +91,7 @@ class DailyPhysicalCountService
             throw ValidationException::withMessages(['items' => 'Laporan belum memiliki rincian pemeriksaan terbaru. Kembalikan untuk koreksi lalu kirim ulang.']);
         }
         $current = $this->snapshot($item->medicine_id, $check['location_id'], true);
-        if ($saved !== $current) {
+        if (! \App\Support\StockSnapshot::matches($saved, $current)) {
             throw ValidationException::withMessages(['items' => $item->name.': stok atau satuan berubah setelah laporan dikirim. Kembalikan untuk koreksi dan hitung ulang sebelum menyetujui.']);
         }
         $counts = $this->counts($item->medicine_id, json_decode($item->batch_counts ?? '[]', true));

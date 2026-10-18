@@ -369,7 +369,10 @@ function initStockEntryContexts() {
         const syncDirection = () => {
             const decreaseOnly = ['rusak', 'hilang', 'terjatuh', 'expired'].includes(condition.value);
             direction.querySelector('[value="increase"]').disabled = decreaseOnly;
-            if (decreaseOnly) direction.value = 'decrease';
+            if (decreaseOnly && direction.value !== 'decrease') {
+                direction.value = 'decrease';
+                direction.dispatchEvent(new Event('change', { bubbles: true }));
+            }
             document.querySelector('[data-adjust-save]').textContent = direction.value === 'increase' ? 'Simpan & Tambah Stok Koreksi' : 'Simpan & Kurangi Stok';
         };
         condition.addEventListener('change', syncDirection);

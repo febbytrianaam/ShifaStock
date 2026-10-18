@@ -12,6 +12,19 @@ class AdminUserManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_delegated_user_management_does_not_promote_the_editor_on_self_update(): void
+    {
+        $user = User::factory()->create(['role' => Role::Pharmacy]);
+        \Illuminate\Support\Facades\DB::table('role_permissions')->updateOrInsert([
+            'role' => Role::Pharmacy->value, 'permission' => 'manage-users',
+        ], ['allowed' => true]);
+        $this->actingAs($user)->put('/admin/pengguna/'.$user->id, [
+            'name' => 'Updated Staff', 'username' => $user->username, 'email' => $user->email,
+            'role' => Role::Pharmacy->value, 'is_active' => '1',
+        ])->assertRedirect('/admin/pengguna')->assertSessionHasNoErrors();
+        $this->assertSame(Role::Pharmacy, $user->fresh()->role);
+    }
+
     public function test_only_administrator_can_manage_users_and_reset_passwords(): void
     {
         $admin = User::factory()->create(['role' => Role::Administrator]);

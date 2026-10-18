@@ -35,7 +35,7 @@
         </div>
     </div>
 
-    <p class="mb-4 text-xs text-slate-600">Opname bulanan membandingkan hitungan fisik dengan stok pada batas waktu pencatatan. Simpan isian terlebih dahulu; finalisasi mencatat penyesuaian selisih. Rekap harian di bawah hanya menampilkan laporan yang sudah disetujui, bukan isian sesi bulanan.</p>
+    <p class="mb-4 text-xs text-slate-600">Opname bulanan membandingkan hitungan fisik dengan stok saat snapshot dibuat. Simpan isian sebelum finalisasi. Jika ada transaksi atau perubahan satuan setelah snapshot, pilih Mulai Hitung Ulang dan periksa kembali seluruh stok. Rekap harian di bawah terpisah dari isian sesi bulanan.</p>
     @can('operate-inventory')
     <form method="POST" action="{{ route('opname.store') }}" class="card mb-5 grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-5" data-required-alert="Lengkapi sesi stock opname" novalidate>
         @csrf
@@ -134,6 +134,12 @@
                 @endif
             </form>
             @if($selectedSession->status === 'draft')
+                @can('operate-inventory')
+                    <form method="POST" action="{{ route('opname.recount', $selectedSession) }}" class="flex justify-end border-t border-slate-100 p-4" data-confirm-action data-confirm-title="Mulai hitung ulang?" data-confirm-text="Snapshot akan mengikuti stok saat ini dan semua isian fisik dikosongkan. Isian sebelumnya tetap tercatat di audit log. Hitung ulang seluruh batch sebelum finalisasi." data-confirm-button="Ya, mulai hitung ulang">
+                        @csrf
+                        <button class="btn-secondary text-xs">Mulai Hitung Ulang</button>
+                    </form>
+                @endcan
                 @can('finalize-opname')
                     <form method="POST" action="{{ route('opname.finalize', $selectedSession) }}" class="flex justify-end border-t border-slate-100 p-4" data-confirm-action data-confirm-title="Finalisasi stock opname?" data-confirm-text="Selisih akan diposting menjadi mutasi penyesuaian dan sesi tidak bisa diedit lagi." data-confirm-button="Ya, finalisasi">
                         @csrf

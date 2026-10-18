@@ -12,7 +12,7 @@ class StockOpnameSession extends Model
 
     protected function casts(): array
     {
-        return ['cutoff_at' => 'datetime', 'finalized_at' => 'datetime'];
+        return ['cutoff_at' => 'datetime', 'finalized_at' => 'datetime', 'stock_snapshot' => 'array'];
     }
 
     public function location(): BelongsTo

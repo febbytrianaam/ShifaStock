@@ -60,6 +60,7 @@
                             @endforeach
                         </select>
                         @error('unit_id')<p class="mt-1 text-xs text-rose-600">{{ $message }}</p>@enderror
+                        <p class="mt-1 text-xs text-slate-500">Satuan stok tidak dapat diganti setelah obat digunakan pada stok atau transaksi. Kemasan pembelian tetap bisa disesuaikan.</p>
                     </div>
                     <div>
                         <label for="package_name" class="label">Kemasan pembelian</label>

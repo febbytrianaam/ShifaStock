@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Medicine extends Model
 {
+    protected static function booted(): void
+    {
+        static::updating(fn (Medicine $medicine) => \App\Services\StockUnitGuard::medicine($medicine));
+    }
+
     protected $fillable = [
         'code',
         'name',

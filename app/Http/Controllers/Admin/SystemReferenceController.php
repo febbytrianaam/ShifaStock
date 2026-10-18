@@ -83,7 +83,6 @@ class SystemReferenceController extends Controller
 
     public function updateUnit(Request $request, Unit $unit)
     {
-        $before = $unit->only(['id', 'name', 'is_active']);
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100', Rule::unique('units', 'name')->ignore($unit)],
             'is_active' => ['nullable', 'boolean'],
@@ -94,13 +93,17 @@ class SystemReferenceController extends Controller
             return back()->withErrors(['unit' => 'Minimal harus ada satu satuan aktif.']);
         }
 
-        $unit->update($data);
-        $unit->refresh();
+        \App\Services\InventoryTransaction::run(function () use ($unit, $data, $request) {
+            $unit = Unit::whereKey($unit->id)->lockForUpdate()->firstOrFail();
+            $before = $unit->only(['id', 'name', 'is_active']);
+            $unit->update($data);
+            $unit->refresh();
 
-        AuditLogger::record('reference.unit.updated', 'Satuan obat '.$unit->name.' diperbarui.', $unit, [
-            'before' => $before,
-            'after' => $unit->only(['id', 'name', 'is_active']),
-        ], $request);
+            AuditLogger::record('reference.unit.updated', 'Satuan obat '.$unit->name.' diperbarui.', $unit, [
+                'before' => $before,
+                'after' => $unit->only(['id', 'name', 'is_active']),
+            ], $request);
+        });
 
         return back()->with('status', 'Satuan obat berhasil diperbarui.');
     }

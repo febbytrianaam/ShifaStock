@@ -113,7 +113,7 @@ class UserController extends Controller
         }
         if ($pengguna->is(auth()->user())) {
             $data['is_active'] = true;
-            $data['role'] = Role::Administrator;
+            $data['role'] = $pengguna->role;
         }
         $pengguna->update($data);
         $pengguna->refresh();

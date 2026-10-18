@@ -58,6 +58,60 @@ class InventoryIntegrationTest extends TestCase
         $this->assertSame([], $report['batch_identity_issues']);
     }
 
+    public function test_special_adjustment_requires_batch_and_keeps_stock_reconciled(): void
+    {
+        $this->receipt('SA-SEED', [['batch_number' => 'SA-BATCH', 'expiry_date' => '2027-12-31', 'quantity' => 10]]);
+        $batch = Batch::where('number', 'SA-BATCH')->firstOrFail();
+        $payload = ['reference' => 'SA-1', 'medicine_id' => $this->medicine->id,
+            'location_id' => $this->warehouse->id, 'direction' => 'decrease', 'condition' => 'rusak',
+            'quantity' => 2, 'occurred_at' => '2026-10-16T09:00'];
+        $this->post(route('special-adjustments.store'), $payload)->assertSessionHasErrors('batch_id');
+        $this->post(route('special-adjustments.store'), $payload + ['batch_id' => $batch->id])
+            ->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertReconciled();
+        $this->assertSame(8.0, (float) StockBalance::first()->quantity);
+        $this->post(route('special-adjustments.store'), array_replace($payload,
+            ['reference' => 'SA-TINY', 'batch_id' => $batch->id, 'quantity' => 0.00001]))->assertSessionHasErrors('quantity');
+        $this->assertDatabaseMissing('inventory_movements', ['reference' => 'SA-TINY']);
+        $other = Medicine::create(['code' => 'SA-OTHER', 'name' => 'Other', 'unit_id' => $this->medicine->unit_id, 'dosage_form' => 'Tablet']);
+        $wrong = Batch::create(['medicine_id' => $other->id, 'number' => 'WRONG']);
+        $this->post(route('special-adjustments.store'), array_replace($payload, ['reference' => 'SA-WRONG', 'batch_id' => $wrong->id]))->assertSessionHasErrors('batch_id');
+        $empty = Batch::create(['medicine_id' => $this->medicine->id, 'number' => 'EMPTY']);
+        BatchStockBalance::create(['medicine_id' => $this->medicine->id, 'batch_id' => $empty->id,
+            'location_id' => $this->warehouse->id, 'quantity' => 0]);
+        $this->get(route('special-adjustments.index'))->assertOk()->assertSee('Pilih batch yang diperiksa')->assertSee('EMPTY');
+        $this->post(route('special-adjustments.store'), array_replace($payload, ['reference' => 'SA-EMPTY',
+            'batch_id' => $empty->id, 'condition' => 'lainnya', 'direction' => 'increase']))->assertSessionHasNoErrors();
+        $this->assertReconciled();
+        $movement = InventoryMovement::where('reference', 'SA-EMPTY')->sole();
+        $this->actingAs($this->pharmacist)->post(route('movements.reverse', $movement), ['reason' => 'Koreksi dibatalkan'])->assertSessionHasNoErrors();
+        $this->post(route('movements.reverse', $movement), ['reason' => 'Pengiriman ulang'])->assertSessionHasErrors('movement');
+        $this->assertReconciled();
+        $this->actingAs(User::factory()->create(['role' => Role::Guest]))
+            ->post(route('special-adjustments.store'), $payload + ['batch_id' => $batch->id])->assertForbidden();
+        $this->assertReconciled();
+    }
+
+    public function test_opname_rejects_changed_snapshot_and_repeated_finalization(): void
+    {
+        $this->receipt('OP-SEED', [['batch_number' => 'OP-BATCH', 'expiry_date' => '2027-12-31', 'quantity' => 10]]);
+        $this->post(route('opname.store'), ['period' => '2026-10', 'location_id' => $this->warehouse->id,
+            'cutoff_at' => '2026-10-16T09:00'])->assertSessionHasNoErrors();
+        $session = StockOpnameSession::firstOrFail();
+        $item = $session->items()->firstOrFail();
+        $this->post(route('opname.save', $session), ['items' => [$item->id => ['physical_quantity' => 8]]])
+            ->assertSessionHasNoErrors();
+        $this->actingAs($this->pharmacist)->post(route('opname.finalize', $session))->assertSessionHasNoErrors();
+        $this->post(route('opname.finalize', $session))->assertStatus(422);
+        $this->assertSame(8.0, (float) StockBalance::first()->quantity);
+        $this->assertReconciled();
+
+        $session->refresh()->update(['status' => 'draft']);
+        $this->post(route('opname.finalize', $session))->assertSessionHasErrors('items');
+        $this->assertSame(8.0, (float) StockBalance::first()->quantity);
+        $this->assertReconciled();
+    }
+
     private function approveCount(Location $location, int $quantity): void
     {
         $this->actingAs($this->staff)->post(route('nightly.store'), ['date' => '2026-10-16', 'location_id' => $location->id])->assertSessionHasNoErrors();

@@ -2,6 +2,12 @@
 
 ## What Exists Now
 
+- Unit/history and concurrency protection (2026-10-18): stock writes, snapshots, medicine edits, and unit renames share a database transaction mutex; historical stock units cannot be changed. MySQL snapshot comparison tolerates JSON key reordering without ignoring value/type differences. Seven real MySQL parallel-worker scenarios and the isolated 58-test suite passed. Report: `Docs/30_implemented/2026-10-18-unit-and-concurrency-protection/implementation_report.md`.
+
+- Audit continuation (2026-10-18): monthly opname snapshots detect net-zero transactions, new batches, and unit changes; audited recount resets stale input safely. Receipt drafts no longer silently change inactive destination locations. Stock-entry quantities are limited to four-decimal database precision. Report: `Docs/30_implemented/2026-10-18-opname-audit/implementation_report.md`.
+
+- Inventory flow safeguards (2026-10-16): mandatory batches for special adjustments, protected self-role updates, locked reversal checks, and locked monthly opname save/finalization with batch snapshot validation. See `Docs/30_implemented/2026-10-16-inventory-flow-safeguards/implementation_report.md`.
+
 - Daily batch reconciliation (2026-10-16): physical differences require explicit batch counts; approval updates totals, batches, and ledger atomically. Stale reports are rejected. Report: `Docs/30_implemented/2026-10-16-daily-batch-reconciliation/implementation_report.md`.
 - Automated inventory testing (2026-10-16): isolated test runner, full stock-cycle regression coverage, read-only total/batch/ledger audit, and an exact-fraction FEFO fix. The daily-count gap discovered by these tests has now been fixed. Report: `Docs/30_implemented/2026-10-16-automated-inventory-testing/implementation_report.md`.
 

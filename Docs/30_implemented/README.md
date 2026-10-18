@@ -20,4 +20,7 @@ This folder records shipped work as historical truth. Each feature folder contai
 - [2026-10-15 Receipt workflow safety](2026-10-15-receipt-workflow-safety/)
 - [2026-10-16 Automated inventory testing](2026-10-16-automated-inventory-testing/)
 - [2026-10-16 Daily batch reconciliation](2026-10-16-daily-batch-reconciliation/)
+- [2026-10-16 Inventory flow safeguards](2026-10-16-inventory-flow-safeguards/)
+- [2026-10-18 Opname audit and recount](2026-10-18-opname-audit/)
+- [2026-10-18 Unit and concurrency protection](2026-10-18-unit-and-concurrency-protection/)
 

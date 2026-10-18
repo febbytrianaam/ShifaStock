@@ -7,7 +7,6 @@ use App\Models\MedicineAudit;
 use App\Models\Unit;
 use App\Models\User;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class MedicineResearchImportService
@@ -30,7 +29,7 @@ class MedicineResearchImportService
 
     public function import(User $user): array
     {
-        return DB::transaction(function () use ($user) {
+        return \App\Services\InventoryTransaction::run(function () use ($user) {
             $created = 0;
             $skipped = 0;
 

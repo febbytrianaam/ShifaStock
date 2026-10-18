@@ -41,9 +41,11 @@ class InventoryUsabilityTest extends TestCase
         $location = Location::create(['code' => 'GDG', 'name' => 'Gudang', 'is_active' => true]);
         $medicine = Medicine::create(['code' => 'UX-2', 'name' => 'Obat UX', 'dosage_form' => 'Tablet', 'unit_id' => $unit->id, 'is_active' => true]);
         StockBalance::create(['medicine_id' => $medicine->id, 'location_id' => $location->id, 'quantity' => 10]);
+        $batch = \App\Models\Batch::create(['medicine_id' => $medicine->id, 'number' => 'UX-2-BATCH', 'expiry_date' => '2028-01-01']);
+        \App\Models\BatchStockBalance::create(['medicine_id' => $medicine->id, 'batch_id' => $batch->id, 'location_id' => $location->id, 'quantity' => 10]);
 
         $this->actingAs($user)->post(route('special-adjustments.store'), [
-            'reference' => 'KHS-UX-1', 'medicine_id' => $medicine->id, 'location_id' => $location->id,
+            'reference' => 'KHS-UX-1', 'medicine_id' => $medicine->id, 'location_id' => $location->id, 'batch_id' => $batch->id,
             'condition' => 'rusak', 'direction' => 'increase', 'quantity' => 2, 'occurred_at' => '2026-10-15T09:00', 'notes' => 'Rusak saat pemeriksaan',
         ])->assertRedirect()->assertSessionHasNoErrors();
 

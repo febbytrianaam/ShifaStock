@@ -10,6 +10,8 @@ php scripts/test-inventory.php
 
 The runner forces SQLite `:memory:` and bypasses cached application configuration. It enables `pdo_sqlite` only in the child process if available. JUnit output is written to `storage/app/qa/inventory/phpunit-results.xml`. Exit 0 means the suite passed; nonzero means a test or environment requirement failed.
 
+On a slow host, set `INVENTORY_TEST_TIMEOUT=900` before running the same command. The default is 180 seconds, with an allowed range of 60 to 1800 seconds. A timed-out run is not a passing test result.
+
 ```bash
 php artisan test
 ```
@@ -84,10 +86,22 @@ These commands inspect the application's configured database without changing st
 ## Confirmed Limitations
 
 - Daily physical differences now require verified batch counts and update aggregate stock, batches, and ledger together. `DailyBatchCountTest` covers stale submissions/approvals, batch validation, zero stock, redistribution, repeated approval, and atomic rollback. Historical inconsistencies are not rewritten automatically.
-- Batchless adjustments and aggregate-only opening data can similarly require reconciliation. Do not automatically assign real physical differences to a batch using FEFO without verifying the physical batch counts.
-- SQLite tests do not prove MySQL concurrent locking behavior. A live read-only audit checks the current local state, not future transactions or physical shelf quantities.
+- Historical batchless adjustments and aggregate-only opening data can require reconciliation. New special adjustments require a batch. Do not automatically assign real physical differences to a batch using FEFO without verifying the physical batch counts.
+- SQLite tests alone do not prove MySQL locking behavior. The separate MySQL runner below tests seven competing-process cases. Neither suite is a production-load benchmark or verification of physical shelf quantities.
 
 ## Daily Batch Browser Checks
 
 Generate local read-only fixtures using `php scripts/verify-inventory-usability.php --fixtures`, then run `node tests/browser-daily-batches.cjs` with Playwright available through Node module resolution. This checks validation, automatic totals, unsaved changes, JSON submission, and desktop/mobile overflow. POST requests are intercepted; browser checks do not modify clinic stock. Backend persistence is tested separately in isolated SQLite.
+
+`node tests/browser-opname-recount.cjs` uses the synthetic opname fixture to check SweetAlert cancel/confirm, the recount route, and desktop/mobile overflow. It also intercepts every request. `OpnameAuditTest` checks persistence, net-zero transactions, new batches, unit changes, stale form rejection, legacy snapshots, recount audit history, guest denial, inactive receipt destinations, and quantity precision.
+
+## Isolated MySQL Concurrency Checks
+
+```bash
+php scripts/test-inventory-mysql.php
+```
+
+The configured MySQL account needs CREATE/DROP DATABASE permission. The runner creates its own random `shifastock_qa_` database, migrates only that database, and starts two independent PHP workers behind a readiness barrier for each case. Workers reject non-testing environments or database names outside the exact QA format. The runner stops its workers and drops only the generated database on completion/failure. It never runs migrate:fresh or destructive cleanup against the clinic database. Fixtures and barrier files in `storage/app/qa/inventory/mysql` are ignored by Git and contain no database credentials.
+
+Cases: competing FEFO issues, repeated reversal, repeated monthly finalization, repeated daily approval, duplicate movement references, a unit edit against first receipt, and two initial receipts into a previously missing balance. Workers call the real controller/service paths; an SQL listener observes application mutex acquisition and delays it briefly to induce contention. Assertions check non-overlapping critical sections, expected accept/reject outcomes, and aggregate/batch/ledger agreement. This is not an HTTP authentication test or an exhaustive load test. Nonzero exit means failure; cleanup messages alone are not proof of success.
 
