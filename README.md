@@ -147,7 +147,7 @@ node tests/browser-opname-recount.cjs
 
 Tes browser tersebut memakai fixture lokal dan mencegat permintaan tulis agar tidak mengubah stok klinik. Petunjuk lengkap ada di [strategi pengujian](Docs/00_current/testing_strategy.md).
 
-**Hasil verifikasi 18 Oktober 2026:** 58 tes / 610 assertion lulus, tujuh skenario MySQL bersamaan lulus, serta tes browser pemeriksaan harian dan hitung ulang opname lulus. Cakupan ini bukan jaminan seluruh kemungkinan jadwal transaksi, beban produksi, atau keamanan aplikasi telah diuji.
+**Hasil eksekusi final 18 Oktober 2026:** 70 tes / 733 assertion lulus, tujuh skenario MySQL bersamaan lulus, 13 kasus browser Playwright pada HTTP lokal lulus, dan build frontend berhasil. [Tabel fungsional dan bukti aktual](Docs/Capstone_Testing_Final/Hasil_Pengujian_Fungsional.md) membedakan pengujian otomatis, browser, dan UAT manual yang belum dilakukan. [Paket screenshot awal](Docs/Capstone_Screenshots/README.md) tetap memuat hasil historis 58 tes / 610 assertion. Pembaruan dokumentasi 19 Oktober tidak dianggap eksekusi ulang. Cakupan ini bukan jaminan seluruh jadwal transaksi, beban produksi, atau keamanan aplikasi telah diuji.
 
 ## Deployment Dan Pembaruan
 

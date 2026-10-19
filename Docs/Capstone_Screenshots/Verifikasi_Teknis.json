@@ -1,0 +1,161 @@
+{
+  "commit": "edf1faa8e51f97927b1f78337c69b230b58be2d6",
+  "verified_at": "2026-10-19T01:51:29.572Z",
+  "main_success": 19,
+  "main_total": 19,
+  "images": [
+    {
+      "file": "Gambar_01_Login.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "43586782bccb247a20d7a76631890d53c32604da340bacce939f3f014fa85e12",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_02_Pengguna_dan_Hak_Akses.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "0cb6aa8f15cd33bd35d404cd0757473ffe92abdc1056b4f2f6ce51400e6b5f67",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_02b_Matriks_Hak_Akses.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "e4f9c2444420e76452627e67366fd420dcae80f28a7f3ebd7bfff9f359f827ea",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_03_Dashboard_Data_Real.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "daca331185c420f8e3c0bb7fc650ee303a74204d8ba2e4d2f03469199a2fdbd7",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_04_Master_Obat.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "b90eb8d5406b4eb3ad8e61d1d76bd41ee7cee264d3a3f9fa15b69c4f17e4ed06",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_05_Form_Edit_Obat.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "e19e8d4618b120de1bcdfc9ce394db2c6f4390bf4b8772fe65aaaadb069e046b",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_06_Form_Penerimaan_Obat.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "4a0c4b60e4608fa1ecf5a3a0370d05dc9d1bf6102a6cc251ffebdf258f5e0cf4",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_07_Riwayat_Penerimaan.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "60a156e7001869d84d5bbfe03ba46507acd946096b820d42bb1c9fb40174d2e4",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_08_Transfer_Gudang_Apotek.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "e2ae1d4c4557cc95332b76c61730304506b6b8568508294f2d30ea2307569a77",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_09_Pengeluaran_Obat.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "3c9047c711c15f1a42f255b6b2899221de26699b5bd3205fb2c053fdbaffcaef",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_10_Stok_Awal.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "eec9f5c4d1e4e8fff5675346f07d2b52b8a83cae24a20b1f9c2a7e2abb9ebe43",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_11_Kartu_Stok_dan_Mutasi.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "77f364341e2143808f0c57057b8cc964ae53b3944439efda59795c3f391890ad",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_12_Retur_PBF.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "54481c7735820399c4ab60fa8b1dabfd72f39541884a4143c42edfdb28e096a1",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_13_Kondisi_Khusus.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "3a189666a681977c60b2c9350061a3b4120bf088ddde9ade9ae396e6d8dfaefa",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_14_Pemeriksaan_Stok_Harian.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "d013fe72e42eeb9199d64fcbc1f6015957013c734ecad9b32719e1c96fce7a25",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_15_Review_Pemeriksaan_Harian.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "8462f3df5e755af7e83e00efe4ceb8f485ab6c270a7666c33f7b02c6c25f7ac7",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_16_Sesi_Stock_Opname_Bulanan.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "46c495ccac4e555483ccf6da71aaa757227c13da790b6f0d57c17ce1bf284f6c",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_17_Detail_Penghitungan_Stock_Opname.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "482cf6070f6b4523f7b22374948d708ef6ed21238f0c8a60cc6c3f4b80366c46",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_18_Laporan_Persediaan.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "b8f40e4516547c4276a150af4a7f3e82616511bcec2fcdd4161712e198bc42af",
+      "nonblank": true
+    },
+    {
+      "file": "Gambar_19_Hasil_Pengujian.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "3d6b36aaaf1709bda234c12a7e2c305157b15576a3b0621dea5afe506d02e089",
+      "nonblank": true
+    }
+  ],
+  "diagnostic": [
+    {
+      "file": "Bukti_Kendala/Kondisi_Khusus_Label_Batch_Apotek.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "4aa97369fbb886e239bf92b0f1560e0acb19ebb059a269270b6e8dbb5601308c",
+      "nonblank": true,
+      "purpose": "Bukti kendala, bukan keberhasilan fitur"
+    }
+  ],
+  "actual_tests_exit_zero": true,
+  "text_secret_pattern_findings": 0,
+  "note": "Pemeriksaan visual/manual tetap diperlukan; dimensi dan pola teks saja tidak membuktikan semua data aman."
+}

@@ -1,0 +1,9 @@
+Created isolated MySQL QA database; clinic database is not migrated or written.
+PASS concurrent FEFO issues: one accepted, no overselling.
+PASS concurrent reversal: applied once.
+PASS concurrent opname finalization: applied once.
+PASS concurrent daily approval and MySQL JSON snapshot round-trip.
+PASS concurrent duplicate reference: posted once.
+PASS unit edit versus first receipt: serialized, no historical relabeling.
+PASS concurrent first receipts: one balance row, both additions retained.
+Removed isolated MySQL QA database.

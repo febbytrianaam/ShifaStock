@@ -13,6 +13,8 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 - [Deployment, backup, and restore](00_current/deployment_backup.md)
 - [Privacy and retention](00_current/privacy_and_retention.md)
 - [Current roadmap](00_current/roadmap.md)
+- [Capstone screenshots](Capstone_Screenshots/README.md)
+- [Final Capstone testing](Capstone_Testing_Final/Ringkasan_Pengujian.md)
 - [Next-step plan](20_plans/active/next-step-plan.md)
 - [PRD completion manual QA plan](20_plans/active/prd-completion-manual-qa-plan.md)
 
@@ -48,4 +50,6 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 - [2026-10-14 Superadmin controls](30_implemented/2026-10-14-superadmin-controls/)
 
 Use [the implementation report template](30_implemented/implementation_report_template.md) when recording future shipped work.
+
+- [2026-10-19 Capstone screenshots and final testing](30_implemented/2026-10-19-capstone-final-testing/)
 

@@ -1,5 +1,7 @@
 # Current State
 
+- Capstone final testing (documentation finalized 2026-10-19; tests executed 2026-10-18 WIB): shared searchable batch dropdowns now preserve the option for the selected location, including prefill and submission. No FEFO, stock-service, or permission changes. Final results: 70 PHPUnit tests / 733 assertions, seven MySQL competing-process scenarios, 13 live HTTP Playwright cases, and frontend build passed. Manual clinic UAT remains unperformed. [Implementation report](../30_implemented/2026-10-19-capstone-final-testing/implementation_report.md), [actual final evidence](../Capstone_Testing_Final/Ringkasan_Pengujian.md). Initial 58-test screenshot evidence remains historical.
+
 ## What Exists Now
 
 - README refresh (2026-10-18): public-facing setup, features, inventory safeguards, isolated tests, deployment steps, and documentation links now reflect the current implementation. Credential-pattern checks were limited to README content, not a repository-wide security certification. Report: `Docs/30_implemented/2026-10-18-readme-refresh/implementation_report.md`.

@@ -1,0 +1,26 @@
+{
+    "commit": "edf1faa8e51f97927b1f78337c69b230b58be2d6",
+    "started_at": "2026-10-18 22:38:31 +07:00",
+    "commands": [
+        {
+            "command": "php.exe test-inventory.php",
+            "file": "01_Regresi_SQLite.txt",
+            "exit_code": 0
+        },
+        {
+            "command": "php.exe test-inventory-mysql.php",
+            "file": "02_Konkruensi_MySQL.txt",
+            "exit_code": 0
+        },
+        {
+            "command": "cmd.exe /d /s /c npm run build",
+            "file": "03_Build_Frontend.txt",
+            "exit_code": 0
+        },
+        {
+            "command": "php.exe artisan inventory:reconcile",
+            "file": "04_Rekonsiliasi_Simulasi.txt",
+            "exit_code": 0
+        }
+    ]
+}

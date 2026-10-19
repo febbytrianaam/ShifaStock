@@ -1,0 +1,109 @@
+{
+  "phase": "final",
+  "base_url": "HTTP loopback sementara",
+  "port": 63798,
+  "medicine": 1,
+  "other_medicine": 2,
+  "warehouse": 1,
+  "pharmacy": 2,
+  "batch": 1,
+  "commit": "edf1faa8e51f97927b1f78337c69b230b58be2d6",
+  "started_at": "2026-10-18T23:31:57+07:00",
+  "simulation": true,
+  "finished_at": "2026-10-18T16:33:22.778Z",
+  "viewport": "1440 x 900",
+  "results": [
+    {
+      "name": "Login tidak valid ditolak",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:32:03.368Z",
+      "evidence": "Browser_01_Login_Ditolak.png",
+      "sha256": "d11392966aacbbdf631760a7c7ff3cfe6c4ddc31126804699117a07883474e1c"
+    },
+    {
+      "name": "Login valid petugas",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:32:05.767Z"
+    },
+    {
+      "name": "Batch Apotek dipilih dengan label dan native option sesuai lokasi",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:32:17.212Z",
+      "evidence": "Browser_02_Batch_Apotek.png",
+      "sha256": "4110ed22d1026b8e896a9c7736aeaf9cf200f2ce272a87dcf0ea52fddfa89914"
+    },
+    {
+      "name": "Pergantian lokasi memilih opsi batch yang sesuai",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:32:19.047Z"
+    },
+    {
+      "name": "Prefill batch Apotek dari tautan monitoring",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:32:19.082Z",
+      "evidence": "Browser_03_Prefill_Apotek.png",
+      "sha256": "948e1d92b2c44f5049da05e3b0934ac8d3247de65f27c392b836342b0dd51c01"
+    },
+    {
+      "name": "Validasi SweetAlert tidak mengembalikan label ke Gudang",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:32:20.001Z",
+      "evidence": "Browser_04_Validasi_Form.png",
+      "sha256": "e92fff21b1d9c48adb194452bc9fdb0ff767fc614da3ba0a8ae7d431391b1f83"
+    },
+    {
+      "name": "Mengubah obat membersihkan batch yang tidak cocok",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:32:20.390Z"
+    },
+    {
+      "name": "Posting kondisi khusus mengurangi stok Apotek saja",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:32:20.652Z",
+      "evidence": "Browser_05_Posting_Apotek.png",
+      "sha256": "6332fa62865ee76bbec742b057c9d8887c2eadeeccb28e3738dbb512754e1239"
+    },
+    {
+      "name": "Regresi dropdown lintas lokasi pada /transfer",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:32:22.506Z"
+    },
+    {
+      "name": "Regresi dropdown lintas lokasi pada /obat-keluar",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:32:23.752Z"
+    },
+    {
+      "name": "Regresi dropdown lintas lokasi pada /retur-pbf",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:32:25.555Z"
+    },
+    {
+      "name": "Monitoring menampilkan lokasi dan indikator minimum serta kedaluwarsa",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:32:27.017Z",
+      "evidence": "Browser_06_Monitoring.png",
+      "sha256": "faa3ff1483b3cf924422cfd930c473d1434a1e5751301547780a0e3d111aa0bc"
+    },
+    {
+      "name": "Guest dapat melihat tetapi tidak dapat mengirim transaksi atau membuka pengguna",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Gagal",
+      "captured_at": "2026-10-18T16:32:30.754Z",
+      "error": "locator.getAttribute: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('meta[name=csrf-token]')\u001b[22m\n"
+    }
+  ],
+  "server_stopped": true
+}

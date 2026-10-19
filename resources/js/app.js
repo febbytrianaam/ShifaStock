@@ -183,7 +183,9 @@ function initSearchableSelects(root = document) {
         const ensureSelectionMatchesDependency = () => {
             const option = selectedOption();
             if (option?.value && !optionMatchesDependency(option)) {
-                select.value = '';
+                // A batch can have the same value at several locations; keep the matching option's identity.
+                const matching = options().find((candidate) => candidate.value === option.value);
+                select.selectedIndex = matching ? matching.index : 0;
                 syncInput();
                 select.dispatchEvent(new Event('change', { bubbles: true }));
             }
@@ -237,10 +239,10 @@ function initSearchableSelects(root = document) {
                 button.className = 'searchable-select-option';
                 button.textContent = option.textContent.trim();
                 button.setAttribute('role', 'option');
-                button.setAttribute('aria-selected', String(option.value === select.value));
+                button.setAttribute('aria-selected', String(option === selectedOption()));
                 button.addEventListener('mousedown', (event) => event.preventDefault());
                 button.addEventListener('click', () => {
-                    select.value = option.value;
+                    select.selectedIndex = option.index;
                     syncInput();
                     select.dispatchEvent(new Event('change', { bubbles: true }));
                     close();
@@ -726,7 +728,7 @@ document.addEventListener('submit', (event) => {
             return matchesDependency && option.textContent.trim().toLocaleLowerCase('id-ID') === query;
         });
         if (exact) {
-            select.value = exact.value;
+            select.selectedIndex = exact.index;
         }
     }
 

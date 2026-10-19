@@ -1,0 +1,33 @@
+{
+  "phase": "baseline",
+  "base_url": "HTTP loopback sementara",
+  "port": 62923,
+  "medicine": 1,
+  "other_medicine": 2,
+  "warehouse": 1,
+  "pharmacy": 2,
+  "batch": 1,
+  "commit": "edf1faa8e51f97927b1f78337c69b230b58be2d6",
+  "started_at": "2026-10-18T23:27:40+07:00",
+  "simulation": true,
+  "finished_at": "2026-10-18T16:28:11.445Z",
+  "viewport": "1440 x 900",
+  "results": [
+    {
+      "name": "Login valid petugas",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:27:44.451Z"
+    },
+    {
+      "name": "Reproduksi bug label batch Apotek sebelum perbaikan",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:27:54.068Z",
+      "actual": "Lokasi Apotek, opsi menu Apotek, tetapi label terpilih Gudang",
+      "evidence": "Bug_Sebelum_Perbaikan.png",
+      "sha256": "63c2d65d016919d4fbebbb8b67c657c3364347e702bf334b1d86db977dae1d09"
+    }
+  ],
+  "server_stopped": true
+}

@@ -24,4 +24,5 @@ This folder records shipped work as historical truth. Each feature folder contai
 - [2026-10-18 Opname audit and recount](2026-10-18-opname-audit/)
 - [2026-10-18 Unit and concurrency protection](2026-10-18-unit-and-concurrency-protection/)
 - [2026-10-18 README refresh](2026-10-18-readme-refresh/)
+- [2026-10-19 Capstone screenshots and final testing](2026-10-19-capstone-final-testing/)
 

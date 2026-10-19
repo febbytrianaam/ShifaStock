@@ -1,0 +1,40 @@
+{
+    "warehouse_quantity": 50,
+    "pharmacy_quantity": 18,
+    "expected": {
+        "warehouse": 50,
+        "pharmacy": 18
+    },
+    "reconciliation": {
+        "checked_pairs": 2,
+        "mismatched_pairs": 0,
+        "batch_identity_issues": [],
+        "rows": [
+            {
+                "medicine_id": 1,
+                "medicine_code": "FINAL-001",
+                "location_id": 1,
+                "location": "Gudang",
+                "stock_quantity": 50,
+                "batch_quantity": 50,
+                "ledger_quantity": 50,
+                "stock_minus_batch": 0,
+                "stock_minus_ledger": 0,
+                "matches": true
+            },
+            {
+                "medicine_id": 1,
+                "medicine_code": "FINAL-001",
+                "location_id": 2,
+                "location": "Apotek",
+                "stock_quantity": 18,
+                "batch_quantity": 18,
+                "ledger_quantity": 18,
+                "stock_minus_batch": 0,
+                "stock_minus_ledger": 0,
+                "matches": true
+            }
+        ]
+    },
+    "status": "Lulus"
+}

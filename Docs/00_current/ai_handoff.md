@@ -52,6 +52,8 @@ Most web routes live in `routes/web.php` and are protected by `auth`, `active`, 
 
 ## Next Recommended Task
 
+Capstone final testing and the cross-location batch-label fix are complete. Read [the implemented report](../30_implemented/2026-10-19-capstone-final-testing/implementation_report.md) and [actual results](../Capstone_Testing_Final/Ringkasan_Pengujian.md) before repeating work. Last functional executions were on 2026-10-18 WIB; documentation finalization on 2026-10-19 is not a new test execution.
+
 Run a browser-based manual QA pass with seeded/local data and document results under `docs/30_implemented/YYYY-MM-DD-manual-qa-pass/` or a future `test_notes.md`.
 
 ## Things Not To Do Yet

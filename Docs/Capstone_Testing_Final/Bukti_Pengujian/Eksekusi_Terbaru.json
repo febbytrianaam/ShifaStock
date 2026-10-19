@@ -1,0 +1,48 @@
+{
+    "commit": "edf1faa8e51f97927b1f78337c69b230b58be2d6",
+    "working_tree_changes": "Perbaikan resources\/js\/app.js dan tes\/script tambahan belum di-commit; SHA-256 dicatat.",
+    "source_sha256": {
+        "resources\/js\/app.js": "e41e97cec72f93da3a97214392c96037152ca321a7fb62002e13944984a658c3",
+        "tests\/Feature\/CapstoneFunctionalTest.php": "b42f5cf0df1126d5af11233d5ce937339e0e16a915a7e6be52b3702d7ae991a5",
+        "scripts\/capstone-final-browser.php": "b2e152c912c6b6caaa015b366c25a8836b3cf0222d9210df6ed2faea1605843f",
+        "scripts\/capstone-final-browser.cjs": "b5156a7416fc7149aa576af921e555cd0eeef47ae4112fd34f9b9824e8040950",
+        "scripts\/capstone-final-tests.php": "da8e38622176d25bda4ba81be8bd953344432a72341bceccd1599b169dbd3c76"
+    },
+    "started_at": "2026-10-18T23:28:19+07:00",
+    "finished_at": "2026-10-18T23:31:40+07:00",
+    "environment": {
+        "os": "Windows",
+        "php": "8.5.9",
+        "laravel": "13.35.0",
+        "phpunit_database": "SQLite :memory:",
+        "mysql_database": "Database acak shifastock_qa_*; dibuat dan dihapus oleh runner",
+        "clinic_database_written": false
+    },
+    "run_directory": "Run_20261018_232819",
+    "commands": [
+        {
+            "name": "01_PHPUnit_SQLite",
+            "command": "php.exe test-inventory.php",
+            "started_at": "2026-10-18T23:28:20+07:00",
+            "finished_at": "2026-10-18T23:30:19+07:00",
+            "exit_code": 0,
+            "log": "01_PHPUnit_SQLite.txt"
+        },
+        {
+            "name": "02_Konkurensi_MySQL",
+            "command": "php.exe test-inventory-mysql.php",
+            "started_at": "2026-10-18T23:30:19+07:00",
+            "finished_at": "2026-10-18T23:31:27+07:00",
+            "exit_code": 0,
+            "log": "02_Konkurensi_MySQL.txt"
+        },
+        {
+            "name": "03_Frontend_Build",
+            "command": "npm.cmd run build",
+            "started_at": "2026-10-18T23:31:27+07:00",
+            "finished_at": "2026-10-18T23:31:40+07:00",
+            "exit_code": 0,
+            "log": "03_Frontend_Build.txt"
+        }
+    ]
+}

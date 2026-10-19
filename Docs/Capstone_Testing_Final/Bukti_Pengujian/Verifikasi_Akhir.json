@@ -1,0 +1,85 @@
+{
+  "verified_at": "2026-10-19T01:54:34.224Z",
+  "commit_base": "edf1faa8e51f97927b1f78337c69b230b58be2d6",
+  "working_tree_modified": true,
+  "sources_sha256": {
+    "resources/js/app.js": "e41e97cec72f93da3a97214392c96037152ca321a7fb62002e13944984a658c3",
+    "tests/Feature/CapstoneFunctionalTest.php": "b42f5cf0df1126d5af11233d5ce937339e0e16a915a7e6be52b3702d7ae991a5",
+    "scripts/capstone-final-tests.php": "da8e38622176d25bda4ba81be8bd953344432a72341bceccd1599b169dbd3c76",
+    "scripts/capstone-final-browser.php": "b2e152c912c6b6caaa015b366c25a8836b3cf0222d9210df6ed2faea1605843f",
+    "scripts/capstone-final-browser.cjs": "056a3e21f1311440d30b573d94b72a728e93af0d40872e0b1adda900ba88e737",
+    "scripts/capstone-final-docs.php": "9c7bf9db6171ccd64826a915b88a0ff097e1243559f98b246d1d57aa869a8764",
+    "scripts/capstone-final-verify.cjs": "cbebb0a4bcae13a179a8c8457b16d2eecc87ecf29c273d687743cb2d372e64ca"
+  },
+  "all_commands_exit_zero": true,
+  "browser_cases_passed": 13,
+  "images": [
+    {
+      "file": "Browser_01_Login_Ditolak.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "43ba3f04f98d1a32fd7304d21502ed23196e15d3528c5d5bb1e69abbbb60ba73",
+      "nonblank": true,
+      "expected_access_denial": false
+    },
+    {
+      "file": "Browser_02_Batch_Apotek.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "4d9dab77bd1adb56249f3377d05fbfb329a707827a4560bbe33357a5349c32d2",
+      "nonblank": true,
+      "expected_access_denial": false
+    },
+    {
+      "file": "Browser_03_Prefill_Apotek.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "587d21dcc4ea0652d30215f71b4ae376fb95f20b330b9cd27c5e9fa95d3cba86",
+      "nonblank": true,
+      "expected_access_denial": false
+    },
+    {
+      "file": "Browser_04_Validasi_Form.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "a0e5245d8a1c603266638324a36575181d2f0ac4d5dbb52dce1ea33a5bfe4106",
+      "nonblank": true,
+      "expected_access_denial": false
+    },
+    {
+      "file": "Browser_05_Posting_Apotek.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "beb3ff13f3ed77fafb34251ff4e05516ae88a16572fea9ff5c489286fc68a50d",
+      "nonblank": true,
+      "expected_access_denial": false
+    },
+    {
+      "file": "Browser_06_Monitoring.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "faa3ff1483b3cf924422cfd930c473d1434a1e5751301547780a0e3d111aa0bc",
+      "nonblank": true,
+      "expected_access_denial": false
+    },
+    {
+      "file": "Browser_07_Akses_Ditolak.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "c13ca8c3a2583a982406af9042ee1ca2e5446ed135105b8d83fd6ecf61a51287",
+      "nonblank": true,
+      "expected_access_denial": true
+    },
+    {
+      "file": "Bug_Sebelum_Perbaikan.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "63c2d65d016919d4fbebbb8b67c657c3364347e702bf334b1d86db977dae1d09",
+      "nonblank": true,
+      "expected_access_denial": false
+    }
+  ],
+  "text_secret_pattern_findings": 0,
+  "local_markdown_links_valid": true,
+  "automatic_checks_only": true
+}

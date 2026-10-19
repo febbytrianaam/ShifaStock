@@ -1,0 +1,110 @@
+{
+  "phase": "final",
+  "base_url": "HTTP loopback sementara",
+  "port": 64570,
+  "medicine": 1,
+  "other_medicine": 2,
+  "warehouse": 1,
+  "pharmacy": 2,
+  "batch": 1,
+  "commit": "edf1faa8e51f97927b1f78337c69b230b58be2d6",
+  "started_at": "2026-10-18T23:39:29+07:00",
+  "simulation": true,
+  "finished_at": "2026-10-18T16:40:19.184Z",
+  "viewport": "1440 x 900",
+  "results": [
+    {
+      "name": "Login tidak valid ditolak",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:39:37.591Z",
+      "evidence": "Browser_01_Login_Ditolak.png",
+      "sha256": "43ba3f04f98d1a32fd7304d21502ed23196e15d3528c5d5bb1e69abbbb60ba73"
+    },
+    {
+      "name": "Login valid petugas",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:39:42.712Z"
+    },
+    {
+      "name": "Batch Apotek dipilih dengan label dan native option sesuai lokasi",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:39:53.899Z",
+      "evidence": "Browser_02_Batch_Apotek.png",
+      "sha256": "4d9dab77bd1adb56249f3377d05fbfb329a707827a4560bbe33357a5349c32d2"
+    },
+    {
+      "name": "Pergantian lokasi memilih opsi batch yang sesuai",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:39:57.473Z"
+    },
+    {
+      "name": "Prefill batch Gudang dan Apotek dari tautan monitoring",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:39:57.505Z",
+      "evidence": "Browser_03_Prefill_Apotek.png",
+      "sha256": "587d21dcc4ea0652d30215f71b4ae376fb95f20b330b9cd27c5e9fa95d3cba86"
+    },
+    {
+      "name": "Validasi SweetAlert tidak mengembalikan label ke Gudang",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:39:59.981Z",
+      "evidence": "Browser_04_Validasi_Form.png",
+      "sha256": "a0e5245d8a1c603266638324a36575181d2f0ac4d5dbb52dce1ea33a5bfe4106"
+    },
+    {
+      "name": "Mengubah obat membersihkan batch yang tidak cocok",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:40:00.640Z"
+    },
+    {
+      "name": "Posting kondisi khusus mengurangi stok Apotek saja",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:40:00.920Z",
+      "evidence": "Browser_05_Posting_Apotek.png",
+      "sha256": "beb3ff13f3ed77fafb34251ff4e05516ae88a16572fea9ff5c489286fc68a50d"
+    },
+    {
+      "name": "Regresi dropdown lintas lokasi pada /transfer",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:40:02.996Z"
+    },
+    {
+      "name": "Regresi dropdown lintas lokasi pada /obat-keluar",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:40:04.568Z"
+    },
+    {
+      "name": "Regresi dropdown lintas lokasi pada /retur-pbf",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:40:06.147Z"
+    },
+    {
+      "name": "Monitoring menampilkan lokasi dan indikator minimum serta kedaluwarsa",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:40:07.968Z",
+      "evidence": "Browser_06_Monitoring.png",
+      "sha256": "faa3ff1483b3cf924422cfd930c473d1434a1e5751301547780a0e3d111aa0bc"
+    },
+    {
+      "name": "Guest dapat melihat tetapi tidak dapat mengirim transaksi atau membuka pengguna",
+      "method": "Browser otomatis (Playwright)",
+      "status": "Lulus",
+      "captured_at": "2026-10-18T16:40:11.407Z",
+      "evidence": "Browser_07_Akses_Ditolak.png",
+      "sha256": "c13ca8c3a2583a982406af9042ee1ca2e5446ed135105b8d83fd6ecf61a51287"
+    }
+  ],
+  "server_stopped": true
+}

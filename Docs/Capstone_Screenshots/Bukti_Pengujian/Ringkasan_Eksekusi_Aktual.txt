@@ -1,0 +1,29 @@
+SHIFASTOCK - BUKTI EKSEKUSI PENGUJIAN AKTUAL
+Commit: edf1faa8e51f97927b1f78337c69b230b58be2d6
+Waktu mulai: 2026-10-18 22:38:31 +07:00
+Data simulasi; database pengujian terpisah. Tidak menggunakan data klinik.
+
+=== 01_Regresi_SQLite.txt | exit 0 ===
+PHPUnit 12.5.38 by Sebastian Bergmann and contributors.
+Runtime:       PHP 8.5.9
+Time: 00:16.037, Memory: 70.00 MB
+OK (58 tests, 610 assertions)
+
+=== 02_Konkruensi_MySQL.txt | exit 0 ===
+Created isolated MySQL QA database; clinic database is not migrated or written.
+PASS concurrent FEFO issues: one accepted, no overselling.
+PASS concurrent reversal: applied once.
+PASS concurrent opname finalization: applied once.
+PASS concurrent daily approval and MySQL JSON snapshot round-trip.
+PASS concurrent duplicate reference: posted once.
+PASS unit edit versus first receipt: serialized, no historical relabeling.
+PASS concurrent first receipts: one balance row, both additions retained.
+Removed isolated MySQL QA database.
+
+=== 03_Build_Frontend.txt | exit 0 ===
+vite v7.3.7 building client environment for production...
+✓ built in 2.90s
+
+=== 04_Rekonsiliasi_Simulasi.txt | exit 0 ===
+Audit baca-saja: 12 pasangan obat/lokasi diperiksa.
+Tidak ditemukan selisih.

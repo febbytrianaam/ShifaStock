@@ -1,5 +1,11 @@
 # Testing Strategy
 
+## Latest Recorded Capstone Execution
+
+Executed 2026-10-18 WIB; documented 2026-10-19: 70 PHPUnit tests / 733 assertions, 7 competing-process MySQL scenarios, 13 live HTTP Playwright cases, and Vite build passed. See [actual evidence and limitations](../Capstone_Testing_Final/Ringkasan_Pengujian.md) and the [ten-group functional table](../Capstone_Testing_Final/Hasil_Pengujian_Fungsional.md). Manual staff UAT is not completed. The earlier 58-test screenshot package is historical, not the latest suite total.
+
+`php scripts/capstone-final-tests.php` records fresh PHPUnit/MySQL/build output. With Playwright available through Node module resolution, `php scripts/capstone-final-browser.php final` creates a separate simulated MySQL database and exercises the actual local HTTP app without response interception. `php scripts/capstone-final-docs.php` formats that evidence; `node scripts/capstone-final-verify.cjs` checks it. Formatting/verifying evidence does not rerun functional tests. The MySQL account needs CREATE/DROP DATABASE privileges. Added browser runners target the local Windows environment; other hosts may require browser/PHP/npm executable adjustments.
+
 ## How To Run Tests
 
 Preferred isolated runner (does not use the clinic database):

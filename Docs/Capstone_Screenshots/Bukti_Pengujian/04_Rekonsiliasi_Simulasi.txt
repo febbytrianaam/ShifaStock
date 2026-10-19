@@ -1,0 +1,2 @@
+Audit baca-saja: 12 pasangan obat/lokasi diperiksa.
+Tidak ditemukan selisih.

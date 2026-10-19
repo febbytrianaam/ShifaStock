@@ -1,0 +1,100 @@
+{
+    "commit": "edf1faa8e51f97927b1f78337c69b230b58be2d6",
+    "test_started_at": "2026-10-18 22:38:31 +07:00",
+    "source": "phpunit-results.xml",
+    "totals": {
+        "tests": 58,
+        "assertions": 610,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+    },
+    "groups": {
+        "Akses dan pengelolaan pengguna": {
+            "tests": 11,
+            "assertions": 68,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+        },
+        "Penerimaan obat dan draf": {
+            "tests": 4,
+            "assertions": 52,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+        },
+        "Mutasi dan rekonsiliasi stok": {
+            "tests": 16,
+            "assertions": 200,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+        },
+        "Pemeriksaan stok harian": {
+            "tests": 13,
+            "assertions": 176,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+        },
+        "Stock opname bulanan": {
+            "tests": 4,
+            "assertions": 50,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+        },
+        "Perlindungan satuan dan snapshot": {
+            "tests": 3,
+            "assertions": 19,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+        },
+        "Antarmuka, format angka, dan dasar": {
+            "tests": 7,
+            "assertions": 45,
+            "failures": 0,
+            "errors": 0,
+            "skipped": 0
+        }
+    },
+    "mysql_scenarios": [
+        {
+            "label": "Pengeluaran bersamaan (FEFO)",
+            "expected": "Stok tidak terjual berlebih",
+            "passed": true
+        },
+        {
+            "label": "Reversal berulang",
+            "expected": "Pembalikan diterapkan sekali",
+            "passed": true
+        },
+        {
+            "label": "Finalisasi opname bersamaan",
+            "expected": "Penyesuaian diterapkan sekali",
+            "passed": true
+        },
+        {
+            "label": "Persetujuan harian bersamaan",
+            "expected": "Persetujuan diterapkan sekali",
+            "passed": true
+        },
+        {
+            "label": "Referensi transaksi ganda",
+            "expected": "Transaksi diposting sekali",
+            "passed": true
+        },
+        {
+            "label": "Ubah satuan saat penerimaan",
+            "expected": "Satuan historis terlindungi",
+            "passed": true
+        },
+        {
+            "label": "Dua penerimaan pertama",
+            "expected": "Kedua penambahan tercatat",
+            "passed": true
+        }
+    ]
+}
