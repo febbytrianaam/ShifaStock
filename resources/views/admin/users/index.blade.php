@@ -24,6 +24,7 @@
             <div class="border-b border-slate-100 p-4">
                 <h2 class="text-base font-bold text-slate-900">Matrix Hak Akses Role</h2>
                 <p class="mt-1 text-sm text-slate-500">Ceklis permission yang boleh dipakai setiap role. Akses administrasi utama untuk Administrator dikunci agar akun superadmin tidak terkunci keluar.</p>
+                <p class="mt-1 text-xs text-slate-500">Guest hanya dapat melihat data persediaan. Izin perubahan data dan menu administrasi tidak dapat diaktifkan untuk Guest.</p>
             </div>
 
             <div class="overflow-x-auto">
@@ -50,6 +51,7 @@
                                     @foreach($roles as $role)
                                         @php
                                             $locked = in_array($permission, $lockedPermissions[$role->value] ?? [], true);
+                                            $forbidden = in_array($permission, $forbiddenPermissions[$role->value] ?? [], true);
                                             $checked = (bool) ($permissionMatrix[$role->value][$permission] ?? false);
                                         @endphp
                                         <td class="table-cell text-center">
@@ -59,11 +61,13 @@
                                                     name="permissions[{{ $role->value }}][{{ $permission }}]"
                                                     value="1"
                                                     @checked($checked)
-                                                    @disabled($locked)
+                                                    @disabled($locked || $forbidden)
                                                     class="h-4 w-4 rounded border-slate-300 text-[#3277B2] focus:ring-[#3277B2]"
                                                 >
                                                 @if($locked)
                                                     <span class="ml-2 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-slate-500">Wajib</span>
+                                                @elseif($forbidden)
+                                                    <span class="ml-2 text-[10px] text-slate-400">Dibatasi</span>
                                                 @endif
                                             </label>
                                         </td>

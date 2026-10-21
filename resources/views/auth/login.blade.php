@@ -8,6 +8,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-[#f6f8fb] text-slate-800">
+    <x-uat-notice />
     <main class="flex min-h-screen items-center justify-center p-6">
         <form method="POST" action="{{ route('login') }}" class="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-7 shadow-soft">
             @csrf
@@ -19,7 +20,11 @@
             </div>
             @if($errors->any())<div role="alert" class="mb-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{{ $errors->first() }}</div>@endif
             <label for="username" class="label">Username</label><input id="username" name="username" type="text" autocomplete="username" value="{{ old('username') }}" required autofocus class="field mb-4">
-            <label for="password" class="label">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required class="field mb-4">
+            <label for="password" class="label">Password</label>
+            <div class="relative mb-4">
+                <input id="password" name="password" type="password" autocomplete="current-password" required class="field pr-12">
+                <button type="button" hidden data-password-toggle aria-controls="password" aria-pressed="false" aria-label="Tampilkan password" title="Tampilkan password" class="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-lg text-slate-500 hover:text-brand-700"></button>
+            </div>
             <label class="mb-6 flex items-center gap-2 text-sm"><input type="checkbox" name="remember" value="1">Ingat saya</label><button class="btn w-full">Masuk</button>
             <p class="mt-6 border-t border-slate-100 pt-4 text-center text-xs leading-relaxed text-slate-500">{{ config('clinic.address') }}</p>
         </form>

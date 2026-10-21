@@ -52,7 +52,13 @@ Most web routes live in `routes/web.php` and are protected by `auth`, `active`, 
 
 ## Next Recommended Task
 
-Capstone final testing and the cross-location batch-label fix are complete. Read [the implemented report](../30_implemented/2026-10-19-capstone-final-testing/implementation_report.md) and [actual results](../Capstone_Testing_Final/Ringkasan_Pengujian.md) before repeating work. Last functional executions were on 2026-10-18 WIB; documentation finalization on 2026-10-19 is not a new test execution.
+Latest interface follow-ups (2026-10-21): welcome guidance is a centered targetless Driver.js step, not a spotlight of the entire dashboard. Later menu highlights remain permission-based. Friendly error pages are standalone Blade views under `resources/views/errors/` without database/session/Vite dependencies; normal JSON and local debug handling are unchanged. Login uses `resources/js/password-visibility.js` for an accessible Lucide eye toggle; no preset credentials are displayed. Latest full suite: 97 tests / 986 assertions passed; separate browser checks: onboarding 9, errors 7, login 3; Vite build passed. See [testing strategy](testing_strategy.md). Do not confuse these runs with historical Capstone or UAT results.
+
+UAT separation and read-only Guest expansion are implemented (2026-10-21). Read [UAT guide](uat_guide.md) and [implementation report](../30_implemented/2026-10-21-uat-guest/implementation_report.md). Setup is already applied locally; do not reset/reseed the persistent UAT database or alter the main `.env`. Use the UAT URL and simulated accounts for clinic trials, not the clinic database. Credentials/configuration are private and ignored by Git. Actual staff UAT is still pending; record their feedback instead of treating automated checks as acceptance.
+
+Dashboard-only real data and the first-login spotlight guide were completed on 2026-10-21. See [the implementation report](../30_implemented/2026-10-21-dashboard-onboarding/implementation_report.md). Local authorized cleanup is already applied: preserve the 167 Excel-derived medicines and do not re-import old SQL/demo stock. The cleanup command is an exact reviewed local manifest, not a generic database reset or production migration. The migration adds `users.onboarding_seen_at`; never mark clinic users as having seen the guide merely for QA. Browser fixtures use their own database.
+
+Historical Capstone final testing and the cross-location batch-label fix are complete. Read [the implemented report](../30_implemented/2026-10-19-capstone-final-testing/implementation_report.md) and [actual results](../Capstone_Testing_Final/Ringkasan_Pengujian.md) before repeating work. For that historical package, functional executions were on 2026-10-18 WIB; documentation finalization on 2026-10-19 is not a new test execution.
 
 Run a browser-based manual QA pass with seeded/local data and document results under `docs/30_implemented/YYYY-MM-DD-manual-qa-pass/` or a future `test_notes.md`.
 
@@ -75,5 +81,5 @@ php artisan serve
 php artisan test
 ```
 
-Known local issue: `php artisan test --filter=InventoryFlowTest` can fail with `could not find driver` if `pdo_sqlite` is not enabled.
+Use `php scripts/test-inventory.php` to force an isolated SQLite database. The runner can enable the SQLite PDO extension in its child process if necessary.
 

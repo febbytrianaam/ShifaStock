@@ -34,9 +34,9 @@
         ['label' => 'PEMERIKSAAN STOK', 'inventory' => false, 'anyCan' => ['view-nightly-checks', 'view-opname', 'view-nightly-history'], 'items' => [
             ['preview.nightly', '✓', 'Pemeriksaan Stok', null, 'view-nightly-checks', ['preview.nightly', 'nightly.show', 'preview.opname', 'nightly.history']],
         ]],
-        ['label' => 'TINDAK LANJUT', 'inventory' => false, 'anyCan' => ['view-shortages', 'view-expiry', 'view-special-adjustments', 'view-reports', 'view-stock-card', 'manage-monitoring-parameters'], 'items' => [
+        ['label' => 'TINDAK LANJUT', 'inventory' => false, 'anyCan' => ['view-shortages', 'view-expiry', 'view-special-adjustments', 'view-reports', 'view-stock-card', 'view-monitoring-parameters'], 'items' => [
             ['shortages.index', '!', 'Monitoring', null, 'view-shortages', ['shortages.index', 'preview.expiry']],
-            ['monitoring-parameters.index', '⚙', 'Parameter Monitoring', null, 'manage-monitoring-parameters'],
+            ['monitoring-parameters.index', '⚙', 'Parameter Monitoring', null, 'view-monitoring-parameters'],
             ['special-adjustments.index', '◇', 'Kondisi Khusus', null, 'view-special-adjustments'],
             ['preview.reports', '▥', 'Laporan', null, 'view-reports', ['preview.reports', 'stock-card.index']],
         ]],
@@ -45,7 +45,7 @@
     $currentGroupLabel = null;
     $pageDescription = null;
     $pageDescriptions = [
-        'dashboard' => 'Gunakan halaman ini untuk memantau kondisi stok secara cepat: total obat, aktivitas penerimaan dan transfer, stok yang perlu perhatian, serta ringkasan data real atau demo sesuai mode yang dipilih.',
+        'dashboard' => 'Pantau stok, aktivitas penerimaan dan transfer, serta hasil pemeriksaan terbaru yang memerlukan tindak lanjut.',
         'admin.users.index' => 'Kelola akun pengguna, role, dan hak akses menu dari satu tempat. Password hanya bisa diubah oleh superadmin/admin yang memiliki akses kelola pengguna, sehingga akun petugas tidak mengubah password sendiri.',
         'admin.users.create' => 'Buat akun baru untuk petugas, admin, kepala apoteker, atau guest. Pastikan role sesuai tugasnya karena role menentukan menu dan aksi yang bisa dilakukan.',
         'admin.users.edit' => 'Perbarui nama, username, role, status aktif, atau password pengguna. Nonaktifkan akun jika petugas tidak lagi boleh login, tanpa menghapus riwayat aktivitasnya.',
@@ -65,7 +65,9 @@
         'nightly.history' => 'Cari riwayat hasil hitung fisik berdasarkan obat, lokasi, dan rentang tanggal. Cocok untuk mengecek perubahan stok fisik dari pemeriksaan sebelumnya.',
         'shortages.index' => 'Pantau daftar obat yang kosong atau menipis berdasarkan pemeriksaan yang sudah disetujui. Gunakan halaman ini untuk menentukan obat yang perlu diminta atau diprioritaskan.',
         'preview.expiry' => 'Pantau batch obat yang sudah kedaluwarsa atau mendekati kedaluwarsa. Lokasi stok ikut ditampilkan agar petugas tahu batch mana yang perlu diprioritaskan atau ditindaklanjuti.',
-        'monitoring-parameters.index' => 'Atur batas minimum stok per obat dan lokasi, serta periode peringatan kedaluwarsa. Parameter ini membantu monitoring menandai stok yang perlu perhatian dengan aturan yang jelas.',
+        'monitoring-parameters.index' => auth()->user()->can('manage-monitoring-parameters')
+            ? 'Atur batas minimum stok per obat dan lokasi, serta periode peringatan kedaluwarsa. Parameter ini membantu monitoring menandai stok yang perlu perhatian dengan aturan yang jelas.'
+            : 'Lihat batas minimum stok per obat dan lokasi, serta periode peringatan kedaluwarsa. Nilai di halaman ini hanya dapat diubah oleh pengguna yang memiliki hak kelola parameter.',
         'special-adjustments.index' => 'Catat kejadian khusus di luar penerimaan dan transfer, seperti obat rusak, hilang, terjatuh, tidak diambil pasien, expired, atau koreksi stok. Posting akan menyesuaikan stok sesuai arah yang dipilih.',
         'preview.reports' => 'Lihat ringkasan stok persediaan per lokasi, mutasi terbaru, dan pemeriksaan yang sudah disetujui. Halaman ini membantu mengecek kondisi stok tanpa membuka transaksi satu per satu.',
         'stock-card.index' => 'Telusuri pergerakan stok secara detail per obat, lokasi, batch, dan periode. Jika lokasi dipilih, sistem menampilkan stok awal periode, mutasi masuk-keluar, dan stok berjalan.',
@@ -95,8 +97,14 @@
         }
     }
 @endphp
-@php($restoredInputFields = array_keys(session()->getOldInput()))
+@php
+    $restoredInputFields = array_keys(session()->getOldInput());
+    $onboardingConfig = ['autoStart' => auth()->user()->onboarding_seen_at === null,
+        'endpoint' => route('onboarding.finish'), 'token' => csrf_token(),
+        'steps' => \App\Support\Onboarding::steps(auth()->user())];
+@endphp
 <script type="application/json" data-restored-input-fields>@json($restoredInputFields)</script>
+<script type="application/json" data-onboarding-config>@json($onboardingConfig)</script>
 <div class="min-h-screen">
     <button type="button" id="sidebar-backdrop" hidden class="fixed inset-0 z-30 bg-slate-950/40 md:hidden" aria-label="Tutup menu"></button>
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-60 -translate-x-full overflow-y-auto border-r border-slate-200 bg-white p-4 transition-transform md:translate-x-0" aria-label="Navigasi aplikasi">
@@ -114,7 +122,7 @@
                             @php($activeRoutes = $activeRoutes ?: [$route])
                             @php($isActive = collect($activeRoutes)->contains(fn ($activeRoute) => request()->routeIs($activeRoute)))
                             @continue($can && !auth()->user()->can($can))
-                            <a class="nav-link {{ $isActive ? 'nav-active' : '' }}" href="{{ route($route) }}" @if($isActive) aria-current="page" @endif><span class="w-5 shrink-0 text-center text-base" aria-hidden="true">{{ $icon }}</span><span class="min-w-0 flex-1">{{ $label }}</span>@if($badge)<span class="text-[9px] font-semibold uppercase text-slate-400">{{ $badge }}</span>@endif</a>
+                            <a data-tour-menu="{{ $route }}" class="nav-link {{ $isActive ? 'nav-active' : '' }}" href="{{ route($route) }}" @if($isActive) aria-current="page" @endif><span class="w-5 shrink-0 text-center text-base" aria-hidden="true">{{ $icon }}</span><span class="min-w-0 flex-1">{{ $label }}</span>@if($badge)<span class="text-[9px] font-semibold uppercase text-slate-400">{{ $badge }}</span>@endif</a>
                         @endforeach
                     </div>
                 @endif
@@ -137,9 +145,10 @@
                 </div>
             </div>
             <div class="flex shrink-0 items-center gap-3">
+                <button type="button" data-tour-restart class="grid h-8 w-8 place-items-center rounded-md text-slate-500 hover:bg-slate-50" aria-label="Buka panduan" title="Buka panduan"><span data-tour-help-icon aria-hidden="true">?</span></button>
                 <span class="hidden text-xs text-slate-400 lg:inline">{{ now()->locale('id')->translatedFormat('d M Y') }}</span>
                 <div class="relative">
-                    <button id="user-menu-button" type="button" class="flex max-w-[150px] items-center gap-2 rounded-md px-1.5 py-1 text-sm font-semibold text-slate-600 hover:bg-slate-50 sm:max-w-[220px] sm:px-2" aria-expanded="false" aria-controls="user-menu" data-user-menu-toggle>
+                    <button id="user-menu-button" data-tour-profile type="button" class="flex max-w-[150px] items-center gap-2 rounded-md px-1.5 py-1 text-sm font-semibold text-slate-600 hover:bg-slate-50 sm:max-w-[220px] sm:px-2" aria-expanded="false" aria-controls="user-menu" data-user-menu-toggle>
                         <span class="hidden min-w-0 truncate text-right text-xs sm:inline">{{ auth()->user()->name ?: auth()->user()->username }}</span>
                         <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700" aria-hidden="true">
                             <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor">
@@ -159,7 +168,8 @@
                 </div>
             </div>
         </header>
-        <div class="p-4 md:p-6">
+        <x-uat-notice />
+        <div class="p-4 md:p-6" data-tour-main>
             @if($pageDescription)
                 <div class="mb-5 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium leading-6 text-slate-600">
                     {{ $pageDescription }}

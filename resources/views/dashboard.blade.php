@@ -1,7 +1,4 @@
 <x-layouts.app title="Dashboard">
-@php
-    $isDemoDashboard = ($dashboardMode ?? 'demo') === 'demo';
-@endphp
 @can('view-inventory')
     <div class="mb-5 border-b border-slate-200 pb-4">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -10,27 +7,16 @@
                     <span class="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold uppercase text-slate-500">
                         {{ auth()->user()->role->label() }}
                     </span>
-                    <span class="rounded-md {{ $isDemoDashboard ? 'border border-amber-200 bg-amber-50 text-amber-800' : 'border border-emerald-200 bg-emerald-50 text-emerald-700' }} px-2 py-0.5 text-[11px] font-semibold uppercase">
-                        {{ $isDemoDashboard ? 'Mode Demo' : 'Data Real' }}
-                    </span>
                 </div>
                 <h1 class="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">
                     Selamat Datang, {{ auth()->user()->username ?? 'Petugas Farmasi' }}
                 </h1>
                 <p class="mt-1 max-w-3xl text-sm leading-relaxed text-slate-500">
-                    {{ $isDemoDashboard ? 'Ringkasan demo untuk kebutuhan presentasi dan simulasi alur klinik.' : 'Ringkasan persediaan dari stok operasional dan pemeriksaan fisik yang disetujui.' }}
+                    Ringkasan persediaan dari transaksi stok dan pemeriksaan fisik yang disetujui.
                 </p>
             </div>
 
             <div class="flex flex-wrap items-center gap-2 shrink-0">
-                <div class="inline-flex rounded-lg border border-slate-200 bg-white p-1 text-xs font-bold shadow-xs">
-                    <a href="{{ route('dashboard', ['data' => 'demo']) }}" class="rounded-md px-3 py-1.5 transition {{ $isDemoDashboard ? 'bg-[#3277B2] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' }}">
-                        Demo
-                    </a>
-                    <a href="{{ route('dashboard', ['data' => 'real']) }}" class="rounded-md px-3 py-1.5 transition {{ ! $isDemoDashboard ? 'bg-[#3277B2] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' }}">
-                        Data real
-                    </a>
-                </div>
                 @can('manage-medicines')
                 <a href="{{ route('medicines.index') }}?tambah=1" class="btn">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
@@ -97,7 +83,7 @@
             <div class="flex items-start justify-between">
                 <div>
                     <span class="inline-flex items-center rounded-md {{ $stats['shortages'] > 0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : 'bg-slate-100 text-slate-600' }} px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                        {{ $stats['shortages'] > 0 ? 'Perlu Restock' : 'Status Aman' }}
+                        {{ $stats['shortages'] > 0 ? 'Perlu Restock' : ($hasApprovedChecks ? 'Tidak Ada Kekurangan' : 'Belum Ada Laporan') }}
                     </span>
                     <h3 class="mt-2 text-xs font-semibold text-slate-500">Kosong / Menipis</h3>
                 </div>
@@ -154,7 +140,7 @@
                     <div class="flex items-center gap-2">
                         <h2 class="font-bold text-slate-900 text-sm">Perlu Ditindaklanjuti</h2>
                         @if(count($shortages) > 0)
-                            <span class="inline-flex items-center rounded-full bg-rose-500 text-white text-[11px] font-bold px-2 py-0.5">{{ count($shortages) }}</span>
+                            <span class="inline-flex items-center rounded-full bg-rose-500 text-white text-[11px] font-bold px-2 py-0.5">{{ $stats['shortages'] }}</span>
                         @endif
                     </div>
                 </div>
@@ -167,17 +153,17 @@
 
             <div class="flex-1 space-y-2.5 overflow-y-auto max-h-[340px] pr-1">
                 @forelse($shortages as $row)
-                    <a href="{{ $isDemoDashboard ? route('shortages.index') : route('nightly.show', $row->nightly_check_id) }}" class="group flex items-center justify-between gap-3 rounded-lg border {{ $row->quantity === 0 ? 'attention-critical hover:bg-rose-50/90' : 'attention-warning hover:bg-amber-50/90' }} p-3 transition-all">
+                    <a href="{{ route('nightly.show', $row->nightly_check_id) }}" class="group flex items-center justify-between gap-3 rounded-lg border {{ (float) $row->quantity === 0.0 ? 'attention-critical hover:bg-rose-50/90' : 'attention-warning hover:bg-amber-50/90' }} p-3 transition-all">
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2">
-                                @if($row->quantity === 0)
+                                @if((float) $row->quantity === 0.0)
                                     <span class="attention-badge-critical inline-flex items-center rounded-md border border-rose-300 bg-rose-100 text-rose-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Kosong</span>
                                 @else
                                     <span class="attention-badge-warning inline-flex items-center rounded-md border border-amber-300 bg-amber-100 text-amber-800 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">Menipis</span>
                                 @endif
                                 <p class="truncate text-sm font-bold text-slate-900 tracking-tight group-hover:text-[#3277B2] transition-colors">{{ $row->name }}</p>
                             </div>
-                            <p class="mt-1 text-xs font-medium text-slate-600 tabular-nums">{{ $row->location }} · {{ \App\Support\Quantity::format($row->quantity) }} {{ $row->unit }} · {{ $row->quantity===0?'Kosong':'Menipis' }}</p>
+                            <p class="mt-1 text-xs font-medium text-slate-600 tabular-nums">{{ $row->location }} · {{ \App\Support\Quantity::format($row->quantity) }} {{ $row->unit }} · {{ (float) $row->quantity === 0.0 ? 'Kosong' : 'Menipis' }}</p>
                         </div>
                         <span class="text-slate-400 group-hover:text-[#3277B2] group-hover:translate-x-0.5 transition-all">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -192,8 +178,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <p class="text-sm font-bold text-slate-800 tracking-tight">Persediaan Aman</p>
-                        <p class="mt-1 text-xs font-normal text-slate-400">Belum ada kekurangan dari pemeriksaan yang disetujui.</p>
+                        <p class="text-sm font-bold text-slate-800 tracking-tight">{{ $hasApprovedChecks ? 'Tidak ada kekurangan dilaporkan' : 'Belum ada hasil pemeriksaan' }}</p>
+                        <p class="mt-1 text-xs font-normal text-slate-400">{{ $hasApprovedChecks ? 'Pemeriksaan terbaru yang disetujui tidak mencatat kekurangan.' : 'Daftar ini akan terisi setelah hasil hitung fisik disetujui.' }}</p>
                     </div>
                 @endforelse
             </div>
@@ -301,6 +287,7 @@
         </div>
     </section>
 @else
+    @canany(['manage-users', 'view-audit-logs', 'manage-system-references', 'manage-system-settings'])
     <div class="mb-5 border-b border-slate-200 pb-4">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -309,23 +296,11 @@
                         <span class="h-1.5 w-1.5 rounded-full bg-brand-600"></span>
                         Portal Administrator
                     </span>
-                    <span class="rounded-md {{ $isDemoDashboard ? 'border border-amber-200 bg-amber-50 text-amber-800' : 'border border-emerald-200 bg-emerald-50 text-emerald-700' }} px-2 py-0.5 text-[11px] font-semibold uppercase">
-                        {{ $isDemoDashboard ? 'Mode Demo' : 'Data Real' }}
-                    </span>
                 </div>
                 <h1 class="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">Manajemen Akses & Konfigurasi Sistem</h1>
                 <p class="mt-1 text-sm font-normal leading-relaxed text-slate-500">
-                    {{ $isDemoDashboard ? 'Ringkasan demo untuk menggambarkan kondisi akun sistem.' : 'Kelola akses pengguna dan referensi sistem Klinik Shifa Medika.' }}
+                    Kelola akses pengguna dan referensi sistem Klinik Shifa Medika.
                 </p>
-            </div>
-
-            <div class="inline-flex rounded-lg border border-slate-200 bg-white p-1 text-xs font-bold shadow-xs">
-                <a href="{{ route('dashboard', ['data' => 'demo']) }}" class="rounded-md px-3 py-1.5 transition {{ $isDemoDashboard ? 'bg-[#3277B2] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' }}">
-                    Demo
-                </a>
-                <a href="{{ route('dashboard', ['data' => 'real']) }}" class="rounded-md px-3 py-1.5 transition {{ ! $isDemoDashboard ? 'bg-[#3277B2] text-white shadow-xs' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' }}">
-                    Data real
-                </a>
             </div>
         </div>
     </div>
@@ -350,5 +325,8 @@
             </div>
         @endforeach
     </div>
+    @else
+        <p class="text-sm text-slate-500">Ringkasan persediaan belum diaktifkan untuk akun ini. Gunakan menu yang tersedia di sidebar.</p>
+    @endcanany
 @endcan
 </x-layouts.app>

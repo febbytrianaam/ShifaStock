@@ -54,3 +54,13 @@ Revert the foundation/auth/dashboard commits if needed, but later inventory feat
 
 2026-10-09
 
+## Follow-up: Login Password Visibility (2026-10-21)
+
+Added a Lucide Eye/EyeOff button inside the existing login password field. Passwords remain masked by default, and the icon switches the input type without changing its value. The button has `type="button"`, matching accessible label/tooltip, `aria-controls`, and `aria-pressed`; keyboard activation is supported. Submitting the form masks the password again. Without JavaScript the eye button stays hidden and ordinary login remains available. No password is added to markup, logs, browser storage, documentation, or account configuration.
+
+Files: `resources/views/auth/login.blade.php`, `resources/js/password-visibility.js`, `resources/js/app.js`, `tests/Feature/FoundationTest.php`, and `scripts/test-login-browser.cjs`.
+
+Actual verification on the local UAT login: three browser checks passed (1440 x 900, 390 x 844, and JavaScript-disabled fallback), with no submitted credentials or account changes. Checks cover masked default, reveal/hide, unchanged field value, keyboard operation, loaded Lucide SVG, stable layout, and zero POST requests. The isolated full PHPUnit suite passed 97 tests / 986 assertions; `npm run build` passed. Local evidence is ignored under `storage/app/qa/login-visibility/`; screenshots contain an empty password field and were visually inspected.
+
+This follow-up does not replace historical dashboard/demo statements above; the real-only dashboard and isolated UAT are documented in the 2026-10-21 implementation reports. No commit, push, or production deployment was performed for the eye toggle.
+

@@ -46,6 +46,9 @@
     </div>
 
     <main class="sheet">
+        @if(app()->environment('uat'))
+            <p data-uat-notice style="margin:0 0 3mm;font-size:10px;font-weight:700;text-align:center">UAT / SIMULASI - Bukan stok operasional klinik</p>
+        @endif
         <header class="clinic">
             <img src="{{ asset('images/shifa-medika.png') }}" alt="Logo Klinik Shifa Medika">
             <div>

@@ -18,7 +18,11 @@ class FoundationTest extends TestCase
 
     public function test_login_and_dashboard_render(): void
     {
-        $this->get('/login')->assertOk()->assertSee('Klinik Shifa Medika');
+        $this->get('/login')->assertOk()->assertSee('Klinik Shifa Medika')
+            ->assertSee('data-password-toggle', false)
+            ->assertSee('type="password"', false)
+            ->assertSee('aria-label="Tampilkan password"', false)
+            ->assertSee('aria-controls="password"', false);
         $user = User::factory()->create(['role' => Role::Pharmacy]);
         $this->post('/login', ['username' => $user->username, 'password' => 'password'])->assertRedirect('/dashboard');
         $this->assertAuthenticatedAs($user);

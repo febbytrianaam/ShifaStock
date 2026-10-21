@@ -17,6 +17,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [SessionController::class, 'store']);
 });
 Route::middleware(['auth', 'active'])->group(function () {
+    Route::post('/panduan/selesai', [\App\Http\Controllers\OnboardingController::class, 'finish'])->name('onboarding.finish');
     Route::post('/logout', [SessionController::class, 'destroy'])->name('logout');
     Route::get('/dashboard', [PrototypeController::class, 'dashboard'])->middleware('can:view-dashboard')->name('dashboard');
     Route::get('/obat', MedicineIndex::class)->middleware('can:view-medicines')->name('medicines.index');
@@ -71,8 +72,8 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/saldo-awal', [InventoryController::class, 'storeOpeningBalance'])->middleware(['can:view-opening-balances', 'can:operate-inventory']);
         Route::get('/stok-awal', [InventoryController::class, 'openingBalances'])->middleware('can:view-opening-balances')->name('opening-balances.index');
         Route::post('/stok-awal', [InventoryController::class, 'storeOpeningBalance'])->middleware(['can:view-opening-balances', 'can:operate-inventory'])->name('opening-balances.store');
-        Route::get('/parameter-monitoring', [InventoryController::class, 'monitoringParameters'])->middleware('can:manage-monitoring-parameters')->name('monitoring-parameters.index');
-        Route::post('/parameter-monitoring', [InventoryController::class, 'saveMonitoringParameters'])->middleware('can:manage-monitoring-parameters')->name('monitoring-parameters.store');
+        Route::get('/parameter-monitoring', [InventoryController::class, 'monitoringParameters'])->middleware('can:view-monitoring-parameters')->name('monitoring-parameters.index');
+        Route::post('/parameter-monitoring', [InventoryController::class, 'saveMonitoringParameters'])->middleware(['can:view-monitoring-parameters', 'can:manage-monitoring-parameters'])->name('monitoring-parameters.store');
         Route::get('/retur-pbf', [InventoryController::class, 'returns'])->middleware('can:view-returns')->name('preview.returns');
         Route::post('/retur-pbf', [InventoryController::class, 'storeReturn'])->middleware(['can:view-returns', 'can:operate-inventory'])->name('returns.store');
         Route::get('/kartu-stok', [InventoryController::class, 'stockCard'])->middleware('can:view-stock-card')->name('stock-card.index');

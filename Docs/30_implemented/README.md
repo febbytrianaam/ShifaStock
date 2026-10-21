@@ -7,6 +7,12 @@ This folder records shipped work as historical truth. Each feature folder contai
 
 ## Index
 
+- [2026-10-21 Friendly error pages](2026-10-21-friendly-error-pages/)
+
+- [2026-10-21 Isolated UAT and combined read-only Guest](2026-10-21-uat-guest/)
+
+- [2026-10-21 Real dashboard, local demo cleanup, and first-login guide](2026-10-21-dashboard-onboarding/)
+
 - [2026-10-09 Foundation, auth, and dashboard](2026-10-09-foundation-auth-dashboard/)
 - [2026-10-09 Master medicine and import workflow](2026-10-09-master-medicine-import/)
 - [2026-10-09 Daily stock check and stock opname](2026-10-09-nightly-check-stock-opname/)

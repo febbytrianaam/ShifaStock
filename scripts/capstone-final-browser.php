@@ -19,8 +19,12 @@ use Symfony\Component\Process\Process;
 require __DIR__.'/../vendor/autoload.php';
 $app = require __DIR__.'/../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
-$phase = ($argv[1] ?? '') === 'baseline' ? 'baseline' : 'final';
-$output = base_path('Docs/Capstone_Testing_Final/Bukti_Pengujian');
+$phase = in_array($argv[1] ?? '', ['baseline', 'onboarding'], true) ? $argv[1] : 'final';
+$output = match (true) {
+    $phase === 'onboarding' => storage_path('app/qa/onboarding'),
+    ($argv[1] ?? '') === 'regression' => storage_path('app/qa/inventory-browser'),
+    default => base_path('Docs/Capstone_Testing_Final/Bukti_Pengujian'),
+};
 $private = storage_path('app/qa/final-'.bin2hex(random_bytes(8)));
 foreach ([$output, $private, $private.'/views'] as $dir) if (! is_dir($dir)) mkdir($dir, 0777, true);
 $database = 'shifastock_final_'.bin2hex(random_bytes(8));
@@ -59,6 +63,13 @@ try {
         'password' => $password, 'role' => Role::Pharmacy, 'is_active' => true]);
     User::create(['username' => 'guest_simulasi', 'name' => 'Guest Simulasi', 'email' => 'guest@simulasi.example.test',
         'password' => $password, 'role' => Role::Guest, 'is_active' => true]);
+    if ($phase === 'onboarding') {
+        foreach (['admin_simulasi' => Role::Administrator, 'apoteker_simulasi' => Role::Pharmacist] as $username => $role) {
+            User::create(['username' => $username, 'name' => $role->label(), 'email' => $username.'@simulasi.example.test', 'password' => $password, 'role' => $role, 'is_active' => true]);
+        }
+    } else {
+        User::query()->update(['onboarding_seen_at' => now()]);
+    }
     Auth::setUser($staff);
     $unit = Unit::where('name', 'Tablet')->sole();
     $medicine = Medicine::create(['code' => 'FINAL-001', 'name' => 'Obat Simulasi Final', 'unit_id' => $unit->id, 'dosage_form' => 'Tablet', 'is_active' => true]);
@@ -80,10 +91,18 @@ try {
         'commit' => trim((new Process(['git', 'rev-parse', 'HEAD'], base_path()))->mustRun()->getOutput()),
         'started_at' => (new DateTimeImmutable('now', new DateTimeZone('Asia/Jakarta')))->format(DATE_ATOM), 'simulation' => true];
     file_put_contents($private.'/metadata.json', json_encode($meta, JSON_THROW_ON_ERROR));
-    $browser = new Process(['node', base_path('scripts/capstone-final-browser.cjs')], base_path(), $env + [
+    $browserScript = $phase === 'onboarding' ? 'scripts/test-onboarding-browser.cjs' : 'scripts/capstone-final-browser.cjs';
+    $browser = new Process(['node', base_path($browserScript)], base_path(), $env + [
         'FINAL_META' => $private.'/metadata.json', 'FINAL_PASSWORD' => $password, 'FINAL_OUTPUT' => $output, 'FINAL_PHP' => PHP_BINARY]);
     $browser->setTimeout(300);
     $code = $browser->run(fn ($type, $text) => print str_replace($password, '[disembunyikan]', $text));
+    if ($phase === 'onboarding' && $code === 0) {
+        $report = app(\App\Services\InventoryReconciliationService::class)->report();
+        if ((float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $warehouse->id)->value('quantity') !== 50.0
+            || (float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $pharmacy->id)->value('quantity') !== 20.0
+            || $report['mismatched_pairs'] || $report['batch_identity_issues']) throw new RuntimeException('Panduan mengubah stok simulasi.');
+        echo "PASS panduan tidak mengubah stok; rekonsiliasi sesuai.\n";
+    }
     if ($phase === 'final' && $code === 0) {
         $gudang = (float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $warehouse->id)->value('quantity');
         $apotek = (float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $pharmacy->id)->value('quantity');

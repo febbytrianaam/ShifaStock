@@ -13,6 +13,7 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 - [Deployment, backup, and restore](00_current/deployment_backup.md)
 - [Privacy and retention](00_current/privacy_and_retention.md)
 - [Current roadmap](00_current/roadmap.md)
+- [Local demo and UAT guide](00_current/uat_guide.md)
 - [Capstone screenshots](Capstone_Screenshots/README.md)
 - [Final Capstone testing](Capstone_Testing_Final/Ringkasan_Pengujian.md)
 - [Next-step plan](20_plans/active/next-step-plan.md)
@@ -38,6 +39,12 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 - Preserve legacy reference files in this `docs/` tree unless the user asks for a cleanup; older screenshots, prior handoff material, import notes, and prototype assets came from the previous `Docs/` folder.
 
 ## Implementation History Index
+
+- [2026-10-21 Friendly error pages](30_implemented/2026-10-21-friendly-error-pages/)
+
+- [2026-10-21 Isolated UAT and combined read-only Guest](30_implemented/2026-10-21-uat-guest/)
+
+- [2026-10-21 Real dashboard, local demo cleanup, and first-login guide](30_implemented/2026-10-21-dashboard-onboarding/)
 
 - [2026-10-09 Foundation, auth, and dashboard](30_implemented/2026-10-09-foundation-auth-dashboard/)
 - [2026-10-09 Master medicine and import workflow](30_implemented/2026-10-09-master-medicine-import/)

@@ -87,8 +87,12 @@
                 @endif
             </div>
 
+            @can('operate-inventory')
             <form method="POST" action="{{ route('opname.save', $selectedSession) }}" data-required-alert="Periksa isian stock opname" novalidate>
                 @csrf
+            @else
+            <div>
+            @endcan
                 <div class="overflow-x-auto">
                     <table class="w-full whitespace-nowrap text-left text-sm">
                         <thead class="bg-[#edf5fb] border-b border-[#d6e8f6] text-[#266194]">
@@ -110,13 +114,21 @@
                                     </td>
                                     <td class="p-4 font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format((float)$item->system_quantity) }}</td>
                                     <td class="p-4">
+                                        @can('operate-inventory')
                                         <input class="field w-32 text-xs" name="items[{{ $item->id }}][physical_quantity]" type="number" min="0" step="0.0001" value="{{ old('items.'.$item->id.'.physical_quantity', $item->physical_quantity !== null ? rtrim(rtrim((string)$item->physical_quantity, '0'), '.') : '') }}" @disabled($selectedSession->status === 'finalized')>
+                                        @else
+                                        <span class="tabular-nums">{{ $item->physical_quantity !== null ? \App\Support\Quantity::format($item->physical_quantity) : 'Belum diisi' }}</span>
+                                        @endcan
                                     </td>
                                     <td class="p-4 font-bold tabular-nums {{ $difference === null ? 'text-slate-400' : ($difference < 0 ? 'text-rose-700' : ($difference > 0 ? 'text-emerald-700' : 'text-slate-700')) }}">
                                         {{ $difference === null ? 'Belum diisi' : ($difference > 0 ? '+' : '').\App\Support\Quantity::format($difference) }}
                                     </td>
                                     <td class="p-4">
+                                        @can('operate-inventory')
                                         <input class="field w-72 text-xs" name="items[{{ $item->id }}][reason]" value="{{ old('items.'.$item->id.'.reason', $item->reason) }}" placeholder="Penyebab selisih jika ada" maxlength="1000" @disabled($selectedSession->status === 'finalized')>
+                                        @else
+                                        <span>{{ $item->reason ?: '-' }}</span>
+                                        @endcan
                                     </td>
                                 </tr>
                             @empty
@@ -125,14 +137,18 @@
                         </tbody>
                     </table>
                 </div>
-                @if($selectedSession->status === 'draft')
+                @if($selectedSession->status === 'draft' && auth()->user()->can('operate-inventory'))
                     <div class="flex flex-wrap justify-end gap-2 border-t border-slate-100 p-4">
                         @can('operate-inventory')
                             <button class="btn-secondary text-xs">Simpan Isian</button>
                         @endcan
                     </div>
                 @endif
+            @can('operate-inventory')
             </form>
+            @else
+            </div>
+            @endcan
             @if($selectedSession->status === 'draft')
                 @can('operate-inventory')
                     <form method="POST" action="{{ route('opname.recount', $selectedSession) }}" class="flex justify-end border-t border-slate-100 p-4" data-confirm-action data-confirm-title="Mulai hitung ulang?" data-confirm-text="Snapshot akan mengikuti stok saat ini dan semua isian fisik dikosongkan. Isian sebelumnya tetap tercatat di audit log. Hitung ulang seluruh batch sebelum finalisasi." data-confirm-button="Ya, mulai hitung ulang">

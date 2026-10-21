@@ -1,0 +1,10 @@
+@extends('errors.layout')
+
+@section('code', '404')
+@section('status', 'Halaman tidak ditemukan')
+@section('accent', '#3277b2')
+@section('title', 'Halaman yang dicari tidak ditemukan')
+@section('description', 'Alamat halaman mungkin tidak sesuai, atau data yang ingin dibuka sudah tidak tersedia.')
+@section('guidance-title', 'Buka kembali dari menu aplikasi')
+@section('guidance', 'Kembali ke aplikasi, lalu pilih menu atau cari data yang dibutuhkan. Jika menggunakan tautan tersimpan, periksa kembali alamatnya.')
+@section('help', 'Jika halaman seharusnya tersedia, sampaikan nama menu dan kode 404 kepada administrator.')

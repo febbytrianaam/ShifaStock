@@ -1,5 +1,11 @@
 # Current State
 
+- Friendly error pages (2026-10-21): custom Indonesian 403, 404, and 500 views with clinic identity, safe GET navigation, administrator guidance, and duplicate-transaction caution for server errors. The views require no database, session, JavaScript, or Vite manifest. JSON errors and developer debug behavior are unchanged. Actual verification: 97 PHPUnit tests / 974 assertions, seven isolated browser checks across desktop/mobile, live UAT 404 verification, and frontend build passed. [Implementation report](../30_implemented/2026-10-21-friendly-error-pages/implementation_report.md).
+
+- Isolated UAT and combined read-only Guest (2026-10-21): persistent `shifastock_uat` database with a schema-limited MySQL account, dedicated runtime/session/cache/log/files, 167 copied Excel masters, simulated inventory and accounts, and no clinical-account/transaction cloning. Guest can see all operational views, including opening balances and monitoring parameters, but cannot gain write or superadmin privileges through the matrix. [UAT guide](uat_guide.md), [implementation report](../30_implemented/2026-10-21-uat-guest/implementation_report.md). The local clinic inventory fingerprint remains unchanged; manual clinic UAT is still pending.
+
+- Dashboard and first-login guide (2026-10-21): dashboard reads only persisted data, without demo mode. The role-aware spotlight guide has Lewati/Kembali/Selanjutnya/Selesai, account-level persistence, and a replay button in the topbar. A reproduced positioning bug was corrected: the welcome step is now centered without targeting the entire dashboard; later steps keep their menu spotlight. Latest verification after this fix: 97 PHPUnit tests / 982 assertions and nine isolated onboarding browser checks passed, including short screens and resize. Authorized local cleanup preserved 167 Excel-sourced medicines and removed six seed medicines plus three reviewed test movements, related balances/batches, and unfilled drafts after a private backup. This cleanup was local, not a production deployment. [Implementation report](../30_implemented/2026-10-21-dashboard-onboarding/implementation_report.md).
+
 - Capstone final testing (documentation finalized 2026-10-19; tests executed 2026-10-18 WIB): shared searchable batch dropdowns now preserve the option for the selected location, including prefill and submission. No FEFO, stock-service, or permission changes. Final results: 70 PHPUnit tests / 733 assertions, seven MySQL competing-process scenarios, 13 live HTTP Playwright cases, and frontend build passed. Manual clinic UAT remains unperformed. [Implementation report](../30_implemented/2026-10-19-capstone-final-testing/implementation_report.md), [actual final evidence](../Capstone_Testing_Final/Ringkasan_Pengujian.md). Initial 58-test screenshot evidence remains historical.
 
 ## What Exists Now
@@ -21,6 +27,7 @@
 
 - Laravel 13 application with Livewire 3, Tailwind CSS 4, Vite, Chart.js, and SweetAlert2.
 - Username/password authentication with active-account middleware.
+- Login password visibility uses an accessible Lucide eye toggle; the field is masked by default and before submission. The button never submits the form and is hidden when JavaScript is unavailable.
 - Roles: administrator, petugas farmasi, kepala apoteker, guest.
 - Database-backed RBAC matrix through `role_permissions`, with locked administrator permissions for core admin access.
 - Superadmin controls for system references, system settings, RBAC default reset, role access preview, and audit log export/filtering.
@@ -59,8 +66,8 @@
 
 ## Current Limitations
 
-- `php artisan test --filter=InventoryFlowTest` currently fails in this local environment because PHP lacks `pdo_sqlite`; this is an environment issue, not an assertion failure.
-- Dashboard supports demo and real mode, but some dashboard cards may intentionally remain demo-oriented.
+- Use `php scripts/test-inventory.php` for isolated SQLite testing, rather than relying on the configured clinic database.
+- Dashboard has no simulated mode. Zero stock and empty activity after cleanup are expected until actual opening balances or transactions are recorded.
 - Daily physical checks reconcile aggregate stock; patient/medical-service detail is intentionally outside ShifaStock.
 - Expiry monitoring depends on batch data from receipts.
 - Retention and deletion policies are assumptions until confirmed by the clinic.

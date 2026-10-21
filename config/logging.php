@@ -51,6 +51,12 @@ return [
     */
 
     'channels' => [
+        'uat' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/uat.log'),
+            'level' => 'warning',
+            'replace_placeholders' => true,
+        ],
 
         'stack' => [
             'driver' => 'stack',

@@ -1,5 +1,31 @@
 # Testing Strategy
 
+## Latest Interface Regression Execution
+
+2026-10-21 WIB: the latest full isolated PHPUnit run passed **97 tests / 986 assertions** after the centered onboarding welcome, friendly error pages, and login password toggle changes. Vite build passed. These totals replace earlier suite totals as the latest run; prior entries below remain stage-specific history.
+
+Actual additional browser runs, executed separately:
+
+| Runner | Result | Scope and Evidence |
+| --- | --- | --- |
+| `php scripts/capstone-final-browser.php onboarding` | 9/9 passed | Random isolated MySQL fixture, four-role welcome, menu steps, replay/skip/back/complete, mobile/short-screen/resize; ignored `storage/app/qa/onboarding/` |
+| `node scripts/test-error-pages.cjs` | 7/7 passed | Six desktop/mobile HTML error responses and one POST-500 safety case; test-only loopback server with SQLite `:memory:`; ignored `storage/app/qa/error-pages/` |
+| `node scripts/test-login-browser.cjs` | 3/3 passed | Local UAT login at port 8010, desktop/mobile toggle and no-JavaScript fallback; no credentials submitted; ignored `storage/app/qa/login-visibility/` |
+
+Playwright must be available through Node module resolution. The runners currently use installed Windows Chrome. Reports/screenshots are local ignored QA evidence, not replacement Capstone screenshots. The latest UI work did not rerun the seven MySQL concurrency scenarios or the 25-check UAT suite; their executions below remain historical. Formal manual clinic UAT is still pending.
+
+## Latest UAT Execution
+
+2026-10-21 WIB: isolated-UAT/Guest implementation passed 90 PHPUnit tests / 931 assertions, seven competing-process MySQL scenarios, 25 direct UAT browser checks and frontend build. `php scripts/uat.php verify` confirms the clinic inventory fingerprint is unchanged and the schema-limited UAT MySQL account cannot read clinic medicines. See [UAT implementation and browser evidence](../30_implemented/2026-10-21-uat-guest/implementation_report.md), and [local UAT guide](uat_guide.md). Manual clinic staff acceptance is not completed.
+
+`php scripts/uat.php browser-check` exercises the running persistent UAT app with temporary QA accounts, without overwriting the supplied simulation accounts or changing inventory. Evidence goes to ignored `storage/app/qa/uat-browser/`; bootstrap/grant verification goes to `storage/app/qa/uat-isolation.json`. All UAT commands must use the dedicated runner; do not repoint the main `.env` or use clinic transactions for testing.
+
+## Earlier Dashboard Execution
+
+2026-10-21 WIB: dashboard/onboarding/cleanup changes passed 81 PHPUnit tests / 795 assertions, seven competing-process MySQL scenarios, 13 operational browser cases, eight additional onboarding browser checks, and Vite build. npm's compatible development-dependency fixes reported zero vulnerabilities. These are actual working-tree runs based on commit `88835eb`, not new Capstone screenshots or manual staff UAT. [Report and private evidence locations](../30_implemented/2026-10-21-dashboard-onboarding/implementation_report.md).
+
+`php scripts/capstone-final-browser.php onboarding` creates an isolated MySQL fixture for first-login, role-aware, replay, and mobile guide tests. `php scripts/capstone-final-browser.php regression` runs the existing 13 operational cases with output under ignored `storage/app/qa/inventory-browser/`, preserving historical Capstone evidence. Node must resolve Playwright; Windows Chrome is currently used by these runners. Neither runner logs fixture passwords or writes to the clinic database.
+
 ## Latest Recorded Capstone Execution
 
 Executed 2026-10-18 WIB; documented 2026-10-19: 70 PHPUnit tests / 733 assertions, 7 competing-process MySQL scenarios, 13 live HTTP Playwright cases, and Vite build passed. See [actual evidence and limitations](../Capstone_Testing_Final/Ringkasan_Pengujian.md) and the [ten-group functional table](../Capstone_Testing_Final/Hasil_Pengujian_Fungsional.md). Manual staff UAT is not completed. The earlier 58-test screenshot package is historical, not the latest suite total.

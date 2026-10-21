@@ -54,10 +54,14 @@
     Kosongkan jumlah jika belum diperiksa; isi 0 jika stok kosong. Jika ada selisih, buka Hasil hitung per batch dan isi tiap batch sesuai fisiknya. Jumlah fisik otomatis dijumlahkan; persetujuan memperbarui total stok dan batch bersama. Jika ada transaksi setelah laporan dikirim, laporan perlu dikembalikan untuk dihitung ulang.
 </div>
 
+@if($editable)
 <form method="POST" action="{{ route('nightly.save',$check->id) }}" data-nightly-count-form novalidate>
     @csrf
     <input type="hidden" name="batch_counts_payload" data-nightly-batch-payload>
     <input type="hidden" name="observed_revision" value="{{ old('observed_revision', $observedRevision) }}">
+@else
+<div>
+@endif
     <div class="no-print card mb-4 flex flex-col gap-3 p-4 sm:flex-row sm:items-end">
         <div class="flex-1">
             <label class="label text-xs font-semibold text-slate-700" for="nightly-search">Cari obat</label>
@@ -171,7 +175,11 @@
             <button class="btn bg-[#3277B2] hover:bg-[#266194] text-white font-bold text-xs" name="action" value="submit">Kirim ke Kepala Apoteker</button>
         </div>
     @endif
+@if($editable)
 </form>
+@else
+</div>
+@endif
 
 @if($check->status==='submitted')
     @can('finalize-opname')

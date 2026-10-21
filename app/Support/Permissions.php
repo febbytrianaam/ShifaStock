@@ -10,30 +10,57 @@ use Throwable;
 class Permissions
 {
     public const VIEW_DASHBOARD = 'view-dashboard';
+
     public const VIEW_INVENTORY = 'view-inventory';
+
     public const VIEW_MEDICINES = 'view-medicines';
+
     public const VIEW_RECEIPTS = 'view-receipts';
+
     public const VIEW_TRANSFERS = 'view-transfers';
+
     public const VIEW_ISSUES = 'view-issues';
+
     public const VIEW_RETURNS = 'view-returns';
+
     public const VIEW_OPENING_BALANCES = 'view-opening-balances';
+
     public const VIEW_STOCK_CARD = 'view-stock-card';
+
     public const VIEW_SPECIAL_ADJUSTMENTS = 'view-special-adjustments';
+
     public const VIEW_NIGHTLY_CHECKS = 'view-nightly-checks';
+
     public const VIEW_OPNAME = 'view-opname';
+
     public const VIEW_NIGHTLY_HISTORY = 'view-nightly-history';
+
     public const VIEW_SHORTAGES = 'view-shortages';
+
     public const VIEW_EXPIRY = 'view-expiry';
+
     public const VIEW_REPORTS = 'view-reports';
+
+    public const VIEW_MONITORING_PARAMETERS = 'view-monitoring-parameters';
+
     public const OPERATE_INVENTORY = 'operate-inventory';
+
     public const MANAGE_MEDICINES = 'manage-medicines';
+
     public const MANAGE_MONITORING_PARAMETERS = 'manage-monitoring-parameters';
+
     public const FINALIZE_OPNAME = 'finalize-opname';
+
     public const REVERSE_INVENTORY_MOVEMENTS = 'reverse-inventory-movements';
+
     public const MANAGE_USERS = 'manage-users';
+
     public const MANAGE_PERMISSIONS = 'manage-permissions';
+
     public const VIEW_AUDIT_LOGS = 'view-audit-logs';
+
     public const MANAGE_SYSTEM_REFERENCES = 'manage-system-references';
+
     public const MANAGE_SYSTEM_SETTINGS = 'manage-system-settings';
 
     public static function definitions(): array
@@ -55,6 +82,7 @@ class Permissions
                 self::VIEW_SHORTAGES => 'Lihat menu Kekurangan & Permintaan',
                 self::VIEW_EXPIRY => 'Lihat menu Monitoring Kedaluwarsa',
                 self::VIEW_REPORTS => 'Lihat menu Laporan',
+                self::VIEW_MONITORING_PARAMETERS => 'Lihat parameter monitoring',
             ],
             'Persediaan' => [
                 self::VIEW_INVENTORY => 'Lihat dashboard persediaan',
@@ -88,6 +116,7 @@ class Permissions
     {
         return [
             Role::Administrator->value => [
+                self::VIEW_MONITORING_PARAMETERS => false,
                 self::VIEW_DASHBOARD => true,
                 self::VIEW_INVENTORY => false,
                 self::VIEW_MEDICINES => false,
@@ -116,6 +145,7 @@ class Permissions
                 self::MANAGE_SYSTEM_SETTINGS => true,
             ],
             Role::Pharmacy->value => [
+                self::VIEW_MONITORING_PARAMETERS => false,
                 self::VIEW_DASHBOARD => true,
                 self::VIEW_INVENTORY => true,
                 self::VIEW_MEDICINES => true,
@@ -144,6 +174,7 @@ class Permissions
                 self::MANAGE_SYSTEM_SETTINGS => false,
             ],
             Role::Pharmacist->value => [
+                self::VIEW_MONITORING_PARAMETERS => true,
                 self::VIEW_DASHBOARD => true,
                 self::VIEW_INVENTORY => true,
                 self::VIEW_MEDICINES => true,
@@ -172,6 +203,7 @@ class Permissions
                 self::MANAGE_SYSTEM_SETTINGS => false,
             ],
             Role::Guest->value => [
+                self::VIEW_MONITORING_PARAMETERS => true,
                 self::VIEW_DASHBOARD => true,
                 self::VIEW_INVENTORY => true,
                 self::VIEW_MEDICINES => true,
@@ -179,7 +211,7 @@ class Permissions
                 self::VIEW_TRANSFERS => true,
                 self::VIEW_ISSUES => true,
                 self::VIEW_RETURNS => true,
-                self::VIEW_OPENING_BALANCES => false,
+                self::VIEW_OPENING_BALANCES => true,
                 self::VIEW_STOCK_CARD => true,
                 self::VIEW_SPECIAL_ADJUSTMENTS => true,
                 self::VIEW_NIGHTLY_CHECKS => true,
@@ -221,6 +253,10 @@ class Permissions
     {
         $roleValue = $role instanceof Role ? $role->value : $role;
 
+        if (in_array($permission, self::forbidden()[$roleValue] ?? [], true)) {
+            return false;
+        }
+
         if (in_array($permission, self::locked()[$roleValue] ?? [], true)) {
             return true;
         }
@@ -261,6 +297,12 @@ class Permissions
             }
         }
 
+        foreach (self::forbidden() as $role => $permissions) {
+            foreach ($permissions as $permission) {
+                $matrix[$role][$permission] = false;
+            }
+        }
+
         return $matrix;
     }
 
@@ -276,6 +318,9 @@ class Permissions
                     if (in_array($permission, self::locked()[$role->value] ?? [], true)) {
                         $allowed = true;
                     }
+                    if (in_array($permission, self::forbidden()[$role->value] ?? [], true)) {
+                        $allowed = false;
+                    }
 
                     DB::table('role_permissions')->updateOrInsert(
                         ['role' => $role->value, 'permission' => $permission],
@@ -289,5 +334,13 @@ class Permissions
     private static function defaultFor(string $role, string $permission): bool
     {
         return (bool) (self::defaults()[$role][$permission] ?? false);
+    }
+
+    public static function forbidden(): array
+    {
+        // Guest may inspect operational menus, never write or enter administration.
+        return [Role::Guest->value => array_values(array_diff(self::all(), [
+            ...array_keys(self::definitions()['Menu']), self::VIEW_INVENTORY,
+        ]))];
     }
 }

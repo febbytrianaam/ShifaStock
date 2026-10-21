@@ -20,6 +20,9 @@
 - Audit log: `AuditLogger`, `AuditLog`, `Admin\AuditLogController`
 - UI shell: `resources/views/components/layouts/app.blade.php`
 - Frontend behavior: `resources/js/app.js`, `resources/css/app.css`
+- Onboarding: `Onboarding`, `OnboardingController`, and Driver.js; targetless centered welcome followed by permission-filtered menu spotlights.
+- Login password visibility: `resources/js/password-visibility.js`, initialized by `app.js`, using Lucide Eye/EyeOff without changing authentication.
+- Error UI: standalone `resources/views/errors/{403,404,500}.blade.php` overrides and a shared layout, independent of Vite/database/session reads. Laravel still controls HTTP status, JSON negotiation, reporting, and debug output.
 
 ## Runtime Flow
 
@@ -70,7 +73,11 @@ No external SaaS integration is currently wired into the runtime application. Co
 
 ## Storage And Database Behavior
 
+- Local UAT uses a persistent separate MySQL schema and schema-limited database account via `scripts/uat.php`, without editing the main `.env`. `UatEnvironment` rejects unsafe UAT configuration during provider boot. Sessions/cache, files/views/logs and APP_KEY/cookie are isolated. See [UAT guide](uat_guide.md); the primary database remains the clinic environment.
+- Guest is capped at operational read permissions, even if forbidden matrix rows are enabled. `view-monitoring-parameters` controls viewing; `manage-monitoring-parameters` controls updates. No guest access to administration/audit/references/settings.
+
 - `users` stores staff/admin/guest accounts.
+- `users.onboarding_seen_at` records completed/skipped first-login guides. The authenticated, active-account-only `POST /panduan/selesai` updates the current account only; this endpoint does not grant inventory permissions. Driver.js displays steps derived from backend RBAC and menu elements, with no inventory writes.
 - `role_permissions` stores RBAC matrix values.
 - `medicines`, `units`, `medicine_packages`, and related tables store master medicine metadata.
 - `stock_balances` stores current aggregate stock by medicine/location.

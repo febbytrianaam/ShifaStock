@@ -4,7 +4,7 @@
 
 ShifaStock membantu pencatatan obat masuk, transfer gudang ke apotek, pengeluaran, pemeriksaan fisik, dan tindak lanjut stok. Persediaan dapat ditelusuri per obat, batch, tanggal kedaluwarsa, dan lokasi melalui kartu stok serta laporan.
 
-Aplikasi berfokus pada pengelolaan obat, bukan pelayanan pasien atau integrasi Neoklinik. Dashboard menyediakan mode demo; transaksi operasional tetap menggunakan database aplikasi.
+Aplikasi berfokus pada pengelolaan obat, bukan pelayanan pasien atau integrasi Neoklinik. Dashboard dan transaksi operasional menggunakan database aplikasi, tanpa mode data dummy. Panduan sorotan menu muncul pada login pertama, mengikuti hak akses, dan dapat dibuka ulang dari tombol tanda tanya di topbar.
 
 ## ✨ Fitur Utama
 
@@ -29,11 +29,13 @@ Pencarian obat dan batch terhubung ke backend. Validasi dan konfirmasi tindakan 
 | Administrator | `admin` | Pengguna, hak akses, referensi sistem, pengaturan, dan audit log |
 | Petugas Farmasi | `petugas` | Pencatatan dan pemantauan stok operasional |
 | Kepala Apoteker | `kepala` | Master obat, review/finalisasi pemeriksaan, dan pengawasan persediaan |
-| Guest | `guest` | Melihat data tanpa mengubah transaksi pada konfigurasi default |
+| Guest | `guest` | Seluruh menu persediaan gabungan petugas/apoteker, hanya baca, tanpa menu superadmin |
 
 Hak akses diatur melalui **Administrasi > Pengguna > Hak Akses**. Matriks mengatur menu serta tindakan backend; beberapa izin inti administrator dikunci untuk mencegah kehilangan akses administrasi.
 
-Pengelolaan password dilakukan melalui pengguna yang berwenang mengelola akun. Password tidak ditampilkan di README, halaman login, atau output seeder.
+Pengelolaan password dilakukan melalui pengguna yang berwenang mengelola akun. Daftar password akun tidak dipublikasikan di README, halaman login, atau output seeder. Kolom password pada form login tersembunyi secara default dan memiliki ikon mata untuk menampilkan atau menyembunyikan isian sendiri.
+
+Halaman 403, 404, dan 500 menggunakan identitas klinik dan petunjuk pemulihan berbahasa Indonesia. Halaman 500 mengingatkan pengguna memeriksa riwayat sebelum mengulang transaksi. Detail teknis error tidak ditampilkan saat `APP_DEBUG=false`.
 
 ## Pengamanan Stok
 
@@ -96,6 +98,12 @@ Master obat dapat dimasukkan melalui menu Data Obat, termasuk preview/import ref
 
 ## Pengujian
 
+**Eksekusi terbaru 21 Oktober 2026:** 97 tes / 986 assertion lulus pada SQLite terisolasi. Pengujian browser tambahan lulus untuk posisi panduan (9 pemeriksaan), halaman error (7 pemeriksaan), dan tombol mata login (3 pemeriksaan), serta build frontend berhasil. Hasil tiap tahap dan lokasi bukti lokal dicatat pada [strategi pengujian](Docs/00_current/testing_strategy.md). Pengujian ini tidak menggantikan UAT manual petugas.
+
+**Eksekusi UAT/Guest 21 Oktober 2026:** 90 tes / 931 assertion, 7 skenario MySQL paralel, 25 pemeriksaan browser UAT, dan build lulus. Database serta pengguna MySQL UAT sudah diverifikasi terpisah dari inventori klinik. [Laporan UAT dan Guest](Docs/30_implemented/2026-10-21-uat-guest/implementation_report.md) memuat hasil browser terbaru dan batasannya.
+
+**Eksekusi dashboard/panduan sebelumnya pada 21 Oktober 2026:** 81 tes / 795 assertion, 7 skenario MySQL, 13 kasus browser operasional, 8 pemeriksaan panduan, dan build frontend lulus pada database uji terpisah. [Laporan dashboard dan panduan](Docs/30_implemented/2026-10-21-dashboard-onboarding/implementation_report.md) mencatat cakupan serta batasannya; UAT petugas tetap belum dilakukan.
+
 ### Regresi Terisolasi
 
 ```bash
@@ -149,6 +157,19 @@ Tes browser tersebut memakai fixture lokal dan mencegat permintaan tulis agar ti
 
 **Hasil eksekusi final 18 Oktober 2026:** 70 tes / 733 assertion lulus, tujuh skenario MySQL bersamaan lulus, 13 kasus browser Playwright pada HTTP lokal lulus, dan build frontend berhasil. [Tabel fungsional dan bukti aktual](Docs/Capstone_Testing_Final/Hasil_Pengujian_Fungsional.md) membedakan pengujian otomatis, browser, dan UAT manual yang belum dilakukan. [Paket screenshot awal](Docs/Capstone_Screenshots/README.md) tetap memuat hasil historis 58 tes / 610 assertion. Pembaruan dokumentasi 19 Oktober tidak dianggap eksekusi ulang. Cakupan ini bukan jaminan seluruh jadwal transaksi, beban produksi, atau keamanan aplikasi telah diuji.
 
+## Demo Dan UAT Lokal
+
+Lingkungan UAT terpisah memakai database `shifastock_uat`, pengguna MySQL dengan grant khusus UAT, akun simulasi, serta sesi/cache sendiri. Data stok dan transaksi UAT tidak masuk ke database klinik. Guest dapat melihat seluruh menu persediaan, termasuk Stok Awal dan Parameter Monitoring, tetapi izin tulis dan administrasinya dikunci di backend.
+
+```bash
+php scripts/uat.php setup
+php scripts/uat.php serve
+```
+
+`setup` hanya untuk penyiapan awal dan menolak menimpa UAT yang sudah ada. Buka `http://127.0.0.1:8010` pada komputer tersebut; tidak membutuhkan hosting publik. Username: `petugas_uat`, `apoteker_uat`, dan `guest`. Akun `admin_uat` khusus pengelola internal. Password akun UAT tidak ditampilkan di README; kredensial disimpan privat lokal dan diabaikan Git.
+
+Lihat [panduan UAT](Docs/00_current/uat_guide.md) untuk lokasi kredensial privat, verifikasi isolasi, pengujian browser, dan batasan akses lokal. Jangan mengganti `.env` utama atau mereset data klinik untuk demo.
+
 ## Deployment Dan Pembaruan
 
 1. Backup database serta konfigurasi sebelum memperbarui aplikasi.
@@ -183,7 +204,7 @@ Jangan menjalankan `migrate:fresh` pada data klinik atau seeder demo di produksi
 
 - Jangan commit `.env`, kredensial database, password, atau hasil pengujian yang mengandung data internal.
 - Akun demo hanya untuk lokal; konfigurasi pengguna produksi dikelola terpisah.
-- Tinjau matriks hak akses sebelum digunakan petugas. Mode demo dashboard bukan pengganti pembatasan akses.
+- Tinjau matriks hak akses sebelum digunakan petugas. Panduan menu bukan pengganti pembatasan akses backend.
 - Pertahankan audit log dan riwayat mutasi sesuai kebijakan klinik. Log mencatat aktivitas akun, administrasi, dan tindakan persediaan yang telah diinstrumentasi.
 - Penguncian aplikasi tidak melindungi perubahan melalui SQL langsung atau akses administrator database. Jangan menggunakannya untuk mengganti satuan atau mengoreksi stok tanpa prosedur terverifikasi.
 

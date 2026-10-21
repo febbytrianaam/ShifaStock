@@ -1,0 +1,10 @@
+@extends('errors.layout')
+
+@section('code', '500')
+@section('status', 'Gangguan sistem')
+@section('accent', '#ba4854')
+@section('title', 'Permintaan belum dapat diproses')
+@section('description', 'Sistem mengalami kendala saat memproses permintaan Anda. Silakan kembali ke aplikasi dan coba beberapa saat lagi.')
+@section('guidance-title', 'Baru saja menyimpan transaksi?')
+@section('guidance', 'Periksa daftar atau riwayat transaksi terlebih dahulu sebelum menginput ulang, agar transaksi tidak tercatat dua kali. Jika belum dapat diperiksa, hubungi administrator.')
+@section('help', 'Jika kendala berulang, sampaikan nama menu, waktu kejadian, dan kode 500 kepada administrator.')

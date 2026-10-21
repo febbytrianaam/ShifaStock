@@ -1,0 +1,35 @@
+.driver-popover.shifa-tour {
+    box-sizing: border-box;
+    width: 360px;
+    max-width: calc(100vw - 24px);
+    border-radius: 8px;
+    padding: 18px;
+    font-family: var(--font-sans);
+    color: #1f2937;
+    box-shadow: 0 8px 32px #11182733;
+}
+.shifa-tour .driver-popover-title { font-size: 16px; line-height: 1.5; font-weight: 700; }
+.shifa-tour .driver-popover-description {
+    font-size: 13px;
+    line-height: 1.7;
+    max-height: max(64px, calc(100dvh - 190px));
+    overflow-y: auto;
+}
+.shifa-tour .driver-popover-footer { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.shifa-tour .driver-popover-progress-text { font-size: 11px; color: #6b7280; }
+.shifa-tour .driver-popover-navigation-btns { display: flex; gap: 6px; margin-left: auto; }
+.shifa-tour .driver-popover-footer button {
+    border: 1px solid #d1d5db;
+    background: white;
+    color: #374151;
+    padding: 7px 9px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    text-shadow: none;
+}
+.shifa-tour .driver-popover-footer .driver-popover-next-btn { background: #3277b2; border-color: #3277b2; color: white; }
+.shifa-tour .driver-popover-footer .shifa-tour-skip { border-color: transparent; padding-left: 0; }
+.shifa-tour [data-tour-error] { font-size: 12px; line-height: 1.5; color: #be123c; }
+.shifa-tour button:disabled { opacity: .5; }
+.shifa-tour button:focus-visible { outline: 3px solid #60a5fa; outline-offset: 2px; }

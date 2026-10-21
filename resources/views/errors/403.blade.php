@@ -1,0 +1,10 @@
+@extends('errors.layout')
+
+@section('code', '403')
+@section('status', 'Akses terbatas')
+@section('accent', '#bc7b16')
+@section('title', 'Akses belum tersedia untuk akun Anda')
+@section('description', 'Akun Anda belum memiliki izin untuk membuka halaman atau menjalankan tindakan ini.')
+@section('guidance-title', 'Perlu akses ke fitur ini?')
+@section('guidance', 'Hubungi administrator klinik untuk memeriksa hak akses akun Anda. Anda tetap dapat menggunakan menu lain yang diizinkan.')
+@section('help', 'Sampaikan nama menu dan kode 403 kepada administrator agar dapat ditindaklanjuti.')

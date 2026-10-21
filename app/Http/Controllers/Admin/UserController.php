@@ -40,6 +40,7 @@ class UserController extends Controller
             'permissionGroups' => Permissions::definitions(),
             'permissionMatrix' => Permissions::matrix(),
             'lockedPermissions' => Permissions::locked(),
+            'forbiddenPermissions' => Permissions::forbidden(),
             'menuPreview' => $this->menuPreview(),
         ]);
     }
@@ -193,7 +194,7 @@ class UserController extends Controller
             ['group' => 'Pemeriksaan Stok', 'label' => 'Riwayat Pemeriksaan', 'permission' => Permissions::VIEW_NIGHTLY_HISTORY],
             ['group' => 'Tindak Lanjut', 'label' => 'Monitoring', 'permission' => Permissions::VIEW_SHORTAGES],
             ['group' => 'Tindak Lanjut', 'label' => 'Monitoring Kedaluwarsa', 'permission' => Permissions::VIEW_EXPIRY],
-            ['group' => 'Tindak Lanjut', 'label' => 'Parameter Monitoring', 'permission' => Permissions::MANAGE_MONITORING_PARAMETERS],
+            ['group' => 'Tindak Lanjut', 'label' => 'Parameter Monitoring', 'permission' => Permissions::VIEW_MONITORING_PARAMETERS],
             ['group' => 'Tindak Lanjut', 'label' => 'Kondisi Khusus', 'permission' => Permissions::VIEW_SPECIAL_ADJUSTMENTS],
             ['group' => 'Tindak Lanjut', 'label' => 'Laporan', 'permission' => Permissions::VIEW_REPORTS],
             ['group' => 'Tindak Lanjut', 'label' => 'Kartu Stok', 'permission' => Permissions::VIEW_STOCK_CARD],

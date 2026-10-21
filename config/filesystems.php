@@ -29,6 +29,11 @@ return [
     */
 
     'disks' => [
+        'uat' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/uat/files'),
+            'throw' => false,
+        ],
 
         'local' => [
             'driver' => 'local',

@@ -5,6 +5,8 @@ import 'sweetalert2/dist/sweetalert2.min.css';
 import { initFormSafety, resetFormBaseline, allowFormNavigation } from './form-safety';
 import { initReceiptValidation, validateReceiptRows, checkReceiptInvoice } from './receipt-validation';
 import { initDailyCounts, prepareDailyCounts } from './daily-counts';
+import { initOnboarding } from './onboarding';
+import { initPasswordVisibility } from './password-visibility';
 
 let nightlyPage = 1;
 
@@ -114,6 +116,8 @@ function initialize() {
     initRolePreview();
     initDailyCounts();
     initFormSafety();
+    initOnboarding();
+    initPasswordVisibility();
 }
 
 function initBalanceSearch() {

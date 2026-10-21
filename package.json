@@ -16,6 +16,8 @@
     },
     "dependencies": {
         "chart.js": "^4.5.1",
+        "driver.js": "^1.10.2",
+        "lucide": "^1.60.0",
         "sweetalert2": "^11.26.25"
     }
 }

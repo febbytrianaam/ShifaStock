@@ -874,7 +874,7 @@ class InventoryController extends Controller
                     ]);
                 }
                 fclose($handle);
-            }, 'laporan-persediaan-'.$start->format('Ymd').'-'.$end->format('Ymd').'.csv', ['Content-Type' => 'text/csv']);
+            }, (app()->environment('uat') ? 'uat-' : '').'laporan-persediaan-'.$start->format('Ymd').'-'.$end->format('Ymd').'.csv', ['Content-Type' => 'text/csv']);
         }
 
         return view('inventory.reports', [
