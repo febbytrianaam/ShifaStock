@@ -24,12 +24,12 @@ class Onboarding
                 : 'Cari obat dan periksa satuan yang digunakan. Jika obat belum tersedia atau satuannya belum tepat, minta kepala apoteker memperbarui master obat.'],
             ['view-opening-balances', 'opening-balances.index', 'Stok awal', 'Saat mulai memakai sistem, masukkan stok fisik per obat, batch, kedaluwarsa, dan lokasi. Jangan mencatat stok yang sama lagi sebagai penerimaan.'],
             ['view-receipts', 'preview.receipts', 'Penerimaan obat', 'Cocokkan faktur PBF dengan obat, batch, kedaluwarsa, jumlah, dan satuan. Simpan draf jika belum selesai. Posting hanya saat benar karena stok langsung bertambah.'],
-            ['view-transfers', 'preview.transfers', 'Transfer Gudang ke Apotek', 'Pilih obat, lokasi sumber, tujuan, dan jumlah. Batch kosong memakai FEFO otomatis. Pastikan obat benar-benar sudah dipindahkan sebelum menyimpan.'],
+            ['view-transfers', 'preview.transfers', 'Transfer Gudang ke Apotek', 'Tentukan lokasi sumber dan tujuan, lalu isi beberapa baris obat beserta jumlahnya. Batch kosong memakai FEFO otomatis. Semua item diproses bersama. Cocokkan dengan perpindahan fisik sebelum menyimpan.'],
             ['view-issues', 'preview.issues', 'Pengeluaran obat', 'Catat obat yang keluar dari lokasi persediaan. Isi referensi dan jumlah sesuai pemakaian; penyimpanan transaksi langsung mengurangi stok.'],
             ['view-returns', 'preview.returns', 'Retur ke PBF', 'Pilih obat, batch, lokasi sumber, dan alasan pengembalian. Posting retur mengurangi stok pada lokasi tersebut.'],
             ['view-nightly-checks', 'preview.nightly', 'Pemeriksaan stok', $user->can('finalize-opname')
                 ? 'Tab Harian dipakai untuk meninjau hasil hitung petugas. Tab Bulanan dipakai untuk stock opname. Cocokkan selisih dan rincian batch sebelum menyetujui atau finalisasi karena tindakan ini dapat menyesuaikan stok.'
-                : 'Mulai pemeriksaan per lokasi, isi hasil hitung fisik tiap batch, lalu simpan draf atau kirim ke kepala apoteker. Tab bulanan dipakai untuk stock opname.'],
+                : 'Pilih lokasi, lalu tentukan semua obat atau obat tertentu. Isi hasil hitung fisik obat dalam laporan dan rincian batch jika ada selisih, lalu simpan draf atau kirim ke kepala apoteker. Obat di luar laporan tidak berubah.'],
             ['view-shortages', 'shortages.index', 'Monitoring stok dan kedaluwarsa', 'Periksa kekurangan stok dan tab Kedaluwarsa. Gunakan filter lokasi untuk menemukan obat yang perlu diisi ulang atau ditindaklanjuti.'],
             ['view-monitoring-parameters', 'monitoring-parameters.index', 'Parameter monitoring', 'Tentukan stok minimum per obat dan lokasi serta batas peringatan kedaluwarsa sesuai keputusan apoteker.'],
             ['view-special-adjustments', 'special-adjustments.index', 'Kondisi khusus', 'Catat obat rusak, hilang, atau kondisi lain. Cocokkan batch dengan lokasi dan jelaskan kejadian; pastikan arah perubahan stok sudah benar.'],

@@ -24,7 +24,11 @@
             </span>
         </div>
     </div>
-    <p class="mt-2 text-xs text-slate-500">Diperiksa: {{ $items->whereNotNull('quantity')->count() }} / {{ $items->count() }} obat. Pembanding: {{ $previous ? $previous->date : 'Belum ada pemeriksaan terdahulu yang disetujui' }}. Selisih bukan jumlah pemakaian pasien.</p>
+    <p class="mt-2 text-xs font-semibold text-slate-700">{{ $check->scope === 'selected' ? 'Obat tertentu' : 'Pemeriksaan lengkap' }} &middot; Diperiksa: {{ $items->whereNotNull('quantity')->count() }} / {{ $items->count() }} obat.</p>
+    <p class="mt-1 text-xs text-slate-500">Pembanding menggunakan hasil terakhir masing-masing obat yang disetujui sebelum tanggal ini. Selisih bukan jumlah pemakaian pasien.</p>
+    @if($check->scope === 'selected')
+        <p class="mt-1 text-xs text-slate-600">Laporan ini hanya mencakup obat yang dipilih. Obat lain tidak ikut diperiksa atau diubah stoknya.</p>
+    @endif
     @if($editable)
         <form method="POST" action="{{ route('nightly.destroy', $check->id) }}" class="no-print mt-3" data-confirm-cancel-draft>
             @csrf
@@ -118,7 +122,7 @@
                             <span class="inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-500 mt-0.5">{{ $i->code }}</span>
                             <x-nightly-batches :item="$i" :batches="$batchOptions->get($i->medicine_id, collect())" :balances="$batchBalances" :editable="$editable" />
                         </td>
-                        <td class="p-3 text-xs font-medium text-slate-600 tabular-nums">{{ $b ? $b->quantity.' '.$b->unit : 'Belum tersedia' }}</td>
+                        <td class="p-3 text-xs font-medium text-slate-600 tabular-nums">{{ $b ? $b->quantity.' '.$b->unit : 'Belum tersedia' }}@if($b)<span class="mt-1 block text-[11px] text-slate-500">{{ $b->checked_date }}</span>@endif</td>
                         <td class="p-3">
                             @if($editable)
                                 <input aria-label="Jumlah {{ $i->name }}" class="field w-28 text-xs font-medium" name="items[{{ $i->id }}][quantity]" type="number" min="0" max="2147483647" step="1" placeholder="Belum dicek" value="{{ old('items.'.$i->id.'.quantity',$i->quantity) }}">
@@ -128,7 +132,28 @@
                         </td>
                         <td class="p-3">
                             @if($editable)
-                                <input aria-label="Satuan {{ $i->name }}" class="field w-28 text-xs font-medium" maxlength="100" name="items[{{ $i->id }}][unit]" placeholder="Tablet / botol" value="{{ old('items.'.$i->id.'.unit',$i->unit) }}">
+                                @php($masterUnit = $medicineUnits->get($i->medicine_id))
+                                @php($savedUnit = old('items.'.$i->id.'.unit', $i->unit))
+                                @php($savedUnit = is_scalar($savedUnit) ? trim((string) $savedUnit) : '')
+                                @php($countedQuantity = old('items.'.$i->id.'.quantity', $i->quantity))
+                                @php($hasCount = $countedQuantity !== null && $countedQuantity !== '')
+                                @php($unitChanged = $masterUnit && $hasCount && mb_strtolower($savedUnit) !== mb_strtolower($masterUnit))
+                                @php($unitOptions = $masterUnit ? collect([$masterUnit]) : $countUnits)
+                                @php($selectedUnit = $masterUnit ? ($unitChanged ? '' : $masterUnit) : $savedUnit)
+                                <select aria-label="Satuan {{ $i->name }}" class="field w-36 text-xs font-medium" name="items[{{ $i->id }}][unit]" data-nightly-unit>
+                                    @if(!$masterUnit || $unitChanged)
+                                        <option value="">Pilih satuan</option>
+                                    @endif
+                                    @foreach($unitOptions as $unitName)
+                                        <option value="{{ $unitName }}" @selected($selectedUnit === $unitName)>{{ $unitName }}</option>
+                                    @endforeach
+                                </select>
+                                @if($unitChanged)
+                                    <p class="mt-1 max-w-40 whitespace-normal text-[11px] text-amber-800">Satuan tersimpan berbeda dari Data Obat. Periksa kembali jumlahnya lalu pilih satuan stok.</p>
+                                @elseif(!$masterUnit)
+                                    <p class="mt-1 max-w-40 whitespace-normal text-[11px] text-amber-800">Satuan Data Obat belum diatur. Pilih referensi sesuai fisik; hasil lebih dari 0 memerlukan satuan di Data Obat.</p>
+                                @endif
+                                @error('items.'.$i->id.'.unit')<p class="mt-1 max-w-40 whitespace-normal text-[11px] text-rose-700" role="alert">{{ $message }}</p>@enderror
                             @else
                                 <span class="text-xs text-slate-600 font-medium">{{ $i->unit }}</span>
                             @endif
@@ -185,7 +210,7 @@
     @can('finalize-opname')
         <form class="no-print card my-6 p-4" method="POST" action="{{ route('nightly.review',$check->id) }}">
             @csrf
-            <p class="mb-3 text-xs text-slate-600">Persetujuan memperbarui total dan batch sesuai hitungan petugas. Jika stok berubah setelah laporan dikirim, kembalikan untuk koreksi dan hitung ulang.</p>
+            <p class="mb-3 text-xs text-slate-600">Persetujuan memperbarui total dan batch hanya untuk {{ $items->count() }} obat dalam laporan ini. Obat lain tidak berubah. Jika stok berubah setelah laporan dikirim, kembalikan untuk koreksi dan hitung ulang.</p>
             <div class="mb-4 max-h-64 overflow-auto">
                 <table class="w-full text-left text-xs">
                     <thead><tr><th class="p-2">Obat</th><th class="p-2">Stok sistem sekarang</th><th class="p-2">Hasil hitung</th><th class="p-2">Perubahan jika disetujui</th></tr></thead>

@@ -4,6 +4,8 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 
 ## Start Here
 
+- [Selected daily physical checks](30_implemented/2026-10-21-selected-daily-check/implementation_report.md)
+
 - [Product overview](00_current/product_overview.md)
 - [Current state](00_current/current_state.md)
 - [Architecture](00_current/architecture.md)
@@ -39,6 +41,8 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 - Preserve legacy reference files in this `docs/` tree unless the user asks for a cleanup; older screenshots, prior handoff material, import notes, and prototype assets came from the previous `Docs/` folder.
 
 ## Implementation History Index
+
+- [2026-10-21 Multi-item stock transfers](30_implemented/2026-10-21-multi-item-transfer/)
 
 - [2026-10-21 Friendly error pages](30_implemented/2026-10-21-friendly-error-pages/)
 

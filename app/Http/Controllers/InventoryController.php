@@ -305,59 +305,105 @@ class InventoryController extends Controller
 
     public function storeTransfer(Request $request, InventoryStockService $stock)
     {
-        $data = $request->validate([
-            'reference' => ['required', 'string', 'max:100', Rule::unique('inventory_movements', 'reference')],
-            'medicine_id' => ['required', 'exists:medicines,id'],
-            'source_location_id' => ['required', 'exists:locations,id'],
-            'destination_location_id' => ['required', 'different:source_location_id', 'exists:locations,id'],
-            'batch_id' => ['nullable', 'exists:batches,id'],
+        $legacy = ! $request->has('items');
+        if (! $legacy && is_array($request->input('items'))) {
+            $request->validate(['items' => ['array', 'max:50']]);
+            $request->merge(['items' => collect($request->input('items'))->filter(fn ($item) => ! is_array($item) || collect($item)->contains(fn ($value) => filled($value)))->values()->all()]);
+        }
+        $itemRules = [
+            'medicine_id' => ['required', 'integer', 'exists:medicines,id'],
+            'batch_id' => ['nullable', 'integer', 'exists:batches,id'],
             'quantity' => ['required', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
+        ];
+        $rules = [
+            'reference' => ['required', 'string', 'max:100', Rule::unique('inventory_movements', 'reference')],
+            'source_location_id' => ['required', 'integer', Rule::exists('locations', 'id')->where('is_active', true)],
+            'destination_location_id' => ['required', 'integer', 'different:source_location_id', Rule::exists('locations', 'id')->where('is_active', true)],
             'occurred_at' => ['required', 'date_format:Y-m-d\\TH:i'],
             'notes' => ['nullable', 'string', 'max:1000'],
+        ];
+        if ($legacy) {
+            $rules += $itemRules;
+        } else {
+            $rules['items'] = ['required', 'array', 'min:1', 'max:50'];
+            $rules['items.*'] = ['required', 'array:medicine_id,batch_id,quantity'];
+            foreach ($itemRules as $field => $fieldRules) {
+                $rules['items.*.'.$field] = $fieldRules;
+            }
+        }
+        $data = $request->validate($rules, [
+            'items.required' => 'Isi minimal satu baris obat untuk ditransfer.',
+            'items.max' => 'Maksimal 50 baris obat dalam satu transfer.',
+            'items.*.medicine_id.required' => 'Baris :position: pilih obat dari daftar.',
+            'items.*.medicine_id.exists' => 'Baris :position: obat tidak ditemukan.',
+            'items.*.quantity.required' => 'Baris :position: isi jumlah yang dipindahkan.',
+            'items.*.quantity.min' => 'Baris :position: jumlah harus lebih dari 0.',
+            'items.*.quantity.numeric' => 'Baris :position: jumlah harus berupa angka.',
+            'items.*.quantity.decimal' => 'Baris :position: jumlah maksimal empat angka di belakang koma.',
+            'items.*.batch_id.exists' => 'Baris :position: batch tidak ditemukan.',
+            'destination_location_id.different' => 'Lokasi tujuan harus berbeda dari lokasi sumber.',
         ]);
-        $medicine = Medicine::with('unit')->findOrFail($data['medicine_id']);
-        if (! $this->isOperationalMedicine($medicine)) {
-            throw ValidationException::withMessages(['medicine_id' => 'Obat harus aktif, punya bentuk sediaan, dan satuan dasar sebelum transfer.']);
-        }
-        if (! empty($data['batch_id']) && ! Batch::where('id', $data['batch_id'])->where('medicine_id', $medicine->id)->exists()) {
-            throw ValidationException::withMessages(['batch_id' => 'Batch tidak sesuai dengan obat yang dipilih.']);
-        }
-        if (! empty($data['batch_id'])) {
-            $this->ensureBatchUsable((int) $data['batch_id']);
-            $this->ensureBatchHasStock($medicine->id, (int) $data['batch_id'], (int) $data['source_location_id'], (float) $data['quantity']);
-        }
+        $items = $legacy ? [array_intersect_key($data, $itemRules)] : $data['items'];
 
-        \App\Services\InventoryTransaction::run(function () use ($data, $medicine, $request, $stock) {
+        \App\Services\InventoryTransaction::run(function () use ($data, $items, $legacy, $request, $stock) {
             $this->assertMovementReferenceAvailable($data['reference']);
-            $allocations = ! empty($data['batch_id'])
-                ? [['batch_id' => (int) $data['batch_id'], 'quantity' => (float) $data['quantity']]]
-                : $stock->fefoAllocations($medicine->id, (int) $data['source_location_id'], (float) $data['quantity']);
-            $stock->add($medicine->id, (int) $data['source_location_id'], -(float) $data['quantity']);
-            $stock->add($medicine->id, (int) $data['destination_location_id'], (float) $data['quantity']);
-
-            foreach ($allocations as $allocation) {
-                $batchId = $allocation['batch_id'];
-                $quantity = (float) $allocation['quantity'];
-
-                if ($batchId) {
-                    $stock->addBatch($medicine->id, (int) $batchId, (int) $data['source_location_id'], -$quantity);
-                    $stock->addBatch($medicine->id, (int) $batchId, (int) $data['destination_location_id'], $quantity);
+            foreach (['source_location_id', 'destination_location_id'] as $field) {
+                if (! Location::whereKey($data[$field])->where('is_active', true)->lockForUpdate()->first()) {
+                    throw ValidationException::withMessages([$field => 'Lokasi sudah tidak aktif. Pilih lokasi aktif sebelum transfer.']);
                 }
-
-                InventoryMovement::create([
-                    'type' => 'transfer', 'reference' => $data['reference'], 'medicine_id' => $medicine->id,
-                    'batch_id' => $batchId, 'source_location_id' => $data['source_location_id'],
-                    'destination_location_id' => $data['destination_location_id'], 'quantity' => $quantity,
-                    'occurred_at' => Carbon::parse($data['occurred_at'], 'Asia/Jakarta'), 'notes' => $data['notes'] ?? null,
-                    'created_by' => $request->user()->id,
-                ]);
+            }
+            $postedItems = [];
+            foreach ($items as $index => $item) {
+                try {
+                    $medicine = Medicine::with('unit')->whereKey($item['medicine_id'])->lockForUpdate()->firstOrFail();
+                    if (! $this->isOperationalMedicine($medicine)) {
+                        throw ValidationException::withMessages(['medicine_id' => 'Obat harus aktif, punya bentuk sediaan, dan satuan dasar sebelum transfer.']);
+                    }
+                    if (! empty($item['batch_id'])) {
+                        if (! Batch::whereKey($item['batch_id'])->where('medicine_id', $medicine->id)->exists()) {
+                            throw ValidationException::withMessages(['batch_id' => 'Batch tidak sesuai dengan obat yang dipilih.']);
+                        }
+                        $this->ensureBatchUsable((int) $item['batch_id']);
+                        $this->ensureBatchHasStock($medicine->id, (int) $item['batch_id'], (int) $data['source_location_id'], (float) $item['quantity']);
+                    }
+                    $allocations = ! empty($item['batch_id'])
+                        ? [['batch_id' => (int) $item['batch_id'], 'quantity' => (float) $item['quantity']]]
+                        : $stock->fefoAllocations($medicine->id, (int) $data['source_location_id'], (float) $item['quantity']);
+                    $stock->add($medicine->id, (int) $data['source_location_id'], -(float) $item['quantity']);
+                    $stock->add($medicine->id, (int) $data['destination_location_id'], (float) $item['quantity']);
+                    foreach ($allocations as $allocation) {
+                        $batchId = $allocation['batch_id'];
+                        $quantity = (float) $allocation['quantity'];
+                        if ($batchId) {
+                            $stock->addBatch($medicine->id, (int) $batchId, (int) $data['source_location_id'], -$quantity);
+                            $stock->addBatch($medicine->id, (int) $batchId, (int) $data['destination_location_id'], $quantity);
+                        }
+                        InventoryMovement::create([
+                            'type' => 'transfer', 'reference' => $data['reference'], 'medicine_id' => $medicine->id,
+                            'batch_id' => $batchId, 'source_location_id' => $data['source_location_id'],
+                            'destination_location_id' => $data['destination_location_id'], 'quantity' => $quantity,
+                            'occurred_at' => Carbon::parse($data['occurred_at'], 'Asia/Jakarta'), 'notes' => $data['notes'] ?? null,
+                            'created_by' => $request->user()->id,
+                        ]);
+                    }
+                    $postedItems[] = ['medicine_id' => $medicine->id, 'quantity' => (float) $item['quantity'], 'allocations' => $allocations];
+                } catch (ValidationException $error) {
+                    if ($legacy) {
+                        throw $error;
+                    }
+                    $messages = [];
+                    foreach ($error->errors() as $field => $errors) {
+                        $messages['items.'.$index.'.'.$field] = array_map(fn ($message) => 'Baris '.($index + 1).': '.$message, $errors);
+                    }
+                    throw ValidationException::withMessages($messages);
+                }
             }
 
-            AuditLogger::record('inventory.transfer.posted', 'Transfer stok '.$medicine->name.' diposting.', null, [
+            AuditLogger::record('inventory.transfer.posted', 'Transfer '.$data['reference'].' diposting ('.count($postedItems).' baris obat).', null, [
                 'reference' => $data['reference'],
-                'medicine_id' => $medicine->id,
-                'allocations' => $allocations,
-                'quantity' => (float) $data['quantity'],
+                'item_count' => count($postedItems),
+                'items' => $postedItems,
+                ...($legacy ? $postedItems[0] : []),
                 'source_location_id' => (int) $data['source_location_id'],
                 'destination_location_id' => (int) $data['destination_location_id'],
             ], $request);

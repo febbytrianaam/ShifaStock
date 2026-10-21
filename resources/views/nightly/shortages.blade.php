@@ -4,7 +4,7 @@
         ['route' => 'preview.expiry', 'label' => 'Kedaluwarsa', 'can' => 'view-expiry'],
     ]" />
 
-    <p class="mb-4 text-xs text-slate-600">Sumber ringkasan dan tabel pertama: pemeriksaan fisik terakhir yang disetujui per lokasi. Tanggal hitung tercantum pada kolom Diperiksa. Stok sistem berdasarkan transaksi ditampilkan terpisah pada bagian batas minimum.</p>
+    <p class="mb-4 text-xs text-slate-600">Sumber ringkasan dan tabel pertama: hasil pemeriksaan terakhir yang disetujui untuk masing-masing obat di setiap lokasi. Pemeriksaan obat tertentu tidak menghapus hasil obat lain. Tanggal hitung tercantum pada kolom Diperiksa. Stok sistem berdasarkan transaksi ditampilkan terpisah pada bagian batas minimum.</p>
     <div class="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div class="card p-4 {{ $summary['total'] > 0 ? 'attention-warning' : '' }}">
             <span class="inline-flex rounded-md bg-[#edf5fb] border border-[#d6e8f6] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#266194]">Perlu Tindak Lanjut</span>

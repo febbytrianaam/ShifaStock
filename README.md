@@ -12,9 +12,9 @@ Aplikasi berfokus pada pengelolaan obat, bukan pelayanan pasien atau integrasi N
 | --- | --- |
 | Master obat | Pencarian, verifikasi, status aktif, preview/import referensi, satuan stok, dan konversi kemasan beli per obat |
 | Penerimaan | Input banyak baris, pilihan obat searchable, nomor faktur supplier, konversi satuan, edit/batalkan draf, posting ke lokasi tujuan, dan peringatan faktur ganda |
-| Pergerakan stok | Stok awal per batch, transfer antar lokasi, pengeluaran, retur PBF, serta kondisi khusus dengan batch wajib |
+| Pergerakan stok | Stok awal per batch, transfer banyak obat dalam satu referensi dengan penyimpanan atomik, pengeluaran, retur PBF, serta kondisi khusus dengan batch wajib |
 | Pemilihan batch | Mengikuti obat dan lokasi; FEFO otomatis untuk transfer/pengeluaran tanpa pilihan batch eksplisit, dengan pengecualian batch kedaluwarsa |
-| Pemeriksaan harian | Draf, hasil hitung per batch, total otomatis, pengiriman laporan, review kepala apoteker, dan penolakan persetujuan jika stok berubah |
+| Pemeriksaan harian | Semua obat atau obat tertentu, dropdown satuan mengikuti master obat, draf, hitung per batch, pengiriman/review kepala apoteker; persetujuan hanya menyesuaikan obat dalam laporan dan ditolak jika stok berubah |
 | Opname periodik | Snapshot stok, isian fisik, finalisasi, dan Mulai Hitung Ulang dengan konfirmasi serta pencatatan isian lama di audit log |
 | Monitoring | Stok kosong/menipis, parameter minimum stok, kedaluwarsa beserta lokasi, dan pintasan tindak lanjut |
 | Pelaporan | Kartu stok per obat/lokasi/batch/periode, cetak dengan identitas klinik, laporan persediaan, dan riwayat pemeriksaan |
@@ -98,7 +98,13 @@ Master obat dapat dimasukkan melalui menu Data Obat, termasuk preview/import ref
 
 ## Pengujian
 
-**Eksekusi terbaru 21 Oktober 2026:** 97 tes / 986 assertion lulus pada SQLite terisolasi. Pengujian browser tambahan lulus untuk posisi panduan (9 pemeriksaan), halaman error (7 pemeriksaan), dan tombol mata login (3 pemeriksaan), serta build frontend berhasil. Hasil tiap tahap dan lokasi bukti lokal dicatat pada [strategi pengujian](Docs/00_current/testing_strategy.md). Pengujian ini tidak menggantikan UAT manual petugas.
+**Pemeriksaan obat tertentu dan dropdown satuan, 21 Oktober 2026:** suite terbaru 124 tes / 1306 assertions lulus. Verifikasi fitur mencakup 8 pemeriksaan browser harian, 13 regresi browser operasional, dan 9 skenario MySQL bersamaan. Build frontend, kompilasi Blade, dan verifikasi pemisahan UAT berhasil. Semua fixture stok memakai database sementara. [Laporan implementasi](Docs/30_implemented/2026-10-21-selected-daily-check/implementation_report.md).
+
+**Transfer banyak obat, 21 Oktober 2026:** 112 tes / 1189 assertions, 9 skenario MySQL bersamaan, 9 pemeriksaan browser transfer, dan 13 regresi browser operasional lulus. Build frontend serta kompilasi Blade berhasil. Semua transaksi pengujian memakai database sementara, bukan database klinik atau UAT persisten.
+
+**Pembaruan domain UAT 21 Oktober 2026:** 100 tes / 1001 assertion lulus. Delapan pemeriksaan browser lewat domain HTTPS juga lulus, termasuk login Guest, dashboard transaksi kosong, pembatasan admin, dan logout. Database klinik tetap tidak berubah.
+
+**Eksekusi antarmuka sebelumnya, 21 Oktober 2026:** 97 tes / 986 assertion lulus pada SQLite terisolasi. Pengujian browser tambahan lulus untuk posisi panduan (9 pemeriksaan), halaman error (7 pemeriksaan), dan tombol mata login (3 pemeriksaan), serta build frontend berhasil. Hasil tiap tahap dan lokasi bukti lokal dicatat pada [strategi pengujian](Docs/00_current/testing_strategy.md). Pengujian ini tidak menggantikan UAT manual petugas.
 
 **Eksekusi UAT/Guest 21 Oktober 2026:** 90 tes / 931 assertion, 7 skenario MySQL paralel, 25 pemeriksaan browser UAT, dan build lulus. Database serta pengguna MySQL UAT sudah diverifikasi terpisah dari inventori klinik. [Laporan UAT dan Guest](Docs/30_implemented/2026-10-21-uat-guest/implementation_report.md) memuat hasil browser terbaru dan batasannya.
 
@@ -159,14 +165,14 @@ Tes browser tersebut memakai fixture lokal dan mencegat permintaan tulis agar ti
 
 ## Demo Dan UAT Lokal
 
-Lingkungan UAT terpisah memakai database `shifastock_uat`, pengguna MySQL dengan grant khusus UAT, akun simulasi, serta sesi/cache sendiri. Data stok dan transaksi UAT tidak masuk ke database klinik. Guest dapat melihat seluruh menu persediaan, termasuk Stok Awal dan Parameter Monitoring, tetapi izin tulis dan administrasinya dikunci di backend.
+Lingkungan UAT terpisah memakai database `shifastock_uat`, pengguna MySQL dengan grant khusus UAT, akun simulasi, serta sesi/cache sendiri. Data stok dan transaksi UAT tidak masuk ke database klinik. Pada workspace demo, [domain UAT](https://shifastock.nexspace.my.id) diteruskan ke loopback port `4002`; restart melalui runner UAT, bukan artisan biasa. Guest dapat melihat seluruh menu persediaan, termasuk Stok Awal dan Parameter Monitoring, tetapi izin tulis dan administrasinya dikunci di backend.
 
 ```bash
 php scripts/uat.php setup
 php scripts/uat.php serve
 ```
 
-`setup` hanya untuk penyiapan awal dan menolak menimpa UAT yang sudah ada. Buka `http://127.0.0.1:8010` pada komputer tersebut; tidak membutuhkan hosting publik. Username: `petugas_uat`, `apoteker_uat`, dan `guest`. Akun `admin_uat` khusus pengelola internal. Password akun UAT tidak ditampilkan di README; kredensial disimpan privat lokal dan diabaikan Git.
+`setup` hanya untuk penyiapan awal dan menolak menimpa UAT yang sudah ada. Instalasi baru memakai `http://127.0.0.1:8010` secara default; workspace demo ini memakai domain HTTPS dan port backend `4002` sesuai konfigurasi privat. Transaksi contoh workspace sudah dikosongkan atas permintaan pengguna, sedangkan akun dan master obat dipertahankan. Username: `petugas_uat`, `apoteker_uat`, dan `guest`. Akun `admin_uat` khusus pengelola internal. Password akun UAT tidak ditampilkan di README; kredensial disimpan privat lokal dan diabaikan Git.
 
 Lihat [panduan UAT](Docs/00_current/uat_guide.md) untuk lokasi kredensial privat, verifikasi isolasi, pengujian browser, dan batasan akses lokal. Jangan mengganti `.env` utama atau mereset data klinik untuk demo.
 

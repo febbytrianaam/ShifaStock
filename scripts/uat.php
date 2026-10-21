@@ -36,8 +36,8 @@ $fingerprint = function (): string {
 };
 
 try {
-    if (! in_array($command, ['setup', 'status', 'serve', 'seed', 'verify', 'browser-check'], true)) {
-        throw new RuntimeException('Gunakan: php scripts/uat.php setup|status|serve|verify|browser-check');
+    if (! in_array($command, ['setup', 'status', 'serve', 'seed', 'verify', 'browser-check', 'migrate'], true)) {
+        throw new RuntimeException('Gunakan: php scripts/uat.php setup|status|serve|verify|browser-check|migrate');
     }
     if (! in_array($command, ['setup', 'verify'], true)) {
         if (! is_file($directory.'/environment.json')) {
@@ -203,6 +203,11 @@ try {
     if (DB::connection()->getDatabaseName() !== UatEnvironment::DATABASE) {
         throw new RuntimeException('Koneksi database UAT tidak sesuai.');
     }
+    if ($command === 'migrate') {
+        $exitCode = \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        echo \Illuminate\Support\Facades\Artisan::output();
+        exit($exitCode);
+    }
     if ($command === 'seed') {
         app(UatSeeder::class)->run();
         exit(0);
@@ -243,13 +248,16 @@ try {
         exit($result);
     }
     if ($command === 'serve') {
+        $port = UatEnvironment::listenPort($manifest);
         echo 'UAT lokal: '.$environment['APP_URL'].' | database '.UatEnvironment::DATABASE.PHP_EOL;
-        $process = new Process([PHP_BINARY, '-S', '127.0.0.1:8010', '-t', $root.'/public',
+        echo 'Listening: 127.0.0.1:'.$port.PHP_EOL;
+        $process = new Process([PHP_BINARY, '-S', '127.0.0.1:'.$port, '-t', $root.'/public',
             $root.'/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php'], $root.'/public', $environment);
         $process->setTimeout(null);
         exit($process->run(fn ($type, $text) => print $text));
     }
     echo json_encode(['environment' => app()->environment(), 'database' => DB::connection()->getDatabaseName(),
+        'listen_port' => UatEnvironment::listenPort($manifest),
         'url' => $environment['APP_URL'], 'simulation' => true, 'copied_medicines' => $manifest['copied_medicines'],
         'source_unchanged_at_setup' => $manifest['source_unchanged'] ?? false,
         'users' => User::orderBy('id')->get(['username', 'role'])->toArray(),

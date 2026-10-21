@@ -174,7 +174,7 @@
                         @forelse($checks as $check)
                             <tr class="hover:bg-slate-50/70 transition-colors">
                                 <td class="p-4 text-xs font-medium text-slate-700 tabular-nums">{{ $check->date }}</td>
-                                <td class="p-4 font-semibold text-slate-800">{{ $check->location }}</td>
+                                <td class="p-4 font-semibold text-slate-800">{{ $check->location }}<span class="mt-1 block text-[11px] font-normal text-slate-500">{{ $check->scope === 'selected' ? 'Obat tertentu' : 'Pemeriksaan lengkap' }}</span></td>
                                 <td class="p-4 text-xs font-medium text-slate-600 tabular-nums">{{ $check->approved_at }}</td>
                                 <td class="p-4 text-right">
                                     <a class="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold text-[#3277B2] hover:bg-[#edf5fb] transition" href="{{ route('nightly.show',$check->id) }}">

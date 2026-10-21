@@ -7,6 +7,7 @@ import { initReceiptValidation, validateReceiptRows, checkReceiptInvoice } from 
 import { initDailyCounts, prepareDailyCounts } from './daily-counts';
 import { initOnboarding } from './onboarding';
 import { initPasswordVisibility } from './password-visibility';
+import { initTransferRows } from './transfer-rows';
 
 let nightlyPage = 1;
 
@@ -113,6 +114,7 @@ function initialize() {
     initReceiptRows();
     initReceiptValidation();
     initStockEntryContexts();
+    initTransferRows({ initSearchableSelects, initStockEntryContexts });
     initRolePreview();
     initDailyCounts();
     initFormSafety();
@@ -199,7 +201,7 @@ function initSearchableSelects(root = document) {
             input.setAttribute('aria-expanded', 'false');
         };
         const open = () => {
-            if (select.closest('.receipt-entry')) {
+            if (select.closest('.receipt-entry, .transfer-entry')) {
                 const rect = input.getBoundingClientRect();
                 const below = window.innerHeight - rect.bottom - 12;
                 const above = rect.top - 12;
@@ -213,7 +215,7 @@ function initSearchableSelects(root = document) {
             menu.hidden = false;
             input.setAttribute('aria-expanded', 'true');
         };
-        if (select.closest('.receipt-entry')) {
+        if (select.closest('.receipt-entry, .transfer-entry')) {
             window.addEventListener('resize', close);
             document.addEventListener('scroll', (event) => {
                 if (event.target === document || event.target.contains?.(wrapper)) close();
@@ -319,11 +321,12 @@ function initSearchableSelects(root = document) {
     });
 }
 
-function initStockEntryContexts() {
+function initStockEntryContexts(root = document) {
     const format = (value) => new Intl.NumberFormat('id-ID', { maximumFractionDigits: 4 }).format(value);
-    document.querySelectorAll('[data-stock-entry-context]:not([data-ready])').forEach((context) => {
+    root.querySelectorAll('[data-stock-entry-context]:not([data-ready])').forEach((context) => {
         context.dataset.ready = '1';
-        const data = JSON.parse(context.querySelector('[data-stock-context-data]').textContent);
+        const source = context.querySelector('[data-stock-context-data]') || document.querySelector(context.dataset.stockContextSource);
+        const data = JSON.parse(source.textContent);
         const medicine = document.querySelector(context.dataset.medicine);
         const location = document.querySelector(context.dataset.location);
         const quantity = document.querySelector(context.dataset.quantity);

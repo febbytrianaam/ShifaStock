@@ -1,5 +1,25 @@
 # Testing Strategy
 
+## Latest Selected Daily Check Execution
+
+2026-10-21 WIB: after the count-unit dropdown follow-up, the full isolated SQLite suite passed **124 tests / 1306 assertions**, including twelve selected-check tests. The added unit cases cover master-only selection, active references/no guessing for an incomplete master, the existing positive-count guard, and mismatched old drafts. `php scripts/capstone-final-browser.php selected-nightly` verifies **8 real HTTP Playwright cases** with a temporary MySQL database: selection/search, master unit dropdown/draft persistence, SweetAlert, draft/submit, explicit batch zero/requested quantity, pharmacist approval, mobile layout, and Guest restrictions. Independent postconditions verify Apotek 20 to 0, Gudang unchanged at 50, one approved item, and consistent total/batch/ledger. Ignored evidence: `storage/app/qa/selected-nightly-browser/`.
+
+The existing `regression` browser phase passed **13/13** cases and `php scripts/test-inventory-mysql.php` passed **nine concurrent-worker scenarios** in this feature verification. Vite build/Blade compilation passed. UAT verification at 15:07 WIB confirmed clinic inventory unchanged and UAT grants isolated. Scope migration applied through the UAT runner; no persistent fixtures were inserted/seeded/cleared. [Details](../30_implemented/2026-10-21-selected-daily-check/implementation_report.md). Earlier totals below remain stage-specific history.
+
+## Latest Multi-Item Transfer Execution
+
+2026-10-21 WIB: full SQLite suite passed **112 tests / 1189 assertions**. `MultiTransferTest` adds coverage for multi-medicine FEFO/explicit batches, atomic rollback, repeated medicines/batches, invalid medicine/location/expiry, blank/partial/malformed/oversized rows, quantity precision, duplicate references, stock cards/dashboard counting, legacy payloads, and Guest restrictions.
+
+`php scripts/test-inventory-mysql.php` passed **nine concurrent-process scenarios**, including two new races: a second-item shortage must roll back the losing multi-transfer, and a repeated multi-transfer reference may post only one complete transaction. The earlier seven scenarios also passed in this run.
+
+With Playwright available through Node resolution, `php scripts/capstone-final-browser.php transfer` creates a random isolated MySQL database and exercises the actual new form. **Nine browser checks passed** at desktop 1440 x 900 and mobile 390 x 844; final aggregate/batch/ledger quantities were independently checked afterward. Evidence: ignored `storage/app/qa/multi-transfer-browser/`. `php scripts/capstone-final-browser.php regression` also passed all **13 operational browser cases**, stored under ignored `storage/app/qa/inventory-browser/`. Both temporary databases were removed; no fixture data was sent to persistent UAT or clinic databases. Build and Blade cache compilation passed. [Report](../30_implemented/2026-10-21-multi-item-transfer/implementation_report.md).
+
+## Latest UAT Domain Execution
+
+2026-10-21 WIB: after changing the port-4002 service to isolated UAT and enabling HTTPS proxy handling, the full SQLite suite passed **100 tests / 1001 assertions**. New regression cases cover validated listen ports, mandatory secure cookies for HTTPS UAT, trusted loopback versus external proxies, and ignored forwarded host/port values. HTTP checks confirmed the actual public domain serves the UAT login with secure cookies and HTTPS links.
+
+An actual Playwright run against the public HTTPS domain passed eight checks: UAT login page, Guest login, empty reception/transfer charts, secure HttpOnly UAT session, denied admin route, accessible medicines, logout, and no browser errors. No inventory POSTs were issued; normal login/logout audit activity was recorded. Private evidence: `storage/app/qa/uat-public/results.json`. Clinic isolation verification and zero UAT movements were checked afterward. This is not a production deployment or manual staff acceptance. Previous test totals below remain historical.
+
 ## Latest Interface Regression Execution
 
 2026-10-21 WIB: the latest full isolated PHPUnit run passed **97 tests / 986 assertions** after the centered onboarding welcome, friendly error pages, and login password toggle changes. Vite build passed. These totals replace earlier suite totals as the latest run; prior entries below remain stage-specific history.

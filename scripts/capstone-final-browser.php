@@ -19,9 +19,11 @@ use Symfony\Component\Process\Process;
 require __DIR__.'/../vendor/autoload.php';
 $app = require __DIR__.'/../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
-$phase = in_array($argv[1] ?? '', ['baseline', 'onboarding'], true) ? $argv[1] : 'final';
+$phase = in_array($argv[1] ?? '', ['baseline', 'onboarding', 'transfer', 'selected-nightly'], true) ? $argv[1] : 'final';
 $output = match (true) {
     $phase === 'onboarding' => storage_path('app/qa/onboarding'),
+    $phase === 'transfer' => storage_path('app/qa/multi-transfer-browser'),
+    $phase === 'selected-nightly' => storage_path('app/qa/selected-nightly-browser'),
     ($argv[1] ?? '') === 'regression' => storage_path('app/qa/inventory-browser'),
     default => base_path('Docs/Capstone_Testing_Final/Bukti_Pengujian'),
 };
@@ -63,13 +65,12 @@ try {
         'password' => $password, 'role' => Role::Pharmacy, 'is_active' => true]);
     User::create(['username' => 'guest_simulasi', 'name' => 'Guest Simulasi', 'email' => 'guest@simulasi.example.test',
         'password' => $password, 'role' => Role::Guest, 'is_active' => true]);
-    if ($phase === 'onboarding') {
+    if (in_array($phase, ['onboarding', 'selected-nightly'], true)) {
         foreach (['admin_simulasi' => Role::Administrator, 'apoteker_simulasi' => Role::Pharmacist] as $username => $role) {
             User::create(['username' => $username, 'name' => $role->label(), 'email' => $username.'@simulasi.example.test', 'password' => $password, 'role' => $role, 'is_active' => true]);
         }
-    } else {
-        User::query()->update(['onboarding_seen_at' => now()]);
     }
+    if ($phase !== 'onboarding') User::query()->update(['onboarding_seen_at' => now()]);
     Auth::setUser($staff);
     $unit = Unit::where('name', 'Tablet')->sole();
     $medicine = Medicine::create(['code' => 'FINAL-001', 'name' => 'Obat Simulasi Final', 'unit_id' => $unit->id, 'dosage_form' => 'Tablet', 'is_active' => true]);
@@ -86,16 +87,52 @@ try {
         app()->call([app(InventoryController::class), 'storeOpeningBalance'], ['request' => $request]);
         StockParameter::create(['medicine_id' => $medicine->id, 'location_id' => $location, 'minimum_quantity' => 60]);
     }
+    if ($phase === 'transfer') {
+        foreach ([[$medicine, 'SIM-LATE', 10, 6], [$other, 'SIM-OTHER', 20, 3]] as [$item, $number, $quantity, $months]) {
+            $request = Request::create('/qa-transfer-seed', 'POST', ['reference' => 'SEED-'.$number, 'medicine_id' => $item->id,
+                'location_id' => $warehouse->id, 'batch_number' => $number, 'expiry_date' => now('Asia/Jakarta')->addMonths($months)->toDateString(),
+                'quantity' => $quantity, 'occurred_at' => now('Asia/Jakarta')->format('Y-m-d\TH:i')]);
+            $request->setUserResolver(fn () => $staff);
+            $request->setLaravelSession(app('session')->driver());
+            app()->instance('request', $request);
+            app()->call([app(InventoryController::class), 'storeOpeningBalance'], ['request' => $request]);
+        }
+    }
     $meta = ['phase' => $phase, 'base_url' => $env['APP_URL'], 'port' => $port, 'medicine' => $medicine->id, 'other_medicine' => $other->id,
         'warehouse' => $warehouse->id, 'pharmacy' => $pharmacy->id, 'batch' => Batch::where('number', 'SIM-BATCH-SAMA')->sole()->id,
         'commit' => trim((new Process(['git', 'rev-parse', 'HEAD'], base_path()))->mustRun()->getOutput()),
         'started_at' => (new DateTimeImmutable('now', new DateTimeZone('Asia/Jakarta')))->format(DATE_ATOM), 'simulation' => true];
     file_put_contents($private.'/metadata.json', json_encode($meta, JSON_THROW_ON_ERROR));
-    $browserScript = $phase === 'onboarding' ? 'scripts/test-onboarding-browser.cjs' : 'scripts/capstone-final-browser.cjs';
+    $browserScript = match ($phase) {
+        'onboarding' => 'scripts/test-onboarding-browser.cjs',
+        'transfer' => 'scripts/test-multi-transfer-browser.cjs',
+        'selected-nightly' => 'scripts/test-selected-nightly-browser.cjs',
+        default => 'scripts/capstone-final-browser.cjs',
+    };
     $browser = new Process(['node', base_path($browserScript)], base_path(), $env + [
         'FINAL_META' => $private.'/metadata.json', 'FINAL_PASSWORD' => $password, 'FINAL_OUTPUT' => $output, 'FINAL_PHP' => PHP_BINARY]);
     $browser->setTimeout(300);
     $code = $browser->run(fn ($type, $text) => print str_replace($password, '[disembunyikan]', $text));
+    if ($phase === 'selected-nightly' && $code === 0) {
+        $report = app(\App\Services\InventoryReconciliationService::class)->report();
+        if ((float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $warehouse->id)->value('quantity') !== 50.0
+            || (float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $pharmacy->id)->value('quantity') !== 0.0
+            || $report['mismatched_pairs'] || $report['batch_identity_issues']) throw new RuntimeException('Persetujuan sebagian mengubah stok di luar laporan atau rekonsiliasi tidak sesuai.');
+        $checked = DB::table('nightly_checks')->where('status', 'approved')->sole();
+        if ($checked->scope !== 'selected' || DB::table('nightly_check_items')->where('nightly_check_id', $checked->id)->count() !== 1) throw new RuntimeException('Cakupan laporan sebagian tidak sesuai.');
+        echo "PASS persetujuan hanya mengubah Apotek 20 menjadi 0, Gudang tetap 50; rekonsiliasi sesuai.\n";
+    }
+    if ($phase === 'transfer' && $code === 0) {
+        $report = app(\App\Services\InventoryReconciliationService::class)->report();
+        foreach ([[$medicine->id, $warehouse->id, 8], [$medicine->id, $pharmacy->id, 72],
+            [$other->id, $warehouse->id, 13], [$other->id, $pharmacy->id, 7]] as [$medicineId, $locationId, $expected]) {
+            if ((float) StockBalance::where('medicine_id', $medicineId)->where('location_id', $locationId)->value('quantity') !== (float) $expected) {
+                throw new RuntimeException('Hasil stok multi-transfer tidak sesuai atau transfer gagal tersimpan sebagian.');
+            }
+        }
+        if ($report['mismatched_pairs'] || $report['batch_identity_issues']) throw new RuntimeException('Rekonsiliasi multi-transfer tidak sesuai.');
+        echo "PASS stok multi-transfer terverifikasi dan transfer gagal tidak mengubah stok.\n";
+    }
     if ($phase === 'onboarding' && $code === 0) {
         $report = app(\App\Services\InventoryReconciliationService::class)->report();
         if ((float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $warehouse->id)->value('quantity') !== 50.0

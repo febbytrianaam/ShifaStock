@@ -75,6 +75,11 @@
     .receipt-entry [data-duplicate-invoice-warning][hidden] { display: none; }
     .receipt-entry td button[data-receipt-remove-row] { margin: 8px; }
     .receipt-entry .searchable-select-menu { position: fixed; right: auto; margin-top: 0; }
+    .transfer-entry td { padding: 0; border: 1px solid #e2e8f0; }
+    .transfer-entry th { padding: 10px 12px; font-size: 11px; }
+    .transfer-entry td .field { border: 0; border-radius: 0; box-shadow: none; min-height: 44px; background: transparent; }
+    .transfer-entry td:focus-within { outline: 1px solid #60a5fa; outline-offset: -1px; }
+    .transfer-entry .searchable-select-menu { position: fixed; right: auto; margin-top: 0; }
     .searchable-select-input { padding-right:2.25rem; }
     .searchable-select-clear {
         @apply absolute right-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-sm font-bold text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:bg-slate-100 focus:text-slate-700 focus:outline-none;

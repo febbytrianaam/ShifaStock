@@ -71,6 +71,15 @@ if (($argv[1] ?? '') === '--worker') {
     });
     try {
                 match ($operation) {
+                    'multi-transfer', 'duplicate-transfer' => invokeInventory('storeTransfer', [
+                        'reference' => $operation === 'duplicate-transfer' ? 'QA-MULTI-DUPLICATE' : 'QA-MULTI-'.bin2hex(random_bytes(4)),
+                        'source_location_id' => $fixture['location'], 'destination_location_id' => $fixture['transfer_target'],
+                        'occurred_at' => '2026-10-18T10:00',
+                        'items' => [
+                            ['medicine_id' => $fixture['multi_a'], 'quantity' => $operation === 'duplicate-transfer' ? 1 : 6],
+                            ['medicine_id' => $fixture['multi_b'], 'quantity' => $operation === 'duplicate-transfer' ? 1 : 6],
+                        ],
+                    ]),
                     'issue', 'duplicate' => invokeInventory('storeIssue', ['reference' => $operation === 'duplicate' ? 'QA-DUPLICATE' : 'QA-ISSUE-'.bin2hex(random_bytes(4)),
                         'medicine_id' => $fixture['medicine'], 'source_location_id' => $fixture['location'],
                         'quantity' => $operation === 'duplicate' ? 1 : 7, 'occurred_at' => '2026-10-18T10:00']),
@@ -209,6 +218,32 @@ try {
     verify(array_column($results, 'status') === ['ok', 'ok'], 'Concurrent first receipts failed.');
     verify((float) StockBalance::where('medicine_id', $fixture['new_medicine'])->sole()->quantity === 10.0, 'Concurrent creation lost a receipt.');
     echo "PASS concurrent first receipts: one balance row, both additions retained.\n";
+    $fixture['transfer_target'] = Location::create(['code' => 'QA-DEST', 'name' => 'QA destination', 'is_active' => true])->id;
+    foreach (['a' => 20, 'b' => 10] as $suffix => $quantity) {
+        $multiMedicine = Medicine::create(['code' => 'QA-MULTI-'.$suffix, 'name' => 'QA multi '.$suffix,
+            'unit_id' => $unit->id, 'dosage_form' => 'Tablet', 'is_active' => true]);
+        $fixture['multi_'.$suffix] = $multiMedicine->id;
+        invokeInventory('storeOpeningBalance', ['reference' => 'QA-MULTI-SEED-'.$suffix,
+            'medicine_id' => $multiMedicine->id, 'location_id' => $location->id,
+            'batch_number' => 'QA-MULTI-BATCH-'.$suffix, 'expiry_date' => '2028-01-01',
+            'quantity' => $quantity, 'occurred_at' => '2026-10-18T09:00']);
+    }
+    $oneWinner($race(['multi-transfer', 'multi-transfer']));
+    foreach (['a' => 14.0, 'b' => 4.0] as $suffix => $remaining) {
+        verify((float) StockBalance::where('medicine_id', $fixture['multi_'.$suffix])->where('location_id', $location->id)->value('quantity') === $remaining,
+            'Failed second item left a partial source transfer.');
+        verify((float) StockBalance::where('medicine_id', $fixture['multi_'.$suffix])->where('location_id', $fixture['transfer_target'])->value('quantity') === 6.0,
+            'Concurrent multi-transfer destination mismatch.');
+    }
+    echo "PASS concurrent multi-item transfers: second-item failure rolls back the entire losing transfer.\n";
+    $oneWinner($race(['duplicate-transfer', 'duplicate-transfer']));
+    verify(InventoryMovement::where('reference', 'QA-MULTI-DUPLICATE')->count() === 2,
+        'Duplicate multi-item reference was posted more than once.');
+    foreach (['a', 'b'] as $suffix) {
+        verify((float) StockBalance::where('medicine_id', $fixture['multi_'.$suffix])->where('location_id', $fixture['transfer_target'])->value('quantity') === 7.0,
+            'Duplicate multi-item posting changed stock twice.');
+    }
+    echo "PASS concurrent multi-item duplicate reference: one complete transfer posted once.\n";
 } catch (Throwable $exception) {
     fwrite(STDERR, 'FAIL: '.$exception->getMessage().PHP_EOL);
     $exitCode = 1;

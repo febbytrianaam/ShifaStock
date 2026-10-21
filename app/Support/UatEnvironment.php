@@ -8,6 +8,17 @@ class UatEnvironment
 {
     public const DATABASE = 'shifastock_uat';
 
+    public static function listenPort(array $manifest): int
+    {
+        $port = filter_var($manifest['listen_port'] ?? 8010, FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1024, 'max_range' => 65535]]);
+        if ($port === false) {
+            throw new RuntimeException('Port UAT harus berupa angka antara 1024 dan 65535.');
+        }
+
+        return $port;
+    }
+
     public static function variables(array $connection, string $username, string $password, int $port = 8010): array
     {
         $directory = storage_path('app/private/uat');
@@ -41,6 +52,7 @@ class UatEnvironment
             || ! in_array(config('cache.stores.database.lock_connection'), [null, 'mysql'], true)
             || config('cache.prefix') !== 'shifastock_uat_'
             || config('queue.default') !== 'sync' || config('logging.default') !== 'uat'
+            || (str_starts_with(config('app.url'), 'https://') && config('session.secure') !== true)
             || config('filesystems.default') !== 'uat') {
             throw new RuntimeException('Konfigurasi UAT tidak terisolasi. Jalankan melalui php scripts/uat.php; database klinik tidak boleh dipakai.');
         }

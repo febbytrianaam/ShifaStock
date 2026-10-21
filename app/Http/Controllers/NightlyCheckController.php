@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Medicine;
 use App\Models\Batch;
 use App\Models\InventoryMovement;
+use App\Models\Unit;
+use App\Queries\LatestNightlyItems;
 use App\Services\DailyPhysicalCountService;
 use App\Services\InventoryStockService;
 use Illuminate\Http\Request;
@@ -22,17 +24,8 @@ class NightlyCheckController extends Controller
             'status' => ['nullable', 'in:all,empty,low'],
         ]);
 
-        $latestChecks = DB::table('nightly_checks')
-            ->where('status', 'approved')
-            ->orderByDesc('date')
-            ->orderByDesc('id')
-            ->get()
-            ->unique('location_id');
-
-        $query = DB::table('nightly_check_items as i')
-            ->join('nightly_checks as c', 'c.id', '=', 'i.nightly_check_id')
+        $query = LatestNightlyItems::query()
             ->join('locations as l', 'l.id', '=', 'c.location_id')
-            ->whereIn('c.id', $latestChecks->pluck('id'))
             ->where(fn ($q) => $q->where('i.quantity', 0)->orWhere('i.is_low', true))
             ->select('i.*', 'c.date', 'l.name as location', 'c.location_id');
 
@@ -75,9 +68,8 @@ class NightlyCheckController extends Controller
             $parameterQuery->whereRaw('COALESCE(b.quantity, 0) > 0');
         }
 
-        $allLatestShortages = DB::table('nightly_check_items')
-            ->whereIn('nightly_check_id', $latestChecks->pluck('id'))
-            ->where(fn ($q) => $q->where('quantity', 0)->orWhere('is_low', true));
+        $allLatestShortages = LatestNightlyItems::query()
+            ->where(fn ($q) => $q->where('i.quantity', 0)->orWhere('i.is_low', true));
 
         return view('nightly.shortages', [
             'rows' => $query->orderBy('l.name')->orderBy('i.name')->paginate(25)->withQueryString(),
@@ -117,25 +109,40 @@ class NightlyCheckController extends Controller
     {
         $checks = DB::table('nightly_checks as c')->join('locations as l', 'l.id', '=', 'c.location_id')->select('c.*', 'l.name as location')->orderByDesc('date')->orderByDesc('c.id')->paginate(20);
 
-        return view('nightly.index', ['checks' => $checks, 'locations' => DB::table('locations')->where('is_active', true)->get()]);
+        return view('nightly.index', [
+            'checks' => $checks,
+            'locations' => DB::table('locations')->where('is_active', true)->get(),
+            'medicines' => Medicine::with('unit')->where(fn ($q) => $q->where('is_active', true)->orWhereNotNull('import_source'))->orderBy('name')->get(),
+        ]);
     }
 
     public function store(Request $r)
     {
-        $d = $r->validate(['date' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.now('Asia/Jakarta')->toDateString()], 'location_id' => ['required', 'exists:locations,id']]);
-        $id = \App\Services\InventoryTransaction::run(function () use ($r, $d) {
+        $d = $r->validate([
+            'date' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.now('Asia/Jakarta')->toDateString()],
+            'location_id' => ['required', 'exists:locations,id'],
+            'scope' => ['sometimes', 'required', 'in:complete,selected'],
+            'medicine_ids' => ['required_if:scope,selected', 'nullable', 'array', 'min:1'],
+            'medicine_ids.*' => ['required', 'integer', 'distinct', 'exists:medicines,id'],
+        ], ['medicine_ids.required_if' => 'Pilih sedikitnya satu obat yang akan diperiksa.']);
+        $scope = $d['scope'] ?? 'complete';
+        $id = \App\Services\InventoryTransaction::run(function () use ($r, $d, $scope) {
             abort_unless(DB::table('locations')->where('id', $d['location_id'])->where('is_active', true)->exists(), 422);
             // Lock the location to serialize creation of a daily report.
             DB::table('locations')->where('id', $d['location_id'])->lockForUpdate()->first();
-            $existing = DB::table('nightly_checks')->where($d)->first();
+            $existing = DB::table('nightly_checks')->where('date', $d['date'])->where('location_id', $d['location_id'])->first();
             if ($existing) {
                 return $existing->id;
             }
-            $medicines = Medicine::with('unit')->where(fn ($q) => $q->where('is_active', true)->orWhereNotNull('import_source'))->get();
+            $medicines = Medicine::with('unit')->where(fn ($q) => $q->where('is_active', true)->orWhereNotNull('import_source'))
+                ->when($scope === 'selected', fn ($query) => $query->whereIn('id', $d['medicine_ids']))->get();
+            if ($scope === 'selected' && $medicines->count() !== count($d['medicine_ids'])) {
+                throw ValidationException::withMessages(['medicine_ids' => 'Ada obat yang tidak tersedia untuk pemeriksaan. Pilih obat aktif atau obat hasil impor.']);
+            }
             if ($medicines->isEmpty()) {
                 throw ValidationException::withMessages(['date' => 'Belum ada master obat untuk diperiksa.']);
             }
-            $id = DB::table('nightly_checks')->insertGetId($d + ['created_by' => $r->user()->id, 'status' => 'draft', 'created_at' => now(), 'updated_at' => now()]);
+            $id = DB::table('nightly_checks')->insertGetId(['date' => $d['date'], 'location_id' => $d['location_id'], 'scope' => $scope, 'created_by' => $r->user()->id, 'status' => 'draft', 'created_at' => now(), 'updated_at' => now()]);
             foreach ($medicines as $m) {
                 DB::table('nightly_check_items')->insert(['nightly_check_id' => $id, 'medicine_id' => $m->id, 'code' => $m->code, 'name' => $m->name, 'unit' => $m->unit?->name]);
             }
@@ -151,10 +158,14 @@ class NightlyCheckController extends Controller
         $check = DB::table('nightly_checks as c')->join('locations as l', 'l.id', '=', 'c.location_id')->join('users as u', 'u.id', '=', 'c.created_by')->select('c.*', 'l.name as location', 'u.name as creator')->where('c.id', $id)->first();
         abort_unless($check, 404);
         $items = DB::table('nightly_check_items')->where('nightly_check_id', $id)->orderBy('name')->get();
-        $previous = DB::table('nightly_checks')->where('location_id', $check->location_id)->where('status', 'approved')->where('date', '<', $check->date)->orderByDesc('date')->first();
-        $baseline = $previous ? DB::table('nightly_check_items')->where('nightly_check_id', $previous->id)->get()->keyBy('medicine_id') : collect();
+        $medicineUnits = Medicine::with('unit')->whereIn('id', $items->pluck('medicine_id'))->get()
+            ->mapWithKeys(fn ($medicine) => [$medicine->id => $medicine->unit?->name]);
+        $countUnits = Unit::where('is_active', true)->orderBy('name')->pluck('name');
+        $baseline = LatestNightlyItems::query($check->date)->where('c.location_id', $check->location_id)
+            ->select('i.*', 'c.date as checked_date')->get()->keyBy('medicine_id');
         $shortages = $items->filter(fn ($i) => $i->quantity !== null && ($i->quantity === 0 || $i->is_low));
-        $summary = "Laporan stok malam {$check->date} - {$check->location}\nStatus: {$check->status}\nObat kosong / menipis:\n";
+        $scopeLabel = $check->scope === 'selected' ? 'Obat tertentu' : 'Pemeriksaan lengkap';
+        $summary = "Laporan stok malam {$check->date} - {$check->location}\nCakupan: {$scopeLabel} ({$items->count()} obat)\nStatus: {$check->status}\nObat kosong / menipis:\n";
         foreach ($shortages as $i) {
             $summary .= "- {$i->name}: {$i->quantity} {$i->unit}".($i->quantity === 0 ? ' (kosong)' : ' (menipis)').($i->requested_quantity !== null ? "; permintaan {$i->requested_quantity} {$i->unit}" : '')."\n";
         }
@@ -170,7 +181,7 @@ class NightlyCheckController extends Controller
             $item->saved_batch_counts = json_decode($item->batch_counts ?? '[]', true);
         }
 
-        return view('nightly.show', compact('check', 'items', 'previous', 'baseline', 'shortages', 'summary', 'systemBalances', 'batchOptions', 'batchBalances', 'observedRevision'));
+        return view('nightly.show', compact('check', 'items', 'medicineUnits', 'countUnits', 'baseline', 'shortages', 'summary', 'systemBalances', 'batchOptions', 'batchBalances', 'observedRevision'));
     }
 
     public function save(Request $r, int $id, DailyPhysicalCountService $counts)
@@ -217,7 +228,7 @@ class NightlyCheckController extends Controller
                     throw ValidationException::withMessages(['items' => "Isi satuan hitung untuk {$i->name}."]);
                 }
                 if ($d['action'] === 'submit' && $q === null) {
-                    throw ValidationException::withMessages(['items' => 'Periksa semua obat sebelum mengirim. Isi 0 hanya jika benar-benar kosong.']);
+                    throw ValidationException::withMessages(['items' => 'Lengkapi semua obat dalam laporan ini sebelum mengirim. Isi 0 hanya jika benar-benar kosong.']);
                 }
                 $batchCounts = $counts->counts($i->medicine_id, $batchData['items'][$i->id]['batch_counts'] ?? []);
                 $snapshot = null;

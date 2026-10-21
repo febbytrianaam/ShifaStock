@@ -8,6 +8,7 @@ use App\Models\InventoryMovement;
 use App\Models\Medicine;
 use App\Models\StockBalance;
 use App\Models\SystemSetting;
+use App\Queries\LatestNightlyItems;
 use Illuminate\Support\Facades\DB;
 
 class PrototypeController extends Controller
@@ -15,12 +16,8 @@ class PrototypeController extends Controller
     public function dashboard()
     {
         $expiryWarningMonths = (int) SystemSetting::value('expiry_warning_months', 3);
-        $latestChecks = DB::table('nightly_checks')->where('status', 'approved')
-            ->orderByDesc('date')->orderByDesc('id')->get()->unique('location_id');
-        $shortageQuery = DB::table('nightly_check_items as i')
-            ->join('nightly_checks as c', 'c.id', '=', 'i.nightly_check_id')
+        $shortageQuery = LatestNightlyItems::query()
             ->join('locations as l', 'l.id', '=', 'c.location_id')
-            ->whereIn('c.id', $latestChecks->pluck('id'))
             ->where(fn ($q) => $q->where('i.quantity', 0)->orWhere('i.is_low', true));
         $shortageCount = (clone $shortageQuery)->count();
         $shortages = $shortageQuery->select('i.*', 'c.date', 'l.name as location')
@@ -37,7 +34,7 @@ class PrototypeController extends Controller
 
         return view('dashboard', [
             'expiryWarningMonths' => $expiryWarningMonths,
-            'hasApprovedChecks' => $latestChecks->isNotEmpty(),
+            'hasApprovedChecks' => DB::table('nightly_checks')->where('status', 'approved')->exists(),
             'stats' => [
                 'verified' => Medicine::where('verification_status', 'terverifikasi')->where('is_active', true)
                     ->whereNotNull('unit_id')->whereNotNull('dosage_form')->where('dosage_form', '<>', '')->count(),

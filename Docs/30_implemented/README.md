@@ -7,6 +7,10 @@ This folder records shipped work as historical truth. Each feature folder contai
 
 ## Index
 
+- [2026-10-21 Complete and selected daily physical checks](2026-10-21-selected-daily-check/)
+
+- [2026-10-21 Multi-item stock transfers](2026-10-21-multi-item-transfer/)
+
 - [2026-10-21 Friendly error pages](2026-10-21-friendly-error-pages/)
 
 - [2026-10-21 Isolated UAT and combined read-only Guest](2026-10-21-uat-guest/)

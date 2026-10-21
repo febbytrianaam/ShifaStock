@@ -95,7 +95,7 @@
             </div>
             <p class="mt-2 text-xl font-bold tabular-nums {{ $stats['shortages'] > 0 ? 'text-rose-600' : 'text-slate-900' }}">{{ \App\Support\Quantity::format($stats['shortages']) }}</p>
             <div class="mt-2 flex items-center justify-between text-xs">
-                <span class="text-slate-400 font-normal">Pemeriksaan terbaru disetujui</span>
+                <span class="text-slate-400 font-normal">Hasil terakhir per obat disetujui</span>
                 <span class="font-bold text-rose-600 group-hover:translate-x-0.5 transition-transform">Tindak Lanjut →</span>
             </div>
         </a>
@@ -149,7 +149,7 @@
                     <span aria-hidden="true">→</span>
                 </a>
             </div>
-            <p class="mt-2 mb-3 text-xs font-normal text-slate-400">Dari pemeriksaan terbaru yang disetujui</p>
+            <p class="mt-2 mb-3 text-xs font-normal text-slate-400">Hasil terakhir per obat dan lokasi yang disetujui</p>
 
             <div class="flex-1 space-y-2.5 overflow-y-auto max-h-[340px] pr-1">
                 @forelse($shortages as $row)
@@ -179,7 +179,7 @@
                             </svg>
                         </div>
                         <p class="text-sm font-bold text-slate-800 tracking-tight">{{ $hasApprovedChecks ? 'Tidak ada kekurangan dilaporkan' : 'Belum ada hasil pemeriksaan' }}</p>
-                        <p class="mt-1 text-xs font-normal text-slate-400">{{ $hasApprovedChecks ? 'Pemeriksaan terbaru yang disetujui tidak mencatat kekurangan.' : 'Daftar ini akan terisi setelah hasil hitung fisik disetujui.' }}</p>
+                        <p class="mt-1 text-xs font-normal text-slate-400">{{ $hasApprovedChecks ? 'Hasil terakhir obat yang sudah diperiksa tidak mencatat kekurangan. Obat yang belum diperiksa belum termasuk.' : 'Daftar ini akan terisi setelah hasil hitung fisik disetujui.' }}</p>
                     </div>
                 @endforelse
             </div>

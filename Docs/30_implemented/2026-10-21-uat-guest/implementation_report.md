@@ -55,8 +55,18 @@ Bukti privat: `storage/app/qa/inventory/phpunit-results.xml`, `storage/app/qa/in
 ## Batasan Dan Pemulihan
 
 - UAT langsung petugas klinik belum dilakukan. Lulus otomatis bukan persetujuan operasional atau validasi satuan/kemasan oleh apoteker.
-- UAT lokal dapat dipakai di laptop saat kunjungan. Komputer lain tidak dapat menggunakan alamat loopback ini; akses LAN/hosting belum dikonfigurasi.
+- Pada setup awal, UAT hanya memakai loopback untuk kunjungan. Pembaruan domain di bagian berikut menggantikan batas akses awal tersebut; loopback tetap bukan alamat yang dapat dibuka langsung dari komputer lain.
 - Password awal ada di file privat lokal, bukan repository. Reset melalui admin UAT akan membuat password awal di file itu tidak berlaku.
 - Hasil UAT dipertahankan ketika server dimulai ulang. Jika kelak perlu reset, backup dan minta persetujuan eksplisit; jangan drop/truncate atau menjalankan seeder paksa.
 - Setup yang tidak selesai ditandai `ready=false` dan tidak boleh dilayani. Periksa penyebab/otorisasi provisioning; jangan menyamarkan kegagalan dengan memakai database klinik.
 - Untuk menghentikan UAT, hentikan proses server yang menjalankan `scripts/uat.php serve`; tidak perlu mengubah `.env` utama. Rollback source/migrasi perlu ditinjau terpisah dan tidak otomatis menghapus schema atau pengguna MySQL UAT.
+
+## Follow-up: Port 4002 and Public UAT Domain (2026-10-21)
+
+At the user's request, the existing normal `artisan serve --port 4002` process was stopped and replaced by the isolated UAT runner on the same loopback port. The domain's existing proxy mapping was not changed; its backend now uses `shifastock_uat`, restricted UAT MySQL credentials, `APP_ENV=uat`, and debug disabled. The private runtime manifest was backed up, then configured with `listen_port=4002`, public HTTPS URL, and secure cookies. No credentials are recorded here. Main `.env` and clinic database remain unchanged. Restart via `php scripts/uat.php serve` to retain isolation.
+
+The runner now validates a configurable listen port (default remains 8010 for a fresh setup). HTTPS UAT requires secure session cookies. `config/trustedproxy.php` trusts only loopback in UAT, and proxy headers are restricted to protocol/client IP; forwarded host/port cannot override generated destinations. No changes to stock rules or permissions were made.
+
+Actual verification: full isolated PHPUnit **100 tests / 1001 assertions** passed; live loopback/public-domain HTTP checks confirmed the UAT banner, secure cookie, and HTTPS asset/form URLs. Playwright against the real public domain passed eight checks (login page, Guest login, empty receipt/transfer charts, secure HttpOnly session, admin 403, medicines, logout, and no browser errors). Evidence remains ignored at `storage/app/qa/uat-public/results.json`. Login/logout create their normal UAT audit entries; no inventory writes were submitted. Clinic fingerprint verification still passed, and UAT retained four accounts, 167 medicines, and zero inventory movements.
+
+Earlier setup fixtures and 25-case UAT results above are historical: the user authorized clearing old simulated operational data after a private backup, then testers entered new transactions. Do not clear or reseed these to rerun fixture-dependent checks. Manual clinic acceptance remains pending. The source changes and documentation are included with the subsequent multi-transfer/selected-daily-check publication; private runtime credentials are not published.

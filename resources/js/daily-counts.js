@@ -1,6 +1,7 @@
 import Swal from 'sweetalert2';
 
 export function initDailyCounts() {
+    initNightlyStart();
     document.querySelectorAll('[data-nightly-row]').forEach((row) => {
         const inputs = [...row.querySelectorAll('[data-nightly-batch-count]')];
         const total = row.querySelector('input[name$="[quantity]"]');
@@ -19,6 +20,37 @@ export function initDailyCounts() {
     });
 }
 
+function initNightlyStart() {
+    const form = document.querySelector('[data-nightly-start-form]');
+    if (!form || form.dataset.startReady) return;
+    form.dataset.startReady = '1';
+    const picker = form.querySelector('[data-nightly-medicine-picker]');
+    const options = [...form.querySelectorAll('[data-nightly-medicine-option]')];
+    const search = form.querySelector('#nightly-medicine-search');
+    const sync = () => {
+        const selected = form.querySelector('[name="scope"]:checked')?.value === 'selected';
+        picker.hidden = !selected;
+        const term = search.value.trim().toLocaleLowerCase('id');
+        let visible = 0;
+        for (const option of options) {
+            option.hidden = !option.dataset.search.includes(term);
+            if (!option.hidden) visible += 1;
+            option.querySelector('input').disabled = !selected;
+        }
+        form.querySelector('[data-nightly-no-matches]').hidden = visible > 0;
+        form.querySelector('[data-nightly-selected-count]').textContent = `${form.querySelectorAll('[name="medicine_ids[]"]:checked').length} obat dipilih`;
+    };
+    form.addEventListener('change', sync);
+    search.addEventListener('input', sync);
+    form.addEventListener('submit', (event) => {
+        if (event.defaultPrevented) return;
+        if (form.querySelector('[name="scope"]:checked')?.value !== 'selected' || form.querySelector('[name="medicine_ids[]"]:checked')) return;
+        event.preventDefault();
+        void Swal.fire({ title: 'Pilih obat terlebih dahulu', text: 'Centang sedikitnya satu obat yang akan diperiksa.', icon: 'warning', confirmButtonText: 'Pilih obat' }).then(() => search.focus());
+    });
+    sync();
+}
+
 export function prepareDailyCounts(form, submitter) {
     const payload = {};
     const errors = [];
@@ -34,6 +66,8 @@ export function prepareDailyCounts(form, submitter) {
         }
         if (submitter?.value !== 'submit') return;
         if (!total.value || !total.validity.valid) errors.push({ input: total, message: `${label}: isi hasil hitung; gunakan 0 jika kosong.` });
+        const unit = row.querySelector('[data-nightly-unit]');
+        if (unit && !unit.value) errors.push({ input: unit, message: `${label}: pilih satuan hitung yang sesuai Data Obat.` });
         if (filled.length || total.value !== '' && Number(total.value) !== Number(row.dataset.systemQuantity)) {
             const missing = inputs.find((input) => Number(input.dataset.systemQuantity) > 0 && input.value === '');
             if (missing) errors.push({ input: missing, message: `${label}: lengkapi hasil hitung semua batch yang memiliki stok.` });
