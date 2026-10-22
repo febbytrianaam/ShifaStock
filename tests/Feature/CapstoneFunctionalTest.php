@@ -192,7 +192,7 @@ class CapstoneFunctionalTest extends TestCase
         $check = DB::table('nightly_checks')->sole();
         $item = DB::table('nightly_check_items')->where('nightly_check_id', $check->id)->sole();
         $counts = Batch::all()->mapWithKeys(fn ($batch) => [$batch->id => $batch->number === 'SIM-EARLY' ? 18 : 30])->all();
-        $this->post(route('nightly.save', $check->id), ['action' => 'submit', 'items' => [$item->id => ['quantity' => 48, 'unit' => 'Tablet', 'batch_counts' => $counts]]])
+        $this->post(route('nightly.save', $check->id), ['draft_revision' => $check->draft_revision, 'action' => 'submit', 'items' => [$item->id => ['quantity' => 48, 'unit' => 'Tablet', 'batch_counts' => $counts]]])
             ->assertSessionHasNoErrors();
         $this->assertDatabaseHas('nightly_checks', ['id' => $check->id, 'status' => 'submitted']);
         $this->assertDatabaseHas('stock_balances', ['location_id' => $this->warehouse->id, 'quantity' => 50]);

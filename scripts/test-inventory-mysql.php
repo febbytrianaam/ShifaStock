@@ -54,6 +54,7 @@ if (($argv[1] ?? '') === '--worker') {
     $operation = $argv[2];
     $id = $argv[3];
     Auth::setUser(User::findOrFail($fixture['user']));
+    if ($operation === 'daily-save' && $id === '0') Auth::setUser(User::findOrFail($fixture['staff']));
     file_put_contents($run.'/ready-'.$id, 'ready');
     $deadline = microtime(true) + 60;
     while (! is_file($run.'/go')) {
@@ -88,6 +89,9 @@ if (($argv[1] ?? '') === '--worker') {
                     'finalize' => invokeInventory('finalizeOpnameSession', [],
                         ['session' => StockOpnameSession::findOrFail($fixture['session'])]),
                     'daily' => invokeInventory('review', ['action' => 'approve'], ['id' => $fixture['daily']], NightlyCheckController::class),
+                    'daily-save' => invokeInventory('save', ['draft_revision' => 0, 'action' => 'save',
+                        'items' => [$fixture['daily_item'] => ['quantity' => null, 'unit' => 'Tablet', 'note' => 'Worker '.$id]]],
+                        ['id' => $fixture['daily']], NightlyCheckController::class),
                     'unit' => InventoryTransaction::run(fn () => Medicine::findOrFail($fixture['new_medicine'])->update(['unit_id' => $fixture['new_unit']])),
                     'receipt', 'receive' => invokeInventory('storeReceipt', ['reference' => 'QA-FIRST-RECEIPT-'.bin2hex(random_bytes(4)), 'action' => 'post',
                         'destination_location_id' => $fixture['location'], 'occurred_at' => '2026-10-18T10:00',
@@ -198,7 +202,19 @@ try {
     invokeInventory('store', ['date' => now('Asia/Jakarta')->toDateString(), 'location_id' => $location->id], [], NightlyCheckController::class);
     $fixture['daily'] = DB::table('nightly_checks')->sole()->id;
     $item = DB::table('nightly_check_items')->sole();
-    invokeInventory('save', ['action' => 'submit', 'items' => [$item->id => ['quantity' => 7, 'unit' => 'Tablet',
+    $fixture['daily_item'] = $item->id;
+    $fixture['staff'] = User::factory()->create(['role' => Role::Pharmacy])->id;
+    $movementsBefore = InventoryMovement::count();
+    $results = $race(['daily-save', 'daily-save']);
+    $oneWinner($results);
+    $winner = $results[0]['status'] === 'ok' ? $fixture['staff'] : $fixture['user'];
+    verify(DB::table('nightly_checks')->sole()->created_by === $fixture['user'], 'Shared save replaced the creator.');
+    verify((int) DB::table('nightly_checks')->sole()->draft_revision === 1, 'Stale shared save advanced revision.');
+    verify(DB::table('nightly_check_items')->sole()->last_edited_by === $winner, 'Shared save attribution is incorrect.');
+    verify(DB::table('nightly_check_activities')->where('action', 'saved')->count() === 1, 'Rejected shared save recorded an activity.');
+    verify(InventoryMovement::count() === $movementsBefore, 'Draft shared save moved stock.');
+    echo "PASS concurrent shared daily drafts: one save accepted, stale write rejected, creator and actor preserved.\n";
+    invokeInventory('save', ['draft_revision' => 1, 'action' => 'submit', 'items' => [$item->id => ['quantity' => 7, 'unit' => 'Tablet',
         'batch_counts' => [Batch::where('number', 'QA-BATCH')->sole()->id => 7]]]], ['id' => $fixture['daily']], NightlyCheckController::class);
     $oneWinner($race(['daily', 'daily']));
     verify((float) StockBalance::where('medicine_id', $medicine->id)->sole()->quantity === 7.0, 'Daily approval applied twice.');

@@ -3,15 +3,15 @@
 .nightly-workspace .field { font-size:12px; padding:8px; min-width:0; }
 .nightly-workspace .btn, .nightly-workspace .btn-secondary { font-size:12px; }
 .nightly-head, .nightly-toolbar, .nightly-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-.nightly-head p { font-size:12px; color:#64748b; margin-top:4px; }
+.nightly-head p { font-size:12px; color:#64748b; margin-top:4px; overflow-wrap:anywhere; }
 .nightly-head-actions { display:flex; align-items:center; gap:8px; }
 .nightly-icon { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border:1px solid #e2e8f0; border-radius:6px; background:white; color:#475569; flex-shrink:0; }
 .nightly-icon:hover { background:#edf5fb; }
 .nightly-icon:disabled { opacity:.35; }
 .nightly-notice { padding:8px 10px; border-left:3px solid #94a3b8; background:#f1f5f9; font-size:12px; line-height:1.6; }
 .nightly-notices { max-height:115px; overflow:auto; display:grid; gap:6px; flex-shrink:0; }
-.nightly-tabs { display:flex; gap:18px; border-bottom:1px solid #e2e8f0; flex-shrink:0; }
-.nightly-tabs button { border-bottom:2px solid transparent; padding:8px 0; color:#64748b; font-size:12px; font-weight:600; }
+.nightly-tabs { display:flex; gap:18px; overflow-x:auto; border-bottom:1px solid #e2e8f0; flex-shrink:0; }
+.nightly-tabs button { flex-shrink:0; border-bottom:2px solid transparent; padding:8px 0; color:#64748b; font-size:12px; font-weight:600; }
 .nightly-tabs button[aria-selected="true"] { color:#266194; border-color:#3277b2; }
 .nightly-panel { display:flex; flex:1; min-height:0; flex-direction:column; gap:10px; }
 .nightly-toolbar { flex-wrap:nowrap; }

@@ -28,6 +28,7 @@
     <div id="nightly-details-{{ $i->id }}" class="nightly-details" data-nightly-row-details hidden>
         <div><x-nightly-batches :item="$i" :batches="$batchOptions->get($i->medicine_id, collect())" :balances="$batchBalances" :editable="$editable" /></div>
         <div class="nightly-extra">
+            <p class="text-[11px] text-slate-500" data-nightly-item-worker>Pembaruan terakhir: {{ $i->last_edited_name ?: 'Belum tercatat' }}@if($i->last_edited_at) &middot; {{ \Carbon\Carbon::parse($i->last_edited_at, config('app.timezone'))->timezone('Asia/Jakarta')->format('d/m/Y H:i') }} WIB @endif</p>
             <dl><div><dt>Hasil sebelumnya</dt><dd>{{ $b ? $b->quantity.' '.$b->unit : 'Belum tersedia' }}@if($b) ({{ $b->checked_date }})@endif</dd></div><div><dt>Selisih dari hasil sebelumnya</dt><dd>{{ $b && $i->quantity !== null && $b->unit === $i->unit ? sprintf('%+d', $i->quantity - $b->quantity) : 'Tidak tersedia' }} (tersimpan)</dd></div></dl>
             <p class="text-[11px] text-slate-500">Pembanding adalah hasil terakhir yang disetujui sebelum tanggal ini. Selisih bukan jumlah pemakaian pasien.</p>
             @if($editable)

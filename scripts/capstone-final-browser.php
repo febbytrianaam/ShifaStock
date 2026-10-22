@@ -116,7 +116,7 @@ try {
         $invokeDaily('store', ['date' => $date, 'location_id' => $warehouse->id, 'scope' => 'selected', 'medicine_ids' => $printMedicines->pluck('id')->all()]);
         $longCheckId = DB::table('nightly_checks')->where('date', $date)->where('location_id', $warehouse->id)->value('id');
         $longItems = DB::table('nightly_check_items')->where('nightly_check_id', $longCheckId)->get()->values();
-        $invokeDaily('save', ['action' => 'save', 'items' => $longItems->mapWithKeys(fn ($item, $index) => [$item->id => [
+        $invokeDaily('save', ['draft_revision' => 0, 'action' => 'save', 'items' => $longItems->mapWithKeys(fn ($item, $index) => [$item->id => [
             'quantity' => $index % 7 === 0 ? null : ($index % 3 === 0 ? 2 : 0), 'unit' => 'Tablet',
             'is_low' => $index % 3 === 0, 'requested_quantity' => $index % 2 === 0 ? 10 : null,
             'note' => 'Catatan simulasi pemeriksaan. Periksa kemasan dan jumlah fisik sebelum laporan diajukan untuk peninjauan.',

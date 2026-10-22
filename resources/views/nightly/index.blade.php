@@ -83,6 +83,7 @@
                                     {{ $check->location }}
                                 </span>
                                 <span class="mt-1 block text-[11px] text-slate-500">Daftar awal: {{ $check->scope === 'selected' ? 'Obat tertentu' : 'Semua obat' }}</span>
+                                <span class="mt-1 block text-[11px] text-slate-500">Dibuat oleh: {{ $check->creator }}</span>
                             </td>
                             <td class="p-4">
                                 @php($statusStyle = ['approved' => 'bg-[#edf5fb] text-[#266194] border border-[#b2d4ee]', 'submitted' => 'bg-amber-100 text-amber-800 border border-amber-200', 'draft' => 'bg-slate-100 text-slate-700 border border-slate-200'][$check->status] ?? 'bg-slate-100 text-slate-700 border border-slate-200')
@@ -101,6 +102,7 @@
                                             <form method="POST" action="{{ route('nightly.destroy', $check->id) }}" data-confirm-cancel-draft>
                                                 @csrf
                                                 @method('DELETE')
+                                                <input type="hidden" name="draft_revision" value="{{ $check->draft_revision }}">
                                                 <button class="inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 transition">Cancel</button>
                                             </form>
                                         @endif

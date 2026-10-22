@@ -256,8 +256,8 @@ const assert = require('node:assert/strict');
             assert(await page.locator('[data-nightly-batch-count]').evaluate((input) => input === document.activeElement));
             assert.equal(await page.locator('#nightly-filter').inputValue(), 'all');
         });
-        await record('Guest dan apoteker bukan pembuat tetap lihat saja, bukan membuka hak edit', async () => {
-            for (const username of ['guest_simulasi', 'apoteker_simulasi']) {
+        await record('Guest tetap lihat saja tanpa hak edit', async () => {
+            for (const username of ['guest_simulasi']) {
                 await login(username);
                 await goto(`/pengecekan-malam/${meta.stress_check}`);
                 assert(await page.locator('[data-nightly-readonly]').isVisible());
@@ -266,6 +266,67 @@ const assert = require('node:assert/strict');
                 await page.getByRole('tab', { name: 'Ringkasan', exact: true }).click();
                 assert(await page.locator('#nightly-summary').isVisible());
             }
+        });
+        await record('Apoteker melanjutkan draf petugas, pembuat tetap sama, pelaksana dan aktivitas tercatat', async () => {
+            await login('petugas_simulasi');
+            await goto(`/pengecekan-malam/${meta.stress_check}`);
+            const staffPage = page;
+            page = null;
+            await login('apoteker_simulasi');
+            await goto(`/pengecekan-malam/${meta.stress_check}`);
+            assert.equal(await page.locator('[data-nightly-count-form]').count(), 1);
+            assert.equal(await page.getByRole('button', { name: 'Cancel Draf', exact: true }).count(), 0);
+            await page.locator('[data-nightly-row-toggle]').first().click();
+            await page.locator('[data-nightly-row]').first().locator('[name$="[note]"]').fill('Dilanjutkan apoteker');
+            await page.getByRole('button', { name: 'Simpan Draf', exact: true }).click();
+            await ready();
+            assert((await page.locator('[data-nightly-creator]').innerText()).includes('Petugas Simulasi'));
+            assert((await page.locator('[data-nightly-last-worker]').innerText()).includes('Apoteker'));
+            await page.getByRole('tab', { name: 'Aktivitas', exact: true }).click();
+            assert((await page.locator('[data-nightly-activities]').innerText()).includes('Menyimpan draf'));
+            assert((await page.locator('[data-nightly-activities]').innerText()).includes('Apoteker'));
+            await capture('Aktivitas_Pemeriksaan_Bersama.png');
+            page = staffPage;
+            await page.locator('[data-nightly-row-toggle]').first().click();
+            await page.locator('[data-nightly-row]').first().locator('[name$="[note]"]').fill('Catatan dari halaman lama');
+        });
+        await record('Dua akun: halaman lama ditolak tanpa menimpa catatan apoteker atau menghilangkan isian petugas', async () => {
+            await page.getByRole('button', { name: 'Simpan Draf', exact: true }).click();
+            await ready();
+            assert((await page.locator('[role="alert"]').innerText()).includes('Laporan sudah diperbarui'));
+            assert.equal(await page.locator('[data-nightly-row]').first().locator('[name$="[note]"]').inputValue(), 'Catatan dari halaman lama');
+            assert(await page.locator('[data-nightly-latest]').isVisible());
+            await capture('Peringatan_Draf_Berubah.png');
+            await page.reload();
+            await ready();
+            assert.equal(await page.locator('[data-nightly-row]').first().locator('[name$="[note]"]').inputValue(), 'Dilanjutkan apoteker');
+            await page.locator('[data-nightly-row-toggle]').first().click();
+            await page.locator('[data-nightly-row]').first().locator('[name$="[note]"]').fill('Dilanjutkan kembali petugas');
+            await page.getByRole('button', { name: 'Simpan Draf', exact: true }).click();
+            await ready();
+            assert((await page.locator('[data-nightly-last-worker]').innerText()).includes('Petugas Simulasi'));
+        });
+        await record('Arah sebaliknya: draf buatan apoteker dapat diisi dan ditambah obat oleh petugas', async () => {
+            await login('apoteker_simulasi');
+            await goto('/pengecekan-malam');
+            await page.locator('[name="location_id"]').selectOption(String(meta.warehouse));
+            await page.locator('[name="scope"][value="selected"]').check();
+            await page.locator(`[name="medicine_ids[]"][value="${meta.other_medicine}"]`).check();
+            await page.getByRole('button', { name: 'Buka / Mulai Pemeriksaan', exact: true }).click();
+            await ready();
+            const reportUrl = new URL(page.url()).pathname;
+            await login('petugas_simulasi');
+            await goto(reportUrl);
+            assert((await page.locator('[data-nightly-creator]').innerText()).includes('Apoteker'));
+            assert.equal(await page.getByRole('button', { name: 'Cancel Draf', exact: true }).count(), 0);
+            await quantity(0).fill('0');
+            await page.getByRole('button', { name: 'Tambah Obat', exact: true }).click();
+            await page.locator(`[data-nightly-add-dialog] [name="medicine_ids[]"][value="${meta.medicine}"]`).check();
+            await page.getByRole('button', { name: 'Tambahkan ke Pemeriksaan', exact: true }).click();
+            await ready();
+            assert.equal(await page.locator('[data-nightly-row]').count(), 2);
+            assert((await page.locator('[data-nightly-last-worker]').innerText()).includes('Petugas Simulasi'));
+            await capture('Draf_Apoteker_Dilanjutkan_Petugas.png');
         });
         console.log(`${results.length}/${results.length} workspace checks passed.`);
     } catch (error) {

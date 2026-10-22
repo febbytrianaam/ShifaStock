@@ -56,6 +56,7 @@ class PartialNightlySubmissionTest extends TestCase
     private function payload(array $override = []): array
     {
         return array_replace([
+            'draft_revision' => DB::table('nightly_checks')->where('id', $this->check)->value('draft_revision'),
             'action' => 'submit', 'confirm_partial' => 1,
             'items' => [
                 $this->items[0] => ['quantity' => 5, 'unit' => 'Tablet', 'batch_counts' => [$this->batches[0]->id => 5]],
@@ -171,12 +172,12 @@ class PartialNightlySubmissionTest extends TestCase
         $this->get(route('preview.opname', ['period' => '2026-01']))->assertOk()->assertViewHas('rows', fn ($rows) => $rows->total() === 2 && $rows->every(fn ($row) => $row->quantity !== null));
     }
 
-    public function test_partial_confirmation_does_not_bypass_ownership_or_guest_permissions(): void
+    public function test_partial_confirmation_does_not_bypass_guest_permissions(): void
     {
-        foreach ([Role::Pharmacy, Role::Guest] as $role) {
+        foreach ([Role::Guest] as $role) {
             $this->actingAs(User::factory()->create(['role' => $role]))->postJson(route('nightly.save', $this->check), $this->payload())->assertForbidden();
             $this->get(route('nightly.show', $this->check))->assertOk()->assertSee('data-nightly-readonly', false)
-                ->assertSee($role === Role::Guest ? 'hanya memiliki akses melihat laporan' : 'Hanya akun pembuat draf');
+                ->assertSee('hanya memiliki akses melihat laporan');
         }
         $this->assertDatabaseHas('nightly_checks', ['id' => $this->check, 'status' => 'draft']);
     }

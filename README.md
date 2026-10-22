@@ -14,7 +14,7 @@ Aplikasi berfokus pada pengelolaan obat, bukan pelayanan pasien atau integrasi N
 | Penerimaan | Input banyak baris, pilihan obat searchable, nomor faktur supplier, konversi satuan, edit/batalkan draf, posting ke lokasi tujuan, dan peringatan faktur ganda |
 | Pergerakan stok | Stok awal per batch, transfer banyak obat dalam satu referensi dengan penyimpanan atomik, pengeluaran, retur PBF, serta kondisi khusus dengan batch wajib |
 | Pemilihan batch | Mengikuti obat dan lokasi; FEFO otomatis untuk transfer/pengeluaran tanpa pilihan batch eksplisit, dengan pengecualian batch kedaluwarsa |
-| Pemeriksaan harian | Daftar responsif dengan pencarian/pagination dan progres, rincian batch/permintaan/catatan, tambah obat ke draf, serta kirim sebagian dengan konfirmasi; tinjauan apoteker hanya menyesuaikan obat yang sudah diperiksa |
+| Pemeriksaan harian | Draf bersama petugas/apoteker dengan identitas pembuat, pelaksana per obat, riwayat aktivitas, dan perlindungan versi lama; daftar responsif, rincian batch, tambah obat, dan kirim sebagian; tinjauan hanya menyesuaikan obat yang diperiksa |
 | Opname periodik | Snapshot stok, isian fisik, finalisasi, dan Mulai Hitung Ulang dengan konfirmasi serta pencatatan isian lama di audit log |
 | Monitoring | Stok kosong/menipis, parameter minimum stok, kedaluwarsa beserta lokasi, dan pintasan tindak lanjut |
 | Pelaporan | Kartu stok per obat/lokasi/batch/periode, cetak dengan identitas klinik, laporan persediaan, dan riwayat pemeriksaan |
@@ -97,6 +97,8 @@ Buka [ShifaStock lokal](http://127.0.0.1:8000). Untuk pengembangan frontend, jal
 Master obat dapat dimasukkan melalui menu Data Obat, termasuk preview/import referensi yang disediakan. Seed referensi tidak berarti stok fisik sudah tersedia; catat stok awal atau penerimaan sesuai batch dan lokasi sebenarnya.
 
 ## Pengujian
+
+**Draf pemeriksaan bersama, 22 Oktober 2026:** pengujian working tree pada `af37ff0` lulus **172 tes / 1777 assertions**, **38 kasus browser** (15 UI, 7 kirim sebagian, 16 operasional), dan **10 skenario MySQL bersamaan**, termasuk penyimpanan dua operator pada versi draf yang sama. Build frontend dan verifikasi isolasi UAT lulus. Pembuat tetap tercatat, pembaruan per obat mengikuti pelaksana sebenarnya, dan versi lama tidak menimpa pekerjaan terbaru. Migrasi tambahan hanya diterapkan ke UAT lokal, tanpa reset data/matriks. [Laporan implementasi](Docs/30_implemented/2026-10-22-shared-daily-check/implementation_report.md).
 
 **Antarmuka pemeriksaan harian, 22 Oktober 2026:** daftar ringkas dengan Rincian, progres dan status simpan, tab tinjauan/ringkasan, serta layout desktop/tablet/HP. Tabel mengikuti lebar halaman tanpa batas 1360 px; pengujian UI mencakup Full HD, QHD, dan 4K. Pengujian ulang sebelum publikasi lulus **157 tes / 1621 assertions** dan **35 kasus browser** (12 UI, 7 kirim sebagian, 16 operasional), beserta build frontend. Tidak ada perubahan aturan stok atau hak akses. Hasil aktual tiap tahap dan batasan pengujian tercatat pada [laporan implementasi](Docs/30_implemented/2026-10-22-daily-check-workspace/implementation_report.md).
 

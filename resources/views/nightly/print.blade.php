@@ -64,7 +64,8 @@
             <p><strong>Nomor laporan:</strong> CHECK-{{ $check->id }}</p>
             <p><strong>Lokasi:</strong> {{ $check->location }}</p>
             <p><strong>Tanggal pemeriksaan:</strong> {{ \Carbon\Carbon::parse($check->date)->format('d/m/Y') }}</p>
-            <p><strong>Petugas:</strong> {{ $check->creator }}</p>
+            <p><strong>Dibuat oleh:</strong> {{ $check->creator }}</p>
+            <p><strong>Dikerjakan terakhir:</strong> {{ $lastWork?->actor_name ?? 'Belum tercatat' }}</p>
             <p><strong>Daftar awal:</strong> {{ $check->scope === 'selected' ? 'Obat tertentu' : 'Semua obat' }} ({{ $items->count() }} obat)</p>
             <p><strong>Status:</strong> {{ ['draft' => 'DRAF - Belum disetujui', 'submitted' => 'MENUNGGU TINJAUAN - Belum disetujui', 'approved' => 'DISETUJUI'][$check->status] ?? 'Belum disetujui' }}</p>
             <p><strong>Peninjau:</strong> {{ $reviewer ?: 'Belum tercatat' }}</p>
@@ -94,7 +95,7 @@
                         <td>{{ $item->unit ?: '-' }}</td>
                         <td>{{ $item->quantity === null ? 'Belum diperiksa' : ((int) $item->quantity === 0 ? 'Kosong' : ($item->is_low ? 'Menipis' : 'Cukup')) }}</td>
                         <td class="num">{{ $item->requested_quantity === null ? '-' : \App\Support\Quantity::format($item->requested_quantity) }}</td>
-                        <td>{{ $item->note ?: '-' }}</td>
+                        <td>{{ $item->note ?: '-' }}@if($item->last_edited_name)<span class="small">Diperbarui: {{ $item->last_edited_name }}</span>@endif</td>
                     </tr>
                 @endforeach
             </tbody>

@@ -52,6 +52,7 @@ class DailyBatchCountTest extends TestCase
     private function submit(int $quantity, array $counts, string $unit = 'Tablet')
     {
         return $this->actingAs($this->staff)->postJson(route('nightly.save', $this->checkId), [
+            'draft_revision' => DB::table('nightly_checks')->where('id', $this->checkId)->value('draft_revision'),
             'action' => 'submit', 'items' => [$this->itemId => ['quantity' => $quantity, 'unit' => $unit, 'batch_counts' => $counts]],
         ]);
     }
@@ -133,7 +134,7 @@ class DailyBatchCountTest extends TestCase
 
     public function test_json_batch_payload_is_persisted_and_rendered_for_review(): void
     {
-        $this->postJson(route('nightly.save', $this->checkId), ['action' => 'submit',
+        $this->postJson(route('nightly.save', $this->checkId), ['draft_revision' => 0, 'action' => 'submit',
             'items' => [$this->itemId => ['quantity' => 13, 'unit' => 'Tablet']],
             'batch_counts_payload' => json_encode([$this->itemId => [$this->early => 9, $this->late => 4]]),
         ])->assertRedirect();
@@ -162,7 +163,7 @@ class DailyBatchCountTest extends TestCase
         $this->post(route('receipts.store'), $receipt)->assertSessionHasNoErrors();
         $batchId = Batch::where('number', 'SECOND-BATCH')->value('id');
         $otherItem = DB::table('nightly_check_items')->insertGetId(['nightly_check_id' => $this->checkId, 'medicine_id' => $other->id, 'code' => $other->code, 'name' => $other->name, 'unit' => 'Tablet']);
-        $this->postJson(route('nightly.save', $this->checkId), ['action' => 'submit', 'items' => [
+        $this->postJson(route('nightly.save', $this->checkId), ['draft_revision' => 0, 'action' => 'submit', 'items' => [
             $this->itemId => ['quantity' => 7, 'unit' => 'Tablet', 'batch_counts' => [$this->early => 3, $this->late => 4]],
             $otherItem => ['quantity' => 3, 'unit' => 'Tablet', 'batch_counts' => [$batchId => 3]],
         ]])->assertRedirect();
@@ -179,7 +180,7 @@ class DailyBatchCountTest extends TestCase
         $this->post(route('receipts.store'), ['reference' => 'WHILE-COUNTING', 'medicine_id' => $this->medicine->id,
             'batch_number' => 'EARLY', 'expiry_date' => '2026-11-01', 'quantity' => 1,
             'destination_location_id' => $this->location->id, 'occurred_at' => '2026-10-16T10:01'])->assertSessionHasNoErrors();
-        $this->postJson(route('nightly.save', $this->checkId), ['action' => 'submit', 'observed_revision' => $revision,
+        $this->postJson(route('nightly.save', $this->checkId), ['draft_revision' => 0, 'action' => 'submit', 'observed_revision' => $revision,
             'items' => [$this->itemId => ['quantity' => 7, 'unit' => 'Tablet', 'batch_counts' => [$this->early => 3, $this->late => 4]]],
         ])->assertUnprocessable()->assertJsonValidationErrors('items');
         $this->assertDatabaseHas('nightly_checks', ['id' => $this->checkId, 'status' => 'draft']);

@@ -128,7 +128,7 @@ class SelectedNightlyCheckTest extends TestCase
         $this->assertSame(['', 'Tablet'], $values);
         $this->get(route('nightly.show', $id))->assertSee('Satuan Data Obat belum diatur');
         $item = DB::table('nightly_check_items')->sole();
-        $this->postJson(route('nightly.save', $id), ['action' => 'submit', 'items' => [$item->id => ['quantity' => 1, 'unit' => 'Tablet']]])
+        $this->postJson(route('nightly.save', $id), ['draft_revision' => 0, 'action' => 'submit', 'items' => [$item->id => ['quantity' => 1, 'unit' => 'Tablet']]])
             ->assertUnprocessable()->assertJsonValidationErrors('items.'.$item->id.'.unit');
         $this->assertDatabaseHas('nightly_checks', ['id' => $id, 'status' => 'draft']);
     }
@@ -151,8 +151,8 @@ class SelectedNightlyCheckTest extends TestCase
         $this->assertDatabaseCount('nightly_check_items', 2);
         $items = DB::table('nightly_check_items')->where('nightly_check_id', $id)->get();
         $payload = $items->mapWithKeys(fn ($item) => [$item->id => ['quantity' => $item->medicine_id === $this->first->id ? 0 : null, 'unit' => 'Tablet']])->all();
-        $this->postJson(route('nightly.save', $id), ['action' => 'save', 'items' => $payload])->assertRedirect();
-        $this->postJson(route('nightly.save', $id), ['action' => 'submit', 'items' => $payload])->assertUnprocessable()->assertJsonValidationErrors('confirm_partial');
+        $this->postJson(route('nightly.save', $id), ['draft_revision' => 0, 'action' => 'save', 'items' => $payload])->assertRedirect();
+        $this->postJson(route('nightly.save', $id), ['draft_revision' => 1, 'action' => 'submit', 'items' => $payload])->assertUnprocessable()->assertJsonValidationErrors('confirm_partial');
         $this->assertDatabaseHas('nightly_checks', ['id' => $id, 'scope' => 'complete', 'status' => 'draft']);
     }
 
@@ -161,9 +161,9 @@ class SelectedNightlyCheckTest extends TestCase
         $id = $this->start(['medicine_ids' => [$this->first->id, $this->other->id]]);
         $items = DB::table('nightly_check_items')->where('nightly_check_id', $id)->get();
         $payload = $items->mapWithKeys(fn ($item) => [$item->id => ['quantity' => null, 'unit' => 'Tablet']])->all();
-        $this->postJson(route('nightly.save', $id), ['action' => 'save', 'items' => $payload])->assertRedirect();
+        $this->postJson(route('nightly.save', $id), ['draft_revision' => 0, 'action' => 'save', 'items' => $payload])->assertRedirect();
         $payload[$items->first()->id]['quantity'] = 0;
-        $this->postJson(route('nightly.save', $id), ['action' => 'submit', 'items' => $payload])->assertUnprocessable();
+        $this->postJson(route('nightly.save', $id), ['draft_revision' => 1, 'action' => 'submit', 'items' => $payload])->assertUnprocessable();
         $this->assertDatabaseHas('nightly_checks', ['id' => $id, 'status' => 'draft']);
     }
 
@@ -182,7 +182,7 @@ class SelectedNightlyCheckTest extends TestCase
         $id = $this->start(['date' => now('Asia/Jakarta')->toDateString()]);
         $item = DB::table('nightly_check_items')->where('nightly_check_id', $id)->sole();
         $batch = Batch::where('number', 'SELECT-BATCH-0')->sole();
-        $payload = ['action' => 'submit', 'items' => [$item->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 30]]];
+        $payload = ['draft_revision' => 0, 'action' => 'submit', 'items' => [$item->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 30]]];
         $this->postJson(route('nightly.save', $id), $payload)->assertUnprocessable()->assertJsonValidationErrors('items.'.$item->id.'.batch_counts');
         $payload['items'][$item->id]['batch_counts'] = [$batch->id => 0];
         $this->postJson(route('nightly.save', $id), $payload)->assertRedirect();

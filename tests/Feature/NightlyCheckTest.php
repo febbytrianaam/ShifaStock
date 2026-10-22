@@ -32,15 +32,15 @@ class NightlyCheckTest extends TestCase
             ->assertSee('Cari obat')
             ->assertSee('25 obat')
             ->assertSee('data-nightly-row', false);
-        $this->post($url, ['action' => 'submit', 'items' => [$i->id => ['quantity' => null, 'unit' => 'Tablet']]])->assertSessionHasErrors('items');
+        $this->post($url, ['draft_revision' => 0, 'action' => 'submit', 'items' => [$i->id => ['quantity' => null, 'unit' => 'Tablet']]])->assertSessionHasErrors('items');
         $this->assertDatabaseHas('nightly_checks', ['id' => $c->id, 'status' => 'draft']);
-        $this->post($url, ['action' => 'save', 'items' => [$i->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 20]]])->assertRedirect();
+        $this->post($url, ['draft_revision' => 0, 'action' => 'save', 'items' => [$i->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 20]]])->assertRedirect();
         $this->assertDatabaseHas('nightly_check_items', ['id' => $i->id, 'quantity' => 0]);
-        $this->post($url, ['action' => 'submit', 'items' => [$i->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 20]]])->assertRedirect();
+        $this->post($url, ['draft_revision' => 1, 'action' => 'submit', 'items' => [$i->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 20]]])->assertRedirect();
         $this->post($url.'/review', ['action' => 'approve'])->assertForbidden();
         $this->actingAs($k)->post($url.'/review', ['action' => 'return', 'review_note' => 'Cek satuan'])->assertRedirect();
         $this->assertDatabaseHas('nightly_checks', ['id' => $c->id, 'status' => 'draft']);
-        $this->actingAs($p)->post($url, ['action' => 'submit', 'items' => [$i->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 20]]])->assertRedirect();
+        $this->actingAs($p)->post($url, ['draft_revision' => 3, 'action' => 'submit', 'items' => [$i->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 20]]])->assertRedirect();
         $this->actingAs($k)->post($url.'/review', ['action' => 'approve'])->assertRedirect();
         $this->assertDatabaseHas('nightly_checks', ['id' => $c->id, 'status' => 'approved']);
         $this->get('/kekurangan-permintaan')->assertOk()
@@ -49,7 +49,7 @@ class NightlyCheckTest extends TestCase
             ->assertSee('Kosong');
         $this->get('/riwayat-stok?search=Obat')->assertOk()->assertSee('Obat A');
         $this->get($url)->assertOk()->assertSee('(kosong)')->assertSee('permintaan 20 Tablet');
-        $this->actingAs($p)->post($url, ['action' => 'save', 'items' => [$i->id => ['quantity' => 5, 'unit' => 'Tablet']]])->assertForbidden();
+        $this->actingAs($p)->post($url, ['draft_revision' => 5, 'action' => 'save', 'items' => [$i->id => ['quantity' => 5, 'unit' => 'Tablet']]])->assertForbidden();
         $this->post('/pengecekan-malam', ['date' => '2026-01-02', 'location_id' => $l->id])->assertRedirect();
         $next = DB::table('nightly_checks')->where('date', '2026-01-02')->first();
         $this->get('/pengecekan-malam/'.$next->id)->assertOk()->assertSee('2026-01-01')->assertSee('0 Tablet');
@@ -57,7 +57,7 @@ class NightlyCheckTest extends TestCase
         $this->assertDatabaseCount('nightly_checks', 2);
     }
 
-    public function test_other_staff_cannot_edit_and_unverified_names_need_a_counting_unit(): void
+    public function test_other_staff_can_continue_but_unverified_names_still_need_a_counting_unit(): void
     {
         $p = User::factory()->create(['role' => Role::Pharmacy]);
         $other = User::factory()->create(['role' => Role::Pharmacy]);
@@ -67,8 +67,8 @@ class NightlyCheckTest extends TestCase
         $c = DB::table('nightly_checks')->first();
         $i = DB::table('nightly_check_items')->first();
         $url = '/pengecekan-malam/'.$c->id;
-        $this->post($url, ['action' => 'save', 'items' => [$i->id => ['quantity' => 1, 'unit' => '']]])->assertSessionHasErrors('items');
-        $this->actingAs($other)->post($url, ['action' => 'save', 'items' => [$i->id => ['quantity' => 1, 'unit' => 'Botol']]])->assertForbidden();
-        $this->assertDatabaseHas('nightly_check_items', ['id' => $i->id, 'quantity' => null]);
+        $this->post($url, ['draft_revision' => 0, 'action' => 'save', 'items' => [$i->id => ['quantity' => 1, 'unit' => '']]])->assertSessionHasErrors('items');
+        $this->actingAs($other)->post($url, ['draft_revision' => 0, 'action' => 'save', 'items' => [$i->id => ['quantity' => 1, 'unit' => 'Botol']]])->assertRedirect();
+        $this->assertDatabaseHas('nightly_check_items', ['id' => $i->id, 'quantity' => 1, 'last_edited_by' => $other->id]);
     }
 }

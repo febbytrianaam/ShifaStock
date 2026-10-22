@@ -37,10 +37,10 @@ class NightlyDraftCancelTest extends TestCase
             'name' => 'Obat',
         ]);
 
-        $this->actingAs($other)->delete('/pengecekan-malam/'.$draftId)->assertForbidden();
+        $this->actingAs($other)->delete('/pengecekan-malam/'.$draftId, ['draft_revision' => 0])->assertForbidden();
         $this->assertDatabaseHas('nightly_checks', ['id' => $draftId]);
 
-        $this->actingAs($creator)->delete('/pengecekan-malam/'.$draftId)->assertRedirect('/pengecekan-malam');
+        $this->actingAs($creator)->delete('/pengecekan-malam/'.$draftId, ['draft_revision' => 0])->assertRedirect('/pengecekan-malam');
         $this->assertDatabaseMissing('nightly_checks', ['id' => $draftId]);
         $this->assertDatabaseMissing('nightly_check_items', ['nightly_check_id' => $draftId]);
     }

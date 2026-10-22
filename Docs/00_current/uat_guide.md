@@ -22,11 +22,15 @@ Setup menolak menimpa database/manifest UAT yang sudah ada. Menjalankan server k
 
 ## Pembaruan Skema Dan Pemeriksaan Harian
 
-Gunakan `php scripts/uat.php migrate` untuk migrasi tambahan ke database UAT yang sudah ada. Runner memeriksa konfigurasi/nama database terlebih dahulu, tanpa seed atau reset hasil petugas. Jangan gunakan artisan dengan `.env` utama untuk memperbarui UAT. Migrasi cakupan pemeriksaan 21 Oktober 2026 sudah diterapkan ke UAT workspace ini; database klinik tidak dimigrasikan.
+Gunakan `php scripts/uat.php migrate` untuk migrasi tambahan ke database UAT yang sudah ada. Runner memeriksa konfigurasi/nama database terlebih dahulu, tanpa seed atau reset hasil petugas. Jangan gunakan artisan dengan `.env` utama untuk memperbarui UAT. Migrasi cakupan pemeriksaan 21 Oktober dan pencatatan draf bersama 22 Oktober 2026 sudah diterapkan ke UAT workspace ini; database klinik tidak dimigrasikan.
 
 Pada Pemeriksaan Stok > Harian, pilih **Semua obat** atau **Obat tertentu**. Pilihan kedua menyediakan pencarian dan centang obat. Daftar awal bisa diisi bertahap: kosongkan jumlah yang belum diperiksa, dan isi 0 hanya jika sudah dihitung dan benar-benar kosong. **Simpan Draf** menyimpan isian yang belum lengkap. Saat mengirim sebagian, konfirmasi menampilkan jumlah yang sudah/belum diperiksa dan menyediakan **Kirim N obat**, **Simpan Draf**, serta **Kembali**. Persetujuan hanya menyesuaikan stok obat yang benar-benar sudah diperiksa; obat lain tidak dianggap kosong. Satu laporan per tanggal/lokasi tetap berlaku; tombol mulai membuka laporan yang sudah ada. Ini tetap hitung fisik, bukan pengajuan pembelian terpisah tanpa perubahan stok.
 
-Jika tabel tidak memiliki kolom input, baca penjelasan **Mode lihat saja**. Draf hanya dapat diisi akun pembuatnya; akun petugas lain maupun Guest tidak mengambil alih draf. Laporan terkirim harus dikembalikan oleh apoteker melalui **Kembalikan untuk Koreksi** sebelum pemiliknya mengisi lagi. Laporan yang sudah disetujui tetap terkunci. Jangan mengubah hak akses, menghapus laporan, atau mereset data untuk mengatasi perbedaan akun pembuat.
+Draf dapat dilanjutkan bersama oleh petugas dan kepala apoteker yang memiliki izin operasional. Buka laporan yang sama dari daftar; nama **Dibuat oleh** tidak berubah meskipun pengguna lain menyimpan pekerjaan. **Dikerjakan terakhir** menunjukkan penyimpan terakhir, **Rincian** menunjukkan pembaru terakhir per obat, dan tab **Aktivitas** mencatat pembuat, penyimpanan, penambahan, pengiriman, serta tinjauan beserta nama dan waktunya. Riwayat sebelum fitur ini tersedia ditandai **Belum tercatat**, bukan diisi ulang dengan perkiraan. Pembatalan draf tetap hanya untuk pembuat.
+
+Jika pengguna lain sudah menyimpan sejak halaman dibuka, sistem menolak isian versi lama agar tidak menimpa pekerjaan terbaru. Isian yang belum tersimpan tetap ditampilkan; gunakan **Buka versi terbaru di tab baru**, bandingkan dengan isian Anda, lalu lanjutkan dari versi terbaru. Jangan langsung memuat ulang tab lama sebelum memeriksa isian yang masih diperlukan. Tidak ada penggabungan atau penyimpanan otomatis.
+
+Jika tabel tidak memiliki kolom input, baca penjelasan **Mode lihat saja**. Guest atau akun tanpa izin operasional tetap hanya baca. Laporan terkirim harus dikembalikan oleh apoteker melalui **Kembalikan untuk Koreksi** sebelum petugas atau apoteker mengisi lagi. Laporan yang sudah disetujui tetap terkunci. Jangan mereset data atau mengubah matriks hak akses untuk membuka laporan yang sudah terkunci.
 
 Tab **Daftar Obat** menampilkan obat, stok sistem saat halaman dibuka, jumlah fisik, dan satuan. Daftar awal menampilkan 10 obat per halaman; pencarian, filter, dan pergantian halaman tidak menghapus isian. Progres menghitung semua obat dalam laporan, bukan hanya halaman yang terlihat. Status **Belum disimpan** berarti perlu menekan **Simpan Draf** sebelum keluar. Membuka tab lain tidak otomatis menyimpan.
 
@@ -34,7 +38,7 @@ Buka **Rincian** pada obat untuk mengisi hasil per batch, menandai stok menipis,
 
 Kepala apoteker meninjau laporan terkirim melalui tab **Tinjauan Apoteker** sebelum menyetujui atau mengembalikan untuk koreksi. Tab **Ringkasan** berisi rekap terakhir yang disimpan untuk disalin ke WAG, bukan angka yang belum disimpan. Tabel mengikuti lebar area halaman di desktop dan berubah susunan sesuai ruang yang tersedia pada tablet/HP; margin halaman tidak dipersempit untuk mengatasi monitor besar.
 
-Untuk menambah obat yang tertinggal, buka draf milik Anda lalu tekan **Tambah Obat**, cari dan centang obat, kemudian **Tambahkan ke Pemeriksaan**. Isian yang sedang dikerjakan ikut disimpan sebagai draf, termasuk rincian batch dan catatan; tidak perlu membatalkan laporan. Obat baru belum dianggap kosong sampai jumlahnya benar-benar diisi. X, Batal, atau Escape menutup pilihan tanpa mengubah isian. Setelah laporan dikirim/disetujui, penambahan terkunci. Laporan terkirim yang dikembalikan apoteker untuk koreksi dapat diperbarui lagi oleh pemiliknya.
+Untuk menambah obat yang tertinggal, buka draf yang sedang dikerjakan lalu tekan **Tambah Obat**, cari dan centang obat, kemudian **Tambahkan ke Pemeriksaan**. Isian yang sedang dikerjakan ikut disimpan sebagai draf, termasuk rincian batch dan catatan; tidak perlu membatalkan laporan. Obat baru belum dianggap kosong sampai jumlahnya benar-benar diisi. X, Batal, atau Escape menutup pilihan tanpa mengubah isian. Setelah laporan dikirim/disetujui, penambahan terkunci. Laporan terkirim yang dikembalikan apoteker untuk koreksi dapat diperbarui lagi oleh petugas atau apoteker berizin operasional.
 
 **Satuan Hitung** berbentuk dropdown dan otomatis mengikuti satuan stok di Data Obat, bukan satuan pembelian box/strip. Jika master belum memiliki satuan, pilih referensi yang sesuai dan lengkapi master lewat apoteker sebelum mencatat hasil lebih dari 0. Jika satuan draf lama berbeda, periksa kembali jumlahnya lalu pilih satuan stok; sistem tidak otomatis mengonversi angka lama.
 
@@ -43,6 +47,19 @@ Untuk menambah obat yang tertinggal, buka draf milik Anda lalu tekan **Tambah Ob
 Widget **Kosong / Menipis** dan **Perlu Ditindaklanjuti** di dashboard memakai stok transaksi dan batas minimum yang diatur per obat/lokasi, bukan menunggu pemeriksaan harian disetujui. Klik item untuk membuka Monitoring pada obat dan lokasi tersebut. Angka dihitung per obat/lokasi, sehingga obat yang sama di dua lokasi dapat dihitung dua kali. Obat tanpa batas minimum belum termasuk penilaian ini. Tabel stok dashboard menampilkan maksimal 12 baris positif terbaru; pencarian hanya mencakup baris tersebut. Status Tersedia berarti jumlah lebih dari nol, bukan otomatis di atas minimum.
 
 ## Akun Simulasi
+
+### Jika Login Menampilkan 419
+
+419 berarti token keamanan formulir tidak cocok dengan sesi yang diterima server, bukan pesan bahwa password salah. Halaman yang lama terbuka, logout/login di tab lain, sesi kedaluwarsa, atau cookie yang tidak terbawa dapat menjadi penyebab; penyebab kasus tertentu perlu diperiksa, bukan langsung disimpulkan.
+
+1. Buka ulang `https://shifastock.nexspace.my.id/login` melalui alamat/tab baru, lalu isi ulang login. Jangan sekadar refresh halaman 419 karena dapat mengirim formulir lama kembali.
+2. Gunakan domain HTTPS yang sama secara konsisten, tanpa bergantian dengan alamat HTTP lokal saat menguji sesi. Port 4002 tetap merupakan backend lokal untuk domain tersebut.
+3. Jika halaman baru masih 419, bandingkan dengan jendela Incognito. Catat alamat, waktu, browser/perangkat, serta apakah error langsung muncul atau sesudah halaman lama terbuka, lalu laporkan ke pengelola. Jangan mengirim password, cookie, atau token ke dokumentasi publik.
+4. Untuk transaksi selain login, periksa riwayat sebelum mengulang agar tidak membuat transaksi ganda.
+
+Pada pemeriksaan 22 Oktober 2026, formulir baru di domain HTTPS berhasil melewati token CSRF dan menampilkan validasi kredensial untuk akun uji yang tidak ada. Ini bukan bukti login akun valid ataupun penyelesaian penyebab pada sesi pengguna. Tidak ada penghapusan sesi massal, penurunan keamanan cookie, atau pengecualian CSRF.
+
+### Daftar Akun
 
 | Username | Role | Pemakaian |
 | --- | --- | --- |

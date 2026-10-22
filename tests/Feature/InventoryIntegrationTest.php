@@ -117,7 +117,7 @@ class InventoryIntegrationTest extends TestCase
         $this->actingAs($this->staff)->post(route('nightly.store'), ['date' => '2026-10-16', 'location_id' => $location->id])->assertSessionHasNoErrors();
         $check = DB::table('nightly_checks')->where('location_id', $location->id)->first();
         $item = DB::table('nightly_check_items')->where('nightly_check_id', $check->id)->first();
-        $this->post(route('nightly.save', $check->id), ['action' => 'submit', 'items' => [$item->id => ['quantity' => $quantity, 'unit' => 'Tablet']]])->assertSessionHasNoErrors();
+        $this->post(route('nightly.save', $check->id), ['draft_revision' => $check->draft_revision, 'action' => 'submit', 'items' => [$item->id => ['quantity' => $quantity, 'unit' => 'Tablet']]])->assertSessionHasNoErrors();
         $this->actingAs($this->pharmacist)->post(route('nightly.review', $check->id), ['action' => 'approve'])->assertSessionHasNoErrors();
     }
 
@@ -177,7 +177,7 @@ class InventoryIntegrationTest extends TestCase
         $this->post(route('nightly.store'), ['date' => '2026-10-16', 'location_id' => $this->warehouse->id])->assertSessionHasNoErrors();
         $check = DB::table('nightly_checks')->first();
         $item = DB::table('nightly_check_items')->first();
-        $this->postJson(route('nightly.save', $check->id), ['action' => 'submit', 'items' => [$item->id => ['quantity' => 7, 'unit' => 'Tablet']]])
+        $this->postJson(route('nightly.save', $check->id), ['draft_revision' => $check->draft_revision, 'action' => 'submit', 'items' => [$item->id => ['quantity' => 7, 'unit' => 'Tablet']]])
             ->assertUnprocessable()->assertJsonValidationErrors('items.'.$item->id.'.batch_counts');
         $this->assertDatabaseHas('nightly_checks', ['id' => $check->id, 'status' => 'draft']);
         $this->assertSame(10.0, (float) StockBalance::first()->quantity);

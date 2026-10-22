@@ -49,7 +49,7 @@ class InventoryFlowTest extends TestCase
         $this->post('/pengecekan-malam', ['date' => '2026-01-01', 'location_id' => $apotek->id]);
         $check = DB::table('nightly_checks')->first();
         $item = DB::table('nightly_check_items')->first();
-        $this->post('/pengecekan-malam/'.$check->id, ['action' => 'submit', 'items' => [
+        $this->post('/pengecekan-malam/'.$check->id, ['draft_revision' => 0, 'action' => 'submit', 'items' => [
             $item->id => ['quantity' => 25, 'unit' => 'Tablet', 'is_low' => 1, 'requested_quantity' => 20, 'batch_counts' => [$batchId => 25]],
         ]]);
         $this->actingAs($kepala)->post('/pengecekan-malam/'.$check->id.'/review', ['action' => 'approve'])->assertRedirect();

@@ -1,21 +1,22 @@
 <x-layouts.app title="Pemeriksaan Stok Harian" :hide-description="true">
 @php
-    $editable = auth()->user()->can('operate-inventory') && $check->status === 'draft' && $check->created_by === auth()->id();
+    $editable = auth()->user()->can('operate-inventory') && $check->status === 'draft';
     $reviewable = $check->status === 'submitted' && auth()->user()->can('finalize-opname');
     $statusLabels = ['draft' => 'Draf', 'submitted' => 'Menunggu tinjauan', 'approved' => 'Disetujui'];
 @endphp
-<section class="nightly-workspace" data-nightly-workspace>
+<section class="nightly-workspace" data-nightly-workspace data-nightly-initial-view="{{ request()->has('activity_page') ? 'activity' : 'list' }}">
     <header class="nightly-head">
         <div class="flex min-w-0 items-center gap-3">
             <a class="nightly-icon" href="{{ route('preview.nightly') }}" aria-label="Kembali ke daftar pemeriksaan" title="Kembali ke daftar pemeriksaan"><span data-nightly-icon="back" aria-hidden="true"></span></a>
-            <div><h2>{{ $check->location }} <span class="ml-1 text-xs font-medium text-slate-500">{{ $check->date }}</span></h2><p>Petugas: {{ $check->creator }} &middot; {{ $check->scope === 'selected' ? 'Obat tertentu' : 'Semua obat' }}</p></div>
+            <div><h2>{{ $check->location }} <span class="ml-1 text-xs font-medium text-slate-500">{{ $check->date }}</span></h2><p data-nightly-creator>Dibuat oleh: {{ $check->creator }} &middot; {{ $check->scope === 'selected' ? 'Obat tertentu' : 'Semua obat' }}</p><p data-nightly-last-worker>Dikerjakan terakhir: {{ $lastWork?->actor_name ?? 'Belum tercatat' }}@if($lastWork) &middot; {{ \Carbon\Carbon::parse($lastWork->created_at, config('app.timezone'))->timezone('Asia/Jakarta')->format('d/m H:i') }} WIB @endif</p></div>
         </div>
         <div class="nightly-head-actions">
             <span class="badge {{ $check->status === 'approved' ? 'badge-ok' : ($check->status === 'submitted' ? 'badge-warn' : 'bg-slate-100 text-slate-600') }}">{{ $statusLabels[$check->status] ?? 'Draf' }}</span>
             <a class="nightly-icon" href="{{ route('nightly.print', $check->id) }}" target="_blank" rel="noopener" data-nightly-print aria-label="Cetak / Simpan PDF" title="Cetak / Simpan PDF"><span data-nightly-icon="print" aria-hidden="true"></span></a>
-            @if($editable)
+            @if($editable && $check->created_by === auth()->id())
                 <form method="POST" action="{{ route('nightly.destroy', $check->id) }}" data-confirm-cancel-draft>
                     @csrf @method('DELETE')
+                    <input type="hidden" name="draft_revision" value="{{ $check->draft_revision }}">
                     <button class="nightly-icon text-rose-600" aria-label="Cancel Draf" title="Batalkan draf pemeriksaan"><span data-nightly-icon="cancel" aria-hidden="true"></span></button>
                 </form>
             @endif
@@ -25,14 +26,13 @@
         @if(!$editable)
             <p role="note" data-nightly-readonly class="nightly-notice"><strong>Mode lihat saja.</strong>
                 @if(!auth()->user()->can('operate-inventory')) Akun Anda hanya memiliki akses melihat laporan, bukan mengisi hasil hitung.
-                @elseif($check->status === 'draft') Draf ini dibuat oleh {{ $check->creator }}. Hanya akun pembuat draf yang dapat mengisi atau menambah obat. Gunakan akun pembuat untuk melanjutkan pemeriksaan.
-                @elseif($check->status === 'submitted') Laporan sudah dikirim untuk ditinjau. Jika perlu diperbaiki, kepala apoteker dapat mengembalikannya melalui Kembalikan untuk Koreksi agar pembuat laporan bisa mengisi lagi.
+                @elseif($check->status === 'submitted') Laporan sudah dikirim untuk ditinjau. Jika perlu diperbaiki, kepala apoteker dapat mengembalikannya melalui Kembalikan untuk Koreksi agar petugas atau apoteker dapat melanjutkan draf.
                 @else Laporan sudah disetujui dan tidak dapat diedit. Gunakan pemeriksaan berikutnya untuk mencatat hasil hitung baru; riwayat laporan ini tetap dipertahankan.
                 @endif
             </p>
         @endif
         @if(session('status'))<p role="status" class="nightly-notice !border-emerald-500 !bg-emerald-50 text-emerald-800">{{ session('status') }}</p>@endif
-        @if($errors->any())<p role="alert" class="nightly-notice !border-rose-500 !bg-rose-50 text-rose-800">{{ $errors->first() }}</p>@endif
+        @if($errors->any())<p role="alert" class="nightly-notice !border-rose-500 !bg-rose-50 text-rose-800">{{ $errors->first() }} @if($errors->has('draft_revision'))<a href="{{ route('nightly.show', $check->id) }}" target="_blank" rel="noopener" class="font-semibold underline" data-nightly-latest>Buka versi terbaru di tab baru</a>@endif</p>@endif
         @if($check->review_note)<p class="nightly-notice !border-amber-500 !bg-amber-50"><strong>Catatan apoteker:</strong> {{ $check->review_note }}</p>@endif
         @if($uncheckedCount > 0 && !$editable)<p data-nightly-incomplete class="text-xs text-amber-800">{{ $uncheckedCount }} obat belum diperiksa. {{ $check->status === 'draft' ? 'Belum ada perubahan stok dari draf ini.' : 'Pemeriksaan dikirim sebagian. Persetujuan hanya mencakup '.$checkedCount.' obat yang sudah diperiksa.' }} Obat yang belum diperiksa tidak dianggap kosong dan stoknya tidak disesuaikan.</p>@endif
     </div>
@@ -40,12 +40,14 @@
         <button id="nightly-tab-list" type="button" role="tab" aria-selected="true" aria-controls="nightly-panel-list" data-nightly-view="list">Daftar Obat</button>
         @if($reviewable)<button id="nightly-tab-review" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="nightly-panel-review" data-nightly-view="review">Tinjauan Apoteker</button>@endif
         <button id="nightly-tab-summary" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="nightly-panel-summary" data-nightly-view="summary">Ringkasan</button>
+        <button id="nightly-tab-activity" type="button" role="tab" aria-selected="false" tabindex="-1" aria-controls="nightly-panel-activity" data-nightly-view="activity">Aktivitas</button>
     </div>
     @if($editable)
     <form id="nightly-count-form" class="nightly-panel" method="POST" action="{{ route('nightly.save', $check->id) }}" data-nightly-count-form novalidate>
         @csrf
         <input type="hidden" name="batch_counts_payload" data-nightly-batch-payload>
         <input type="hidden" name="observed_revision" value="{{ old('observed_revision', $observedRevision) }}">
+        <input type="hidden" name="draft_revision" value="{{ old('draft_revision', $check->draft_revision) }}">
         <input type="hidden" name="confirm_partial" value="0" data-nightly-confirm-partial>
     @else
     <div class="nightly-panel" data-nightly-list-container>
@@ -102,6 +104,27 @@
         <p class="text-xs text-slate-500">Ringkasan dan cetakan memakai data terakhir yang disimpan. Simpan Draf terlebih dahulu jika ada perubahan.</p>
         <textarea id="nightly-summary" aria-label="Ringkasan untuk disalin" readonly class="field nightly-summary font-mono">{{ $summary }}</textarea>
         <div class="nightly-footer"><button type="button" class="btn-secondary" data-nightly-copy><span data-nightly-icon="copy" aria-hidden="true"></span><span data-nightly-copy-label>Salin Ringkasan WAG</span></button></div>
+    </section>
+    <section id="nightly-panel-activity" class="nightly-panel" role="tabpanel" aria-labelledby="nightly-tab-activity" data-nightly-panel="activity" hidden>
+        <p class="text-xs text-slate-600">Draf dapat dilanjutkan petugas atau kepala apoteker yang memiliki izin operasional. Nama pembuat tetap tersimpan; riwayat berikut mencatat setiap penyimpanan yang berhasil.</p>
+        <div class="nightly-scroll-panel">
+            <ol class="divide-y divide-slate-100" data-nightly-activities>
+                @forelse($activities as $activity)
+                    @php($activityLabels = ['created' => 'Membuat laporan', 'saved' => 'Menyimpan draf', 'added' => 'Menambah obat', 'submitted' => 'Mengirim untuk tinjauan', 'returned' => 'Mengembalikan untuk koreksi', 'approved' => 'Menyetujui laporan'])
+                    @php($metadata = json_decode($activity->metadata ?? '[]', true))
+                    <li class="py-3 text-xs">
+                        <div class="flex flex-wrap justify-between gap-2"><strong>{{ $activity->actor_name }}</strong><time class="text-slate-500">{{ \Carbon\Carbon::parse($activity->created_at, config('app.timezone'))->timezone('Asia/Jakarta')->format('d/m/Y H:i:s') }} WIB</time></div>
+                        <p class="mt-1">{{ $activityLabels[$activity->action] ?? $activity->action }}
+                            @if(isset($metadata['changed_count'])) &middot; {{ $metadata['changed_count'] }} obat diperbarui @endif
+                            @if(!empty($metadata['added_count'])) &middot; {{ $metadata['added_count'] }} obat ditambahkan @endif
+                        </p>
+                    </li>
+                @empty
+                    <li class="py-3 text-xs text-slate-500">Belum ada catatan pengerjaan. Aktivitas sebelum pembaruan ini tidak dicatat ulang; nama pembuat tetap tersedia.</li>
+                @endforelse
+            </ol>
+        </div>
+        <div class="text-xs">{{ $activities->links() }}</div>
     </section>
 </section>
 </x-layouts.app>

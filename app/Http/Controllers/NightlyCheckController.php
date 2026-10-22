@@ -99,7 +99,8 @@ class NightlyCheckController extends Controller
 
     public function index()
     {
-        $checks = DB::table('nightly_checks as c')->join('locations as l', 'l.id', '=', 'c.location_id')->select('c.*', 'l.name as location')->orderByDesc('date')->orderByDesc('c.id')->paginate(20);
+        $checks = DB::table('nightly_checks as c')->join('locations as l', 'l.id', '=', 'c.location_id')
+            ->join('users as u', 'u.id', '=', 'c.created_by')->select('c.*', 'l.name as location', 'u.name as creator')->orderByDesc('date')->orderByDesc('c.id')->paginate(20);
 
         return view('nightly.index', [
             'checks' => $checks,
@@ -138,6 +139,7 @@ class NightlyCheckController extends Controller
             foreach ($medicines as $m) {
                 DB::table('nightly_check_items')->insert(['nightly_check_id' => $id, 'medicine_id' => $m->id, 'code' => $m->code, 'name' => $m->name, 'unit' => $m->unit?->name]);
             }
+            $this->recordActivity($id, $r, 'created', ['item_count' => $medicines->count()]);
 
             return $id;
         });
@@ -165,7 +167,7 @@ class NightlyCheckController extends Controller
         $check = DB::table('nightly_checks as c')->join('locations as l', 'l.id', '=', 'c.location_id')->join('users as u', 'u.id', '=', 'c.created_by')->select('c.*', 'l.name as location', 'u.name as creator')->where('c.id', $id)->first();
         abort_unless($check, 404);
         $items = DB::table('nightly_check_items')->where('nightly_check_id', $id)->orderBy('name')->get();
-        $availableMedicines = ! $forPrint && $check->status === 'draft' && $check->created_by === auth()->id() && auth()->user()->can('operate-inventory')
+        $availableMedicines = ! $forPrint && $check->status === 'draft' && auth()->user()->can('operate-inventory')
             ? Medicine::with('unit')->where(fn ($q) => $q->where('is_active', true)->orWhereNotNull('import_source'))
                 ->whereNotIn('id', $items->pluck('medicine_id'))->orderBy('name')->get()
             : collect();
@@ -189,6 +191,12 @@ class NightlyCheckController extends Controller
         if ($shortages->isEmpty()) {
             $summary .= "Belum ada obat kosong / menipis yang tercatat.\n";
         }
+        $lastWork = DB::table('nightly_check_activities')->where('nightly_check_id', $id)
+            ->whereIn('action', ['saved', 'added', 'submitted'])->latest('id')->first();
+        $activities = $forPrint ? null : DB::table('nightly_check_activities')->where('nightly_check_id', $id)
+            ->orderByDesc('id')->paginate(20, ['*'], 'activity_page')->withQueryString();
+        $summary .= "Dibuat oleh: {$check->creator}\n";
+        $summary .= 'Dikerjakan terakhir: '.($lastWork?->actor_name ?? 'Belum tercatat')."\n";
 
         $systemBalances = DB::table('stock_balances')->where('location_id', $check->location_id)->pluck('quantity', 'medicine_id');
         $batchOptions = Batch::whereIn('medicine_id', $items->pluck('medicine_id'))->orderBy('expiry_date')->orderBy('number')->get()->groupBy('medicine_id');
@@ -198,11 +206,12 @@ class NightlyCheckController extends Controller
             $item->saved_batch_counts = json_decode($item->batch_counts ?? '[]', true);
         }
 
-        return compact('check', 'items', 'checkedCount', 'uncheckedCount', 'availableMedicines', 'medicineUnits', 'countUnits', 'baseline', 'shortages', 'summary', 'systemBalances', 'batchOptions', 'batchBalances', 'observedRevision');
+        return compact('check', 'items', 'checkedCount', 'uncheckedCount', 'availableMedicines', 'medicineUnits', 'countUnits', 'baseline', 'shortages', 'summary', 'systemBalances', 'batchOptions', 'batchBalances', 'observedRevision', 'lastWork', 'activities');
     }
 
     public function save(Request $r, int $id, DailyPhysicalCountService $counts)
     {
+        Gate::authorize('operate-inventory');
         $r->validate(['batch_counts_payload' => ['nullable', 'json', 'max:200000'], 'observed_revision' => ['nullable', 'integer', 'min:0']]);
         if ($r->has('batch_counts_payload') && ! $r->filled('batch_counts_payload')) {
             throw ValidationException::withMessages(['items' => 'Rincian hitungan belum siap dikirim. Aktifkan JavaScript lalu muat ulang halaman.']);
@@ -221,16 +230,17 @@ class NightlyCheckController extends Controller
             }
             $r->merge(['items' => $items]);
         }
-        $d = $r->validate(['action' => ['required', 'in:save,submit,add'], 'items' => ['required', 'array'], 'items.*.quantity' => ['nullable', 'integer', 'min:0', 'max:2147483647'], 'items.*.unit' => ['nullable', 'string', 'max:100'], 'items.*.is_low' => ['nullable', 'boolean'], 'items.*.requested_quantity' => ['nullable', 'integer', 'min:0', 'max:2147483647'], 'items.*.note' => ['nullable', 'string', 'max:1000'],
+        $d = $r->validate(['draft_revision' => ['required', 'integer', 'min:0'], 'action' => ['required', 'in:save,submit,add'], 'items' => ['required', 'array'], 'items.*.quantity' => ['nullable', 'integer', 'min:0', 'max:2147483647'], 'items.*.unit' => ['nullable', 'string', 'max:100'], 'items.*.is_low' => ['nullable', 'boolean'], 'items.*.requested_quantity' => ['nullable', 'integer', 'min:0', 'max:2147483647'], 'items.*.note' => ['nullable', 'string', 'max:1000'],
             'medicine_ids' => ['required_if:action,add', 'nullable', 'array', 'min:1'],
             'medicine_ids.*' => ['required', 'integer', 'distinct', 'exists:medicines,id'],
             'confirm_partial' => ['sometimes', 'boolean'],
-        ], ['medicine_ids.required_if' => 'Pilih sedikitnya satu obat yang akan ditambahkan.']);
+        ], ['medicine_ids.required_if' => 'Pilih sedikitnya satu obat yang akan ditambahkan.', 'draft_revision.required' => 'Versi draf belum tersedia. Muat ulang halaman sebelum menyimpan.']);
         $batchData = $r->validate(['items.*.batch_counts' => ['nullable', 'array'], 'items.*.batch_counts.*' => ['nullable', 'integer', 'min:0', 'max:2147483647']]);
         $result = \App\Services\InventoryTransaction::run(function () use ($r, $id, $d, $batchData, $counts) {
             $c = DB::table('nightly_checks')->where('id', $id)->lockForUpdate()->first();
             abort_unless($c, 404);
-            abort_unless($c->created_by === $r->user()->id && $c->status === 'draft', 403);
+            abort_unless($c->status === 'draft', 403);
+            $this->assertDraftRevision($c, (int) $d['draft_revision']);
             if ($d['action'] === 'submit' && $r->filled('observed_revision')) {
                 $latest = (int) (InventoryMovement::where(fn ($query) => $query->where('source_location_id', $c->location_id)->orWhere('destination_location_id', $c->location_id))->max('id') ?? 0);
                 if ((int) $r->input('observed_revision') !== $latest) {
@@ -258,6 +268,7 @@ class NightlyCheckController extends Controller
                 $existingIds = $items->pluck('medicine_id')->all();
                 $newMedicines = $selectedMedicines->reject(fn ($medicine) => in_array($medicine->id, $existingIds));
             }
+            $changedItemIds = [];
             foreach ($items as $i) {
                 $v = $d['items'][$i->id] ?? null;
                 if (! $v) {
@@ -277,11 +288,19 @@ class NightlyCheckController extends Controller
                     $snapshot = $counts->snapshot($i->medicine_id, $c->location_id);
                     $counts->validateTarget($i, (int) $q, $unit, $batchCounts, $snapshot);
                 }
-                DB::table('nightly_check_items')->where('id', $i->id)->update([
+                $values = ['quantity' => $q === null ? null : (int) $q, 'unit' => $unit ?: null, 'is_low' => ! empty($v['is_low']),
+                    'requested_quantity' => isset($v['requested_quantity']) ? (int) $v['requested_quantity'] : null, 'note' => $v['note'] ?? null];
+                $before = ['quantity' => $i->quantity === null ? null : (int) $i->quantity, 'unit' => $i->unit, 'is_low' => (bool) $i->is_low,
+                    'requested_quantity' => $i->requested_quantity === null ? null : (int) $i->requested_quantity, 'note' => $i->note];
+                $previousBatches = json_decode($i->batch_counts ?? '[]', true);
+                if ($values !== $before || $previousBatches != $batchCounts) {
+                    $values += ['last_edited_by' => $r->user()->id, 'last_edited_name' => $r->user()->name ?: $r->user()->username, 'last_edited_at' => now()];
+                    $changedItemIds[] = $i->id;
+                }
+                DB::table('nightly_check_items')->where('id', $i->id)->update($values + [
                     'batch_counts' => json_encode($batchCounts, JSON_THROW_ON_ERROR),
                     'stock_snapshot' => $snapshot === null ? null : json_encode($snapshot, JSON_THROW_ON_ERROR),
                 ]);
-                DB::table('nightly_check_items')->where('id', $i->id)->update(['quantity' => $q, 'unit' => $unit ?: null, 'is_low' => ! empty($v['is_low']), 'requested_quantity' => $v['requested_quantity'] ?? null, 'note' => $v['note'] ?? null]);
             }
             foreach ($newMedicines as $medicine) {
                 DB::table('nightly_check_items')->insert([
@@ -289,7 +308,10 @@ class NightlyCheckController extends Controller
                     'code' => $medicine->code, 'name' => $medicine->name, 'unit' => $medicine->unit?->name,
                 ]);
             }
-            DB::table('nightly_checks')->where('id', $id)->update(['status' => $d['action'] === 'submit' ? 'submitted' : 'draft', 'submitted_at' => $d['action'] === 'submit' ? now() : null, 'updated_at' => now()]);
+            DB::table('nightly_checks')->where('id', $id)->update(['status' => $d['action'] === 'submit' ? 'submitted' : 'draft', 'submitted_at' => $d['action'] === 'submit' ? now() : null, 'updated_at' => now(), 'draft_revision' => $c->draft_revision + 1]);
+            $this->recordActivity($id, $r, ['save' => 'saved', 'submit' => 'submitted', 'add' => 'added'][$d['action']], [
+                'changed_item_ids' => $changedItemIds, 'changed_count' => count($changedItemIds), 'added_count' => $newMedicines->count(), 'checked_count' => $checkedCount,
+            ]);
 
             return ['added' => $newMedicines->count(), 'checked' => $checkedCount, 'unchecked' => $uncheckedCount + $newMedicines->count()];
         });
@@ -308,10 +330,13 @@ class NightlyCheckController extends Controller
 
     public function destroy(Request $r, int $id)
     {
+        Gate::authorize('operate-inventory');
+        $r->validate(['draft_revision' => ['required', 'integer', 'min:0']]);
         \App\Services\InventoryTransaction::run(function () use ($r, $id) {
             $c = DB::table('nightly_checks')->where('id', $id)->lockForUpdate()->first();
             abort_unless($c, 404);
             abort_unless($c->created_by === $r->user()->id && $c->status === 'draft', 403);
+            $this->assertDraftRevision($c, (int) $r->input('draft_revision'));
 
             DB::table('nightly_checks')->where('id', $id)->delete();
         });
@@ -336,9 +361,26 @@ class NightlyCheckController extends Controller
                     $stock->setPhysicalCount(['id' => $id, 'location_id' => $c->location_id], $item, $r->user()->id);
                 }
             }
-            DB::table('nightly_checks')->where('id', $id)->update(['status' => $d['action'] === 'approve' ? 'approved' : 'draft', 'review_note' => $d['review_note'] ?? null, 'reviewed_by' => $r->user()->id, 'approved_at' => $d['action'] === 'approve' ? now() : null, 'updated_at' => now()]);
+            DB::table('nightly_checks')->where('id', $id)->update(['status' => $d['action'] === 'approve' ? 'approved' : 'draft', 'review_note' => $d['review_note'] ?? null, 'reviewed_by' => $r->user()->id, 'approved_at' => $d['action'] === 'approve' ? now() : null, 'updated_at' => now(), 'draft_revision' => $c->draft_revision + 1]);
+            $this->recordActivity($id, $r, $d['action'] === 'approve' ? 'approved' : 'returned');
         }, 3);
 
         return back()->with('status', $d['action'] === 'approve' ? 'Disetujui. Total stok dan rincian batch diperbarui hanya untuk obat yang sudah diperiksa. Obat yang belum diperiksa tidak berubah.' : 'Dikembalikan kepada petugas untuk dikoreksi.');
+    }
+
+    private function assertDraftRevision(object $check, int $revision): void
+    {
+        if ((int) $check->draft_revision !== $revision) {
+            throw ValidationException::withMessages(['draft_revision' => 'Laporan sudah diperbarui sejak halaman ini dibuka. Isian Anda belum disimpan agar tidak menimpa pekerjaan terbaru. Buka versi terbaru di tab baru untuk membandingkan isian, lalu lanjutkan dari versi tersebut.']);
+        }
+    }
+
+    private function recordActivity(int $id, Request $request, string $action, array $metadata = []): void
+    {
+        DB::table('nightly_check_activities')->insert([
+            'nightly_check_id' => $id, 'actor_id' => $request->user()->id,
+            'actor_name' => $request->user()->name ?: $request->user()->username,
+            'action' => $action, 'metadata' => json_encode($metadata, JSON_THROW_ON_ERROR), 'created_at' => now(),
+        ]);
     }
 }

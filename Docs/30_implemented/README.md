@@ -7,6 +7,8 @@ This folder records shipped work as historical truth. Each feature folder contai
 
 ## Index
 
+- [2026-10-22 Shared daily drafts and operator activity](2026-10-22-shared-daily-check/)
+
 - [2026-10-22 Compact daily check workspace](2026-10-22-daily-check-workspace/)
 
 - [2026-10-22 Partial daily submission and clear validation](2026-10-22-partial-daily-submission/)

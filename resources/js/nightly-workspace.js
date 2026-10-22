@@ -48,6 +48,7 @@ export function initNightlyWorkspace() {
             tabs[next].focus();
         });
     });
+    selectView(workspace.dataset.nightlyInitialView || 'list');
     rows.forEach((row) => {
         row.querySelector('[data-nightly-row-toggle]').addEventListener('click', () => {
             const details = row.querySelector('[data-nightly-row-details]');

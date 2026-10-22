@@ -44,7 +44,7 @@ class AddNightlyMedicinesTest extends TestCase
 
     private function payload(array $item = []): array
     {
-        return ['action' => 'add', 'medicine_ids' => [$this->other->id],
+        return ['draft_revision' => DB::table('nightly_checks')->where('id', $this->checkId)->value('draft_revision'), 'action' => 'add', 'medicine_ids' => [$this->other->id],
             'items' => [$this->itemId => array_replace(['quantity' => null, 'unit' => 'Tablet'], $item)]];
     }
 
@@ -68,7 +68,7 @@ class AddNightlyMedicinesTest extends TestCase
     {
         $this->postJson(route('nightly.save', $this->checkId), $this->payload())->assertRedirect();
         $items = DB::table('nightly_check_items')->get()->mapWithKeys(fn ($item) => [$item->id => ['unit' => $item->unit, 'quantity' => $item->id === $this->itemId ? 0 : null]])->all();
-        $this->postJson(route('nightly.save', $this->checkId), ['action' => 'submit', 'items' => $items])->assertUnprocessable()->assertJsonValidationErrors('confirm_partial');
+        $this->postJson(route('nightly.save', $this->checkId), ['draft_revision' => 1, 'action' => 'submit', 'items' => $items])->assertUnprocessable()->assertJsonValidationErrors('confirm_partial');
         $this->assertDatabaseHas('nightly_checks', ['id' => $this->checkId, 'status' => 'draft']);
     }
 
@@ -91,20 +91,28 @@ class AddNightlyMedicinesTest extends TestCase
         $this->postJson(route('nightly.save', $this->checkId), $payload)->assertRedirect();
         $otherItem = DB::table('nightly_check_items')->where('medicine_id', $this->other->id)->sole();
         $payload['items'][$otherItem->id] = ['unit' => 'Botol', 'quantity' => null];
+        $payload['draft_revision'] = 1;
         $this->postJson(route('nightly.save', $this->checkId), $payload)->assertRedirect()->assertSessionHasNoErrors();
         $this->assertDatabaseCount('nightly_check_items', 2);
         $this->assertDatabaseHas('nightly_check_items', ['id' => $this->itemId, 'quantity' => 0, 'note' => 'Tetap ada']);
         $this->assertDatabaseHas('nightly_check_items', ['id' => $otherItem->id, 'quantity' => null]);
     }
 
-    public function test_only_draft_owner_with_operational_access_can_add(): void
+    public function test_other_operators_can_add_but_guest_cannot(): void
     {
-        foreach ([Role::Pharmacy, Role::Pharmacist, Role::Guest] as $role) {
+        foreach ([Role::Pharmacy, Role::Pharmacist] as $role) {
             $otherUser = User::factory()->create(['role' => $role]);
-            $this->actingAs($otherUser)->postJson(route('nightly.save', $this->checkId), $this->payload())->assertForbidden();
-            $this->get(route('nightly.show', $this->checkId))->assertOk()->assertDontSee('data-nightly-add-open', false);
+            $this->actingAs($otherUser)->get(route('nightly.show', $this->checkId))->assertOk()->assertSee('data-nightly-add-open', false);
+            $payload = $this->payload();
+            foreach (DB::table('nightly_check_items')->get() as $item) {
+                $payload['items'][$item->id] = ['quantity' => $item->quantity, 'unit' => $item->unit];
+            }
+            $this->postJson(route('nightly.save', $this->checkId), $payload)->assertRedirect()->assertSessionHasNoErrors();
         }
-        $this->assertDatabaseCount('nightly_check_items', 1);
+        $this->actingAs(User::factory()->create(['role' => Role::Guest]))->postJson(route('nightly.save', $this->checkId), $this->payload())->assertForbidden();
+        $this->get(route('nightly.show', $this->checkId))->assertOk()->assertDontSee('data-nightly-add-open', false);
+        $this->assertDatabaseCount('nightly_check_items', 2);
+        $this->assertDatabaseHas('nightly_checks', ['id' => $this->checkId, 'created_by' => $this->staff->id]);
     }
 
     public function test_submitted_and_approved_reports_reject_additions_until_returned_for_correction(): void
