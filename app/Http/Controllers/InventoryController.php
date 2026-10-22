@@ -952,7 +952,7 @@ class InventoryController extends Controller
         $rows = DB::table('nightly_check_items as i')
             ->join('nightly_checks as c', 'c.id', '=', 'i.nightly_check_id')
             ->join('locations as l', 'l.id', '=', 'c.location_id')
-            ->where('c.status', 'approved')->whereBetween('c.date', [$start->toDateString(), $end->toDateString()])
+            ->where('c.status', 'approved')->whereNotNull('i.quantity')->whereBetween('c.date', [$start->toDateString(), $end->toDateString()])
             ->select('i.*', 'c.date', 'c.id as check_id', 'l.name as location')
             ->orderByDesc('c.date')->orderBy('l.name')->orderBy('i.name')->paginate(30)->withQueryString();
 

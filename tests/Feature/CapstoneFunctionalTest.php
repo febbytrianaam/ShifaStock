@@ -143,6 +143,36 @@ class CapstoneFunctionalTest extends TestCase
         $this->assertReconciled();
     }
 
+    public function test_dashboard_minimum_alerts_follow_real_postings_without_daily_checks(): void
+    {
+        foreach ([[$this->warehouse, 60], [$this->pharmacy, 20]] as [$location, $minimum]) {
+            StockParameter::create(['medicine_id' => $this->medicine->id, 'location_id' => $location->id, 'minimum_quantity' => $minimum]);
+        }
+        $assertAlerts = function (array $expected): void {
+            $dashboard = $this->get(route('dashboard'))->assertOk()
+                ->assertViewHas('stats', fn ($stats) => $stats['shortages'] === count($expected));
+            $monitoring = $this->get(route('shortages.index'))->assertOk();
+            foreach ([$dashboard->viewData('shortages'), $monitoring->viewData('parameterRows')] as $rows) {
+                $actual = $rows->mapWithKeys(fn ($row) => [$row->location_id => (float) $row->quantity])->all();
+                $this->assertEquals($expected, $actual);
+            }
+        };
+        $this->receipt('SIM-DRAFT', 'draft');
+        $assertAlerts([$this->warehouse->id => 0.0, $this->pharmacy->id => 0.0]);
+        $this->receipt();
+        $assertAlerts([$this->warehouse->id => 50.0, $this->pharmacy->id => 0.0]);
+        $this->transfer();
+        $assertAlerts([$this->warehouse->id => 25.0]);
+        $this->post(route('issues.store'), ['reference' => 'SIM-MON-OUT', 'medicine_id' => $this->medicine->id,
+            'source_location_id' => $this->pharmacy->id, 'quantity' => 6, 'occurred_at' => '2026-10-18T10:00'])
+            ->assertRedirect()->assertSessionHasNoErrors();
+        $assertAlerts([$this->warehouse->id => 25.0, $this->pharmacy->id => 19.0]);
+        $this->receipt('SIM-RESTOCK');
+        $assertAlerts([$this->pharmacy->id => 19.0]);
+        $this->assertDatabaseCount('nightly_checks', 0);
+        $this->assertReconciled();
+    }
+
     public function test_stock_card_history_matches_posted_transactions(): void
     {
         $this->receipt();

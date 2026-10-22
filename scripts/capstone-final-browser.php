@@ -19,11 +19,12 @@ use Symfony\Component\Process\Process;
 require __DIR__.'/../vendor/autoload.php';
 $app = require __DIR__.'/../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
-$phase = in_array($argv[1] ?? '', ['baseline', 'onboarding', 'transfer', 'selected-nightly'], true) ? $argv[1] : 'final';
+$phase = in_array($argv[1] ?? '', ['baseline', 'onboarding', 'transfer', 'selected-nightly', 'partial-nightly'], true) ? $argv[1] : 'final';
 $output = match (true) {
     $phase === 'onboarding' => storage_path('app/qa/onboarding'),
     $phase === 'transfer' => storage_path('app/qa/multi-transfer-browser'),
     $phase === 'selected-nightly' => storage_path('app/qa/selected-nightly-browser'),
+    $phase === 'partial-nightly' => storage_path('app/qa/partial-nightly-browser'),
     ($argv[1] ?? '') === 'regression' => storage_path('app/qa/inventory-browser'),
     default => base_path('Docs/Capstone_Testing_Final/Bukti_Pengujian'),
 };
@@ -65,7 +66,7 @@ try {
         'password' => $password, 'role' => Role::Pharmacy, 'is_active' => true]);
     User::create(['username' => 'guest_simulasi', 'name' => 'Guest Simulasi', 'email' => 'guest@simulasi.example.test',
         'password' => $password, 'role' => Role::Guest, 'is_active' => true]);
-    if (in_array($phase, ['onboarding', 'selected-nightly'], true)) {
+    if (in_array($phase, ['onboarding', 'selected-nightly', 'partial-nightly'], true)) {
         foreach (['admin_simulasi' => Role::Administrator, 'apoteker_simulasi' => Role::Pharmacist] as $username => $role) {
             User::create(['username' => $username, 'name' => $role->label(), 'email' => $username.'@simulasi.example.test', 'password' => $password, 'role' => $role, 'is_active' => true]);
         }
@@ -98,7 +99,47 @@ try {
             app()->call([app(InventoryController::class), 'storeOpeningBalance'], ['request' => $request]);
         }
     }
+    if ($phase === 'selected-nightly') {
+        $printMedicines = collect(range(1, 70))->map(fn ($index) => Medicine::create([
+            'code' => sprintf('SIM-PRINT-%03d', $index), 'name' => sprintf('Obat Simulasi Cetak %03d', $index),
+            'unit_id' => $unit->id, 'dosage_form' => 'Tablet', 'is_active' => true,
+        ]));
+        $date = now('Asia/Jakarta')->subDay()->toDateString();
+        $invokeDaily = function (string $method, array $payload, array $parameters = []) use ($staff) {
+            $request = Request::create('/qa-report-fixture', 'POST', $payload);
+            $request->setUserResolver(fn () => $staff);
+            $request->setLaravelSession(app('session')->driver());
+            app()->instance('request', $request);
+            return app()->call([app(\App\Http\Controllers\NightlyCheckController::class), $method], ['r' => $request] + $parameters);
+        };
+        $invokeDaily('store', ['date' => $date, 'location_id' => $warehouse->id, 'scope' => 'selected', 'medicine_ids' => $printMedicines->pluck('id')->all()]);
+        $longCheckId = DB::table('nightly_checks')->where('date', $date)->where('location_id', $warehouse->id)->value('id');
+        $longItems = DB::table('nightly_check_items')->where('nightly_check_id', $longCheckId)->get()->values();
+        $invokeDaily('save', ['action' => 'save', 'items' => $longItems->mapWithKeys(fn ($item, $index) => [$item->id => [
+            'quantity' => $index % 7 === 0 ? null : ($index % 3 === 0 ? 2 : 0), 'unit' => 'Tablet',
+            'is_low' => $index % 3 === 0, 'requested_quantity' => $index % 2 === 0 ? 10 : null,
+            'note' => 'Catatan simulasi pemeriksaan. Periksa kemasan dan jumlah fisik sebelum laporan diajukan untuk peninjauan.',
+        ]])->all()], ['id' => $longCheckId]);
+        // Historical reports must still print every row after masters become inactive.
+        Medicine::whereIn('id', $printMedicines->pluck('id'))->update(['is_active' => false]);
+    }
+    if ($phase === 'partial-nightly') {
+        $stressMedicines = collect(range(1, 30))->map(fn ($n) => Medicine::create([
+            'code' => sprintf('WARN-%03d', $n), 'name' => sprintf('Obat Uji Peringatan %03d', $n).($n === 26 ? ' <img src=x onerror=window.unsafeWarning=1>' : ''),
+            'unit_id' => $unit->id, 'dosage_form' => 'Tablet', 'is_active' => true,
+        ]));
+        $request = Request::create('/qa-partial-fixture', 'POST', ['date' => now('Asia/Jakarta')->subDay()->toDateString(), 'location_id' => $warehouse->id,
+            'scope' => 'selected', 'medicine_ids' => $stressMedicines->pluck('id')->all()]);
+        $request->setUserResolver(fn () => $staff);
+        $request->setLaravelSession(app('session')->driver());
+        app()->instance('request', $request);
+        app()->call([app(\App\Http\Controllers\NightlyCheckController::class), 'store'], ['r' => $request]);
+        $stressCheckId = DB::table('nightly_checks')->latest('id')->value('id');
+        Medicine::whereIn('id', $stressMedicines->pluck('id'))->update(['is_active' => false]);
+    }
     $meta = ['phase' => $phase, 'base_url' => $env['APP_URL'], 'port' => $port, 'medicine' => $medicine->id, 'other_medicine' => $other->id,
+        'stress_check' => $stressCheckId ?? null,
+        'long_check' => $longCheckId ?? null,
         'warehouse' => $warehouse->id, 'pharmacy' => $pharmacy->id, 'batch' => Batch::where('number', 'SIM-BATCH-SAMA')->sole()->id,
         'commit' => trim((new Process(['git', 'rev-parse', 'HEAD'], base_path()))->mustRun()->getOutput()),
         'started_at' => (new DateTimeImmutable('now', new DateTimeZone('Asia/Jakarta')))->format(DATE_ATOM), 'simulation' => true];
@@ -107,19 +148,31 @@ try {
         'onboarding' => 'scripts/test-onboarding-browser.cjs',
         'transfer' => 'scripts/test-multi-transfer-browser.cjs',
         'selected-nightly' => 'scripts/test-selected-nightly-browser.cjs',
+        'partial-nightly' => 'scripts/test-partial-nightly-browser.cjs',
         default => 'scripts/capstone-final-browser.cjs',
     };
     $browser = new Process(['node', base_path($browserScript)], base_path(), $env + [
         'FINAL_META' => $private.'/metadata.json', 'FINAL_PASSWORD' => $password, 'FINAL_OUTPUT' => $output, 'FINAL_PHP' => PHP_BINARY]);
     $browser->setTimeout(300);
     $code = $browser->run(fn ($type, $text) => print str_replace($password, '[disembunyikan]', $text));
+    if ($phase === 'partial-nightly' && $code === 0) {
+        $report = app(\App\Services\InventoryReconciliationService::class)->report();
+        if ((float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $warehouse->id)->value('quantity') !== 50.0
+            || (float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $pharmacy->id)->value('quantity') !== 18.0
+            || StockBalance::where('medicine_id', $other->id)->exists()
+            || $report['mismatched_pairs'] || $report['batch_identity_issues']) throw new RuntimeException('Pemeriksaan sebagian mengubah obat yang belum diperiksa atau rekonsiliasi tidak sesuai.');
+        $approved = DB::table('nightly_checks')->where('status', 'approved')->sole();
+        if (DB::table('nightly_check_items')->where('nightly_check_id', $approved->id)->whereNull('quantity')->count() !== 1) throw new RuntimeException('Obat belum diperiksa tidak dipertahankan sebagai null.');
+        echo "PASS hitungan sebagian: Apotek 20 menjadi 18, Gudang tetap 50, obat belum diperiksa tetap tanpa stok baru; rekonsiliasi sesuai.\n";
+    }
     if ($phase === 'selected-nightly' && $code === 0) {
         $report = app(\App\Services\InventoryReconciliationService::class)->report();
         if ((float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $warehouse->id)->value('quantity') !== 50.0
             || (float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $pharmacy->id)->value('quantity') !== 0.0
             || $report['mismatched_pairs'] || $report['batch_identity_issues']) throw new RuntimeException('Persetujuan sebagian mengubah stok di luar laporan atau rekonsiliasi tidak sesuai.');
         $checked = DB::table('nightly_checks')->where('status', 'approved')->sole();
-        if ($checked->scope !== 'selected' || DB::table('nightly_check_items')->where('nightly_check_id', $checked->id)->count() !== 1) throw new RuntimeException('Cakupan laporan sebagian tidak sesuai.');
+        if ($checked->scope !== 'selected' || DB::table('nightly_check_items')->where('nightly_check_id', $checked->id)->count() !== 2
+            || (float) StockBalance::where('medicine_id', $other->id)->where('location_id', $pharmacy->id)->value('quantity') !== 0.0) throw new RuntimeException('Cakupan laporan sebagian atau obat tambahan tidak sesuai.');
         echo "PASS persetujuan hanya mengubah Apotek 20 menjadi 0, Gudang tetap 50; rekonsiliasi sesuai.\n";
     }
     if ($phase === 'transfer' && $code === 0) {

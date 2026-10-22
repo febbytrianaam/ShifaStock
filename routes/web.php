@@ -93,6 +93,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/pengecekan-malam', [NightlyCheckController::class, 'index'])->middleware('can:view-nightly-checks')->name('preview.nightly');
         Route::post('/pengecekan-malam', [NightlyCheckController::class, 'store'])->middleware(['can:view-nightly-checks', 'can:operate-inventory'])->name('nightly.store');
         Route::get('/pengecekan-malam/{id}', [NightlyCheckController::class, 'show'])->middleware('can:view-nightly-checks')->whereNumber('id')->name('nightly.show');
+        Route::get('/pengecekan-malam/{id}/cetak', [NightlyCheckController::class, 'printReport'])->middleware('can:view-nightly-checks')->whereNumber('id')->name('nightly.print');
         Route::post('/pengecekan-malam/{id}', [NightlyCheckController::class, 'save'])->middleware(['can:view-nightly-checks', 'can:operate-inventory'])->whereNumber('id')->name('nightly.save');
         Route::delete('/pengecekan-malam/{id}', [NightlyCheckController::class, 'destroy'])->middleware(['can:view-nightly-checks', 'can:operate-inventory'])->whereNumber('id')->name('nightly.destroy');
         Route::post('/pengecekan-malam/{id}/review', [NightlyCheckController::class, 'review'])->middleware(['can:view-nightly-checks', 'can:finalize-opname'])->whereNumber('id')->name('nightly.review');

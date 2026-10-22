@@ -8,6 +8,7 @@ use App\Models\BatchStockBalance;
 use App\Models\InventoryMovement;
 use App\Models\Location;
 use App\Models\Medicine;
+use App\Models\StockParameter;
 use App\Models\Unit;
 use App\Models\User;
 use App\Support\Onboarding;
@@ -24,7 +25,7 @@ class DashboardOnboardingTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => Role::Pharmacy]));
         $this->get('/dashboard?data=demo')->assertOk()
             ->assertViewHas('stats', ['verified' => 0, 'stocked' => 0, 'shortages' => 0, 'expiring' => 0])
-            ->assertViewHas('hasApprovedChecks', false)->assertDontSee('Mode Demo')->assertDontSee('Data Demo');
+            ->assertViewHas('hasMonitoringParameters', false)->assertDontSee('Mode Demo')->assertDontSee('Data Demo');
         $this->assertDatabaseCount('medicines', 0);
     }
 
@@ -32,11 +33,9 @@ class DashboardOnboardingTest extends TestCase
     {
         $user = User::factory()->create(['role' => Role::Pharmacy]);
         $location = Location::create(['code' => 'GDG', 'name' => 'Gudang']);
-        $check = DB::table('nightly_checks')->insertGetId(['date' => '2026-10-20', 'location_id' => $location->id, 'created_by' => $user->id, 'status' => 'approved']);
         foreach (range(1, 12) as $number) {
             $medicine = Medicine::create(['code' => 'REAL-'.$number, 'name' => 'Obat '.$number]);
-            DB::table('nightly_check_items')->insert(['nightly_check_id' => $check, 'medicine_id' => $medicine->id,
-                'code' => $medicine->code, 'name' => $medicine->name, 'quantity' => 0, 'is_low' => true]);
+            StockParameter::create(['medicine_id' => $medicine->id, 'location_id' => $location->id, 'minimum_quantity' => 10]);
         }
         $this->actingAs($user)->get('/dashboard')->assertOk()
             ->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 12)

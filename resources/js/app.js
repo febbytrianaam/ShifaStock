@@ -2,7 +2,7 @@ import './bootstrap';
 import Chart from 'chart.js/auto';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
-import { initFormSafety, resetFormBaseline, allowFormNavigation } from './form-safety';
+import { initFormSafety, resetFormBaseline, allowFormNavigation, cancelFormNavigation } from './form-safety';
 import { initReceiptValidation, validateReceiptRows, checkReceiptInvoice } from './receipt-validation';
 import { initDailyCounts, prepareDailyCounts } from './daily-counts';
 import { initOnboarding } from './onboarding';
@@ -527,6 +527,16 @@ function filterNightlyRows() {
     for (const id of ['nightly-prev', 'nightly-prev-bottom']) document.getElementById(id).disabled = nightlyPage === 1;
     for (const id of ['nightly-next', 'nightly-next-bottom']) document.getElementById(id).disabled = nightlyPage === totalPages;
 }
+document.addEventListener('nightly:reveal-row', (event) => {
+    const row = event.detail;
+    const rows = [...document.querySelectorAll('[data-nightly-row]')];
+    if (!rows.includes(row)) return;
+    document.getElementById('nightly-search').value = '';
+    document.getElementById('nightly-filter').value = 'all';
+    nightlyPage = Math.floor(rows.indexOf(row) / Number(document.getElementById('nightly-page-size').value)) + 1;
+    filterNightlyRows();
+});
+
 function closeSidebar() {
     document.getElementById('sidebar')?.classList.add('-translate-x-full');
     const backdrop = document.getElementById('sidebar-backdrop');
@@ -543,7 +553,8 @@ document.addEventListener('click', (event) => {
     const approveButton = event.target.closest('[data-confirm-stock-review]');
     if (approveButton && approveButton.dataset.confirmed !== '1') {
         event.preventDefault();
-        Swal.fire({ title: 'Setujui dan sesuaikan stok?', text: 'Stok sistem akan disesuaikan ke hasil hitung laporan ini. Pastikan satuan dan transaksi setelah penghitungan sudah diperiksa.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, setujui dan sesuaikan', cancelButtonText: 'Periksa kembali' }).then((result) => {
+        const coverage = approveButton.dataset.checkedCount === undefined ? '' : `${approveButton.dataset.checkedCount} obat sudah diperiksa; ${approveButton.dataset.uncheckedCount} obat belum diperiksa dan tidak akan diubah stoknya. `;
+        Swal.fire({ title: 'Setujui dan sesuaikan stok?', text: coverage + 'Stok sistem akan disesuaikan hanya ke hasil hitung yang sudah diisi. Pastikan satuan dan transaksi setelah penghitungan sudah diperiksa.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Ya, setujui dan sesuaikan', cancelButtonText: 'Periksa kembali' }).then((result) => {
             if (!result.isConfirmed) return;
             approveButton.dataset.confirmed = '1';
             approveButton.form.requestSubmit(approveButton);
@@ -713,6 +724,7 @@ document.addEventListener('submit', (event) => {
     if (!(form instanceof HTMLFormElement)) return;
     if (form.matches('[data-nightly-count-form]') && !prepareDailyCounts(form, event.submitter)) {
         event.preventDefault();
+        cancelFormNavigation();
         return;
     }
 

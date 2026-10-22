@@ -14,7 +14,7 @@ Aplikasi berfokus pada pengelolaan obat, bukan pelayanan pasien atau integrasi N
 | Penerimaan | Input banyak baris, pilihan obat searchable, nomor faktur supplier, konversi satuan, edit/batalkan draf, posting ke lokasi tujuan, dan peringatan faktur ganda |
 | Pergerakan stok | Stok awal per batch, transfer banyak obat dalam satu referensi dengan penyimpanan atomik, pengeluaran, retur PBF, serta kondisi khusus dengan batch wajib |
 | Pemilihan batch | Mengikuti obat dan lokasi; FEFO otomatis untuk transfer/pengeluaran tanpa pilihan batch eksplisit, dengan pengecualian batch kedaluwarsa |
-| Pemeriksaan harian | Semua obat atau obat tertentu, dropdown satuan mengikuti master obat, draf, hitung per batch, pengiriman/review kepala apoteker; persetujuan hanya menyesuaikan obat dalam laporan dan ditolak jika stok berubah |
+| Pemeriksaan harian | Semua obat atau obat tertentu, tambah obat ke draf, kirim sebagian dengan konfirmasi, dropdown satuan master dan hitung per batch; persetujuan hanya menyesuaikan obat yang sudah diperiksa, dengan perlindungan perubahan stok |
 | Opname periodik | Snapshot stok, isian fisik, finalisasi, dan Mulai Hitung Ulang dengan konfirmasi serta pencatatan isian lama di audit log |
 | Monitoring | Stok kosong/menipis, parameter minimum stok, kedaluwarsa beserta lokasi, dan pintasan tindak lanjut |
 | Pelaporan | Kartu stok per obat/lokasi/batch/periode, cetak dengan identitas klinik, laporan persediaan, dan riwayat pemeriksaan |
@@ -97,6 +97,16 @@ Buka [ShifaStock lokal](http://127.0.0.1:8000). Untuk pengembangan frontend, jal
 Master obat dapat dimasukkan melalui menu Data Obat, termasuk preview/import referensi yang disediakan. Seed referensi tidak berarti stok fisik sudah tersedia; catat stok awal atau penerimaan sesuai batch dan lokasi sebenarnya.
 
 ## Pengujian
+
+**Pemeriksaan sebagian, 22 Oktober 2026:** **157 tes / 1621 assertions**, **7 tes browser pemeriksaan sebagian**, **15 regresi harian**, dan **16 regresi operasional** lulus. Obat yang belum diperiksa tetap kosong pada isian, tidak dianggap stok 0, dan tidak disesuaikan saat persetujuan. Peringatan dikelompokkan dan mode lihat saja menjelaskan akun pembuat/status laporan. Semua transaksi uji memakai database sementara. [Laporan implementasi](Docs/30_implemented/2026-10-22-partial-daily-submission/implementation_report.md).
+
+**Audit widget dashboard, 22 Oktober 2026:** seluruh widget cocok dengan query pembanding read-only pada database UAT. Pengujian fokus **25 tes / 254 assertions** lulus. Tabel stok dashboard adalah pratinjau maksimal 12 baris; pencariannya bukan pencarian seluruh inventori. [Rincian audit](Docs/30_implemented/2026-10-22-dashboard-stock-monitoring/implementation_report.md#follow-up-audit-of-other-widgets).
+
+**Monitoring stok dashboard, 22 Oktober 2026:** pengujian ulang **147 tes / 1533 assertions** dan **16 pemeriksaan browser** lulus. Widget kosong/menipis kini memakai stok transaksi dan batas minimum yang sama dengan halaman Monitoring, tanpa menunggu pemeriksaan harian disetujui. Pengujian transaksi memakai database simulasi terpisah. [Laporan implementasi](Docs/30_implemented/2026-10-22-dashboard-stock-monitoring/implementation_report.md).
+
+**Laporan cetak pemeriksaan, 22 Oktober 2026:** pengujian tahap ini **140 tes / 1450 assertions** dan **15 pemeriksaan browser harian** lulus. PDF **A4 portrait** diuji langsung: laporan singkat satu halaman, laporan 70 obat delapan halaman, seluruh baris serta judul tabel terverifikasi dan semua hasil render diperiksa. Pengujian memakai database simulasi terpisah. [Laporan implementasi](Docs/30_implemented/2026-10-21-daily-check-print-report/implementation_report.md).
+
+**Tambah obat pada draf, 21 Oktober 2026:** pengujian tahap ini **133 tes / 1392 assertions** dan **12 pemeriksaan browser harian** lulus, termasuk penambahan sambil mempertahankan jumlah, satuan, rincian batch, permintaan, dan catatan. Build frontend, kompilasi Blade, serta isolasi UAT diverifikasi. [Laporan](Docs/30_implemented/2026-10-21-add-medicines-to-draft/implementation_report.md).
 
 **Pemeriksaan obat tertentu dan dropdown satuan, 21 Oktober 2026:** suite terbaru 124 tes / 1306 assertions lulus. Verifikasi fitur mencakup 8 pemeriksaan browser harian, 13 regresi browser operasional, dan 9 skenario MySQL bersamaan. Build frontend, kompilasi Blade, dan verifikasi pemisahan UAT berhasil. Semua fixture stok memakai database sementara. [Laporan implementasi](Docs/30_implemented/2026-10-21-selected-daily-check/implementation_report.md).
 

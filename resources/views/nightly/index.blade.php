@@ -58,7 +58,7 @@
         </div>
         <div class="mt-4 flex flex-wrap items-center gap-3">
             <button class="btn bg-[#3277B2] hover:bg-[#266194] text-white font-bold text-xs">Buka / Mulai Pemeriksaan</button>
-            <p class="max-w-xl text-xs text-slate-500">Satu laporan per tanggal dan lokasi. Jika sudah ada, laporan tersebut akan dibuka tanpa mengganti pilihan obatnya. Untuk mengganti cakupan, batalkan draf milik Anda lalu mulai kembali.</p>
+            <p class="max-w-xl text-xs text-slate-500">Satu laporan per tanggal dan lokasi. Jika sudah ada, laporan tersebut akan dibuka. Untuk menambah obat yang tertinggal, gunakan tombol Tambah Obat pada draf tanpa membatalkannya.</p>
         </div>
     </form>
     @endcan
@@ -82,7 +82,7 @@
                                 <span class="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
                                     {{ $check->location }}
                                 </span>
-                                <span class="mt-1 block text-[11px] text-slate-500">{{ $check->scope === 'selected' ? 'Obat tertentu' : 'Pemeriksaan lengkap' }}</span>
+                                <span class="mt-1 block text-[11px] text-slate-500">Daftar awal: {{ $check->scope === 'selected' ? 'Obat tertentu' : 'Semua obat' }}</span>
                             </td>
                             <td class="p-4">
                                 @php($statusStyle = ['approved' => 'bg-[#edf5fb] text-[#266194] border border-[#b2d4ee]', 'submitted' => 'bg-amber-100 text-amber-800 border border-amber-200', 'draft' => 'bg-slate-100 text-slate-700 border border-slate-200'][$check->status] ?? 'bg-slate-100 text-slate-700 border border-slate-200')

@@ -77,7 +77,7 @@ class SelectedNightlyCheckTest extends TestCase
         $this->assertDatabaseCount('nightly_check_items', 1);
         $this->assertDatabaseHas('nightly_check_items', ['nightly_check_id' => $id, 'medicine_id' => $this->first->id, 'quantity' => null]);
         $this->get(route('nightly.show', $id))->assertOk()->assertSee('Obat tertentu')
-            ->assertSee('Obat Pilihan')->assertDontSee('Obat Lain');
+            ->assertSee('Obat Pilihan')->assertViewHas('items', fn ($items) => $items->count() === 1 && $items->first()->medicine_id === $this->first->id);
     }
 
     public function test_selection_is_required_unique_and_limited_to_eligible_master_medicines(): void
@@ -145,18 +145,18 @@ class SelectedNightlyCheckTest extends TestCase
         $this->assertDatabaseHas('nightly_check_items', ['nightly_check_id' => $id, 'quantity' => 5, 'unit' => 'Box']);
     }
 
-    public function test_complete_mode_still_requires_all_items_and_accepts_incomplete_drafts(): void
+    public function test_complete_mode_accepts_incomplete_drafts_and_requires_partial_confirmation(): void
     {
         $id = $this->start(['scope' => 'complete']);
         $this->assertDatabaseCount('nightly_check_items', 2);
         $items = DB::table('nightly_check_items')->where('nightly_check_id', $id)->get();
         $payload = $items->mapWithKeys(fn ($item) => [$item->id => ['quantity' => $item->medicine_id === $this->first->id ? 0 : null, 'unit' => 'Tablet']])->all();
         $this->postJson(route('nightly.save', $id), ['action' => 'save', 'items' => $payload])->assertRedirect();
-        $this->postJson(route('nightly.save', $id), ['action' => 'submit', 'items' => $payload])->assertUnprocessable()->assertJsonValidationErrors('items');
+        $this->postJson(route('nightly.save', $id), ['action' => 'submit', 'items' => $payload])->assertUnprocessable()->assertJsonValidationErrors('confirm_partial');
         $this->assertDatabaseHas('nightly_checks', ['id' => $id, 'scope' => 'complete', 'status' => 'draft']);
     }
 
-    public function test_selected_mode_requires_counts_for_every_selected_item_not_just_any_one(): void
+    public function test_selected_mode_also_requires_confirmation_before_sending_only_some_counts(): void
     {
         $id = $this->start(['medicine_ids' => [$this->first->id, $this->other->id]]);
         $items = DB::table('nightly_check_items')->where('nightly_check_id', $id)->get();
@@ -228,7 +228,8 @@ class SelectedNightlyCheckTest extends TestCase
         $this->get(route('shortages.index'))->assertOk()
             ->assertViewHas('summary', fn ($summary) => $summary['total'] === 1 && $summary['low'] === 1 && $summary['empty'] === 0)
             ->assertViewHas('rows', fn ($rows) => $rows->count() === 1 && $rows->first()->medicine_id === $this->other->id);
-        $this->get(route('dashboard'))->assertOk()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 1);
+        // These history-only fixtures do not create current-stock minimum alerts.
+        $this->get(route('dashboard'))->assertOk()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 0);
         $id = $this->start(['date' => '2026-01-03', 'scope' => 'complete']);
         $this->get(route('nightly.show', $id))->assertOk()->assertViewHas('baseline', function ($baseline) {
             return $baseline[$this->first->id]->quantity === 5 && $baseline[$this->first->id]->checked_date === '2026-01-02'
@@ -248,6 +249,6 @@ class SelectedNightlyCheckTest extends TestCase
             return $rows->count() === 2 && $rows->contains(fn ($row) => $row->medicine_id === $this->first->id && $row->location_id === $warehouse->id)
                 && $rows->contains(fn ($row) => $row->medicine_id === $this->other->id && $row->location_id === $this->location->id);
         });
-        $this->get(route('dashboard'))->assertOk()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 2);
+        $this->get(route('dashboard'))->assertOk()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 0);
     }
 }

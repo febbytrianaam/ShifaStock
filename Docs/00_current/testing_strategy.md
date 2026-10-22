@@ -1,5 +1,43 @@
 # Testing Strategy
 
+## Latest Partial Daily Submission Execution
+
+2026-10-22 WIB: full isolated SQLite rerun passed **157 tests / 1621 assertions**, including ten partial-submission tests and read-only explanations. Actual temporary-MySQL HTTP browser runs passed **seven partial**, **15 existing daily**, and **16 existing operational** checks, with independent stock/batch/ledger postconditions and cleanup. The new partial suite covers cancellation, draft save from confirmation, mobile sending, pharmacist coverage confirmation, all-blank rejection, safe bounded warnings, and focus across pagination. A4 portrait PDFs were regenerated and parsed: one and eight pages, all 70 long-report codes, repeated headers, no orphan closing page; all nine rendered pages reviewed. Build/syntax/format checks passed. No operational UAT data or permissions changed. [Actual evidence and initial QA findings](../30_implemented/2026-10-22-partial-daily-submission/implementation_report.md). Earlier results below are stage-specific history.
+
+## Latest Dashboard Widget Audit
+
+2026-10-22, 14:20 WIB: a read-only restricted-UAT check compared actual dashboard controller output with independent database queries. All matched: ready verified masters 1, distinct stocked medicines 2, minimum alerts 1, stocked near-expiry batches 0, seven-day receipt references 1 and transfer references 4, balance preview 4 rows, administrator accounts 4/active 4/supported roles 4. These are simulation snapshots, not fixed expected inventory values.
+
+Focused isolated backend rerun: **25 tests / 254 assertions passed** across `DashboardOnboardingTest`, `DashboardStockMonitoringTest`, and `CapstoneFunctionalTest`. JUnit evidence stays ignored at `storage/app/qa/inventory/dashboard-widget-audit.xml`. No application code or persistent data changed during this audit; Playwright was not rerun for the audit itself. The stock-table search covers only its 12-row preview, and Tersedia means positive stock rather than above minimum. [Audit details](../30_implemented/2026-10-22-dashboard-stock-monitoring/implementation_report.md#follow-up-audit-of-other-widgets).
+
+## Latest Dashboard Minimum Monitoring Execution
+
+2026-10-22 WIB: isolated SQLite suite passed **147 tests / 1533 assertions**. Six new dashboard regressions cover actual balances without daily approval, stale history, minimum equality/location separation, absent balance/zero minimum, missing configuration, and Guest read-only access. One actual posting workflow verifies dashboard and Monitoring after draft/post reception, transfer, issue, and restock. Existing 12-row preview coverage now uses minimum rules instead of historical checks.
+
+Real HTTP Playwright operational regression passed **16/16**, including desktop/mobile dashboard, filtered medicine/location links, and updated Apotek quantity after a simulation posting. Independent stock and batch/ledger reconciliation postconditions passed, and the temporary MySQL database was removed. Desktop/mobile screenshots were opened for visual review. Build, focused Pint, Node syntax, and whitespace checks passed. The read-only persistent UAT comparison at 13:54 WIB returned **one alert from both dashboard and Monitoring, with zero approved daily reports**. No persistent fixtures or permission changes. [Details and evidence](../30_implemented/2026-10-22-dashboard-stock-monitoring/implementation_report.md). Older results below remain stage-specific history.
+
+## Latest Portrait Print Execution
+
+2026-10-22, approximately 08:45 WIB: actual full isolated SQLite rerun passed **140 tests / 1450 assertions**; actual HTTP daily browser rerun passed **15/15**, including portrait CSS, standalone printing, unsaved-input protection, and independent stock/reconciliation postconditions. Temporary browser MySQL data was removed; persistent UAT/clinic data was not used for fixtures.
+
+Actual Chrome PDFs measured approximately **595 x 842 pt**: one approved page and eight pages for the 70-item draft. pypdf verified all medicine codes, repeated headers, no application controls, and no orphan closing page. All nine Poppler-rendered pages were opened and visually inspected. Evidence: ignored `storage/app/qa/selected-nightly-browser/`, with `Laporan_Pendek_Portrait-1.png` and `Laporan_Panjang_Portrait-1.png` through `-8.png`. Full details and the initial CSS-serialization assertion finding are in [the print report](../30_implemented/2026-10-21-daily-check-print-report/implementation_report.md). No physical-printer test performed; the earlier operational/browser concurrency and build results below are historical.
+
+## Historical Landscape Print Execution
+
+2026-10-21 WIB: complete isolated SQLite suite passed **140 tests / 1447 assertions**, including seven new print cases (standalone structure, saved batch/zero data, escaping, true approval/reviewer state, RBAC/login/404, recorded units, and unpaginated report items). The actual HTTP daily browser suite passed **15/15** checks, now including dirty-print SweetAlert, real separate-tab report navigation and PDF generation, and a 70-item saved draft whose masters were later deactivated.
+
+Headless Chrome generated actual A4-landscape PDFs: approved report **one page**, long draft **seven pages**. pypdf verified page dimensions, all 70 medicine codes, repeated table headings, absence of application controls, and no orphan closing page. Poppler rendered the short document and all seven long pages; each was opened and visually inspected. Evidence stays ignored under `storage/app/qa/selected-nightly-browser/`. Build/Blade and UAT isolation passed. See [the print report](../30_implemented/2026-10-21-daily-check-print-report/implementation_report.md) for actual initial QA findings and limitations. Earlier suite totals below are historical.
+
+The existing `regression` browser phase was also rerun for this print follow-up: **13/13 operational cases passed**, including its independent Gudang/Apotek stock and reconciliation postconditions. The final UAT isolation check at 16:16 WIB still passed; no persistent stock or user-managed access setting was changed.
+
+## Latest Draft Addition Execution
+
+2026-10-21 WIB: complete isolated SQLite execution passed **133 tests / 1392 assertions**, including nine new add-to-draft cases. The first execution hit the runner's 180-second limit; a process-only timeout increase to 900 seconds allowed a complete passing rerun in about 33 seconds. The incomplete run is not a passing result.
+
+The isolated `selected-nightly` Playwright phase passed **12/12** checks: original eight flows plus searchable addition, X/Escape/Enter behavior, visible empty-selection SweetAlert, unsaved input preservation, stable item identity, blank new rows, and mandatory counting before submission. Desktop/mobile screenshots were opened and inspected. Independent PHP postconditions verify two approved items and consistent stock/ledger quantities. Build, Blade compilation, and UAT isolation passed. Ignored evidence: `storage/app/qa/selected-nightly-browser/` and `storage/app/qa/inventory/phpunit-results.xml`. No real inventory, persistent UAT data, or user-modified permission matrix was reset. [Report](../30_implemented/2026-10-21-add-medicines-to-draft/implementation_report.md). Earlier stage results below remain historical.
+
+`php scripts/test-inventory-mysql.php` was rerun for this follow-up: all **nine existing competing-process scenarios** passed, including daily approval, inventory references, FEFO, and multi-item transfer rollback. These are existing concurrency regressions, not a newly added two-operator draft-edit race scenario.
+
 ## Latest Selected Daily Check Execution
 
 2026-10-21 WIB: after the count-unit dropdown follow-up, the full isolated SQLite suite passed **124 tests / 1306 assertions**, including twelve selected-check tests. The added unit cases cover master-only selection, active references/no guessing for an incomplete master, the existing positive-count guard, and mismatched old drafts. `php scripts/capstone-final-browser.php selected-nightly` verifies **8 real HTTP Playwright cases** with a temporary MySQL database: selection/search, master unit dropdown/draft persistence, SweetAlert, draft/submit, explicit batch zero/requested quantity, pharmacist approval, mobile layout, and Guest restrictions. Independent postconditions verify Apotek 20 to 0, Gudang unchanged at 50, one approved item, and consistent total/batch/ledger. Ignored evidence: `storage/app/qa/selected-nightly-browser/`.

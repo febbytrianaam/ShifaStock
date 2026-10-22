@@ -83,6 +83,34 @@ const crypto = require('node:crypto');
             await page.waitForURL('**/dashboard');
             await ready();
         });
+        if (meta.phase !== 'baseline') {
+            await record('Dashboard minimum stok memakai stok transaksi tanpa menunggu pemeriksaan harian', async () => {
+                assert.equal((await page.locator('[data-stock-shortages] > p').innerText()).trim(), '2');
+                assert.equal(await page.locator('[data-stock-shortages]').getByText('Tindak Lanjut →', { exact: true })
+                    .evaluate((element) => getComputedStyle(element).whiteSpace), 'nowrap');
+                const alerts = page.locator('[data-stock-alerts]');
+                assert.equal(await alerts.locator('[data-stock-alert]').count(), 2);
+                assert((await alerts.innerText()).includes('50 Tablet'));
+                assert((await alerts.innerText()).includes('20 Tablet'));
+                assert(!(await alerts.innerText()).includes('Belum ada hasil pemeriksaan'));
+            }, 'Browser_Dashboard_Monitoring_Desktop.png');
+            await record('Dashboard mobile dan tautan monitoring mempertahankan obat serta lokasi', async () => {
+                await page.setViewportSize({ width: 390, height: 844 });
+                await page.waitForFunction(() => document.getElementById('sidebar').getBoundingClientRect().right <= 1);
+                await page.locator('[data-stock-alerts]').scrollIntoViewIfNeeded();
+                assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
+                await page.screenshot({ path: path.join(output, 'Browser_Dashboard_Monitoring_Mobile.png') });
+                await page.locator('[data-stock-alert]').filter({ hasText: 'Gudang' }).click();
+                await ready();
+                const url = new URL(page.url());
+                assert.equal(url.searchParams.get('location_id'), String(meta.warehouse));
+                assert.equal(url.searchParams.get('search'), 'FINAL-001');
+                assert.equal(url.hash, '#stok-minimum');
+                assert.equal(await page.locator('#stok-minimum tbody tr').count(), 1);
+                assert((await page.locator('#stok-minimum').innerText()).includes('50 Tablet'));
+                await page.setViewportSize({ width: 1440, height: 900 });
+            });
+        }
         await record(meta.phase === 'baseline' ? 'Reproduksi bug label batch Apotek sebelum perbaikan' : 'Batch Apotek dipilih dengan label dan native option sesuai lokasi', async () => {
             await goto('/kondisi-khusus');
             await pick('#adjust-medicine', 'FINAL-001');
@@ -138,6 +166,13 @@ const crypto = require('node:crypto');
             assert.equal(await row.count(), 1);
             assert((await row.innerText()).includes('Apotek'));
         }, 'Browser_05_Posting_Apotek.png');
+        await record('Widget dashboard membaca ulang stok Apotek setelah posting kondisi khusus', async () => {
+            await goto('/dashboard');
+            assert.equal((await page.locator('[data-stock-shortages] > p').innerText()).trim(), '2');
+            const alerts = page.locator('[data-stock-alerts]');
+            assert((await alerts.locator('[data-stock-alert]').filter({ hasText: 'Apotek' }).innerText()).includes('18 Tablet'));
+            assert((await alerts.locator('[data-stock-alert]').filter({ hasText: 'Gudang' }).innerText()).includes('50 Tablet'));
+        }, 'Browser_Dashboard_Monitoring_Setelah_Posting.png');
         for (const [route, prefix, location] of [['/transfer', 'transfer', 'source'], ['/obat-keluar', 'issue', 'location'], ['/retur-pbf', 'return', 'location']]) {
             await record('Regresi dropdown lintas lokasi pada '+route, async () => {
                 await goto(route);

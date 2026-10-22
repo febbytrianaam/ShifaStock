@@ -7,6 +7,14 @@ This folder records shipped work as historical truth. Each feature folder contai
 
 ## Index
 
+- [2026-10-22 Partial daily submission and clear validation](2026-10-22-partial-daily-submission/)
+
+- [2026-10-22 Dashboard stock monitoring alignment](2026-10-22-dashboard-stock-monitoring/)
+
+- [2026-10-21 Dedicated daily-check print report](2026-10-21-daily-check-print-report/)
+
+- [2026-10-21 Add medicines to daily drafts without losing input](2026-10-21-add-medicines-to-draft/)
+
 - [2026-10-21 Complete and selected daily physical checks](2026-10-21-selected-daily-check/)
 
 - [2026-10-21 Multi-item stock transfers](2026-10-21-multi-item-transfer/)

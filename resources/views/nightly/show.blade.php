@@ -1,6 +1,5 @@
 <x-layouts.app title="Laporan Stok Malam">
 @php($editable = auth()->user()->can('operate-inventory') && $check->status === 'draft' && $check->created_by === auth()->id())
-<style>@media print {aside,header,nav,.no-print{display:none!important}main{margin:0!important;padding:0!important}body{background:white!important}.card{box-shadow:none!important}input,textarea{border:0!important}table{font-size:10px}tr{break-inside:avoid}}</style>
 
 <div class="no-print">
     <x-page-tabs :links="[
@@ -24,10 +23,13 @@
             </span>
         </div>
     </div>
-    <p class="mt-2 text-xs font-semibold text-slate-700">{{ $check->scope === 'selected' ? 'Obat tertentu' : 'Pemeriksaan lengkap' }} &middot; Diperiksa: {{ $items->whereNotNull('quantity')->count() }} / {{ $items->count() }} obat.</p>
+    <p class="mt-2 text-xs font-semibold text-slate-700">Daftar awal: {{ $check->scope === 'selected' ? 'Obat tertentu' : 'Semua obat' }} &middot; Diperiksa: {{ $checkedCount }} / {{ $items->count() }} obat.</p>
     <p class="mt-1 text-xs text-slate-500">Pembanding menggunakan hasil terakhir masing-masing obat yang disetujui sebelum tanggal ini. Selisih bukan jumlah pemakaian pasien.</p>
     @if($check->scope === 'selected')
         <p class="mt-1 text-xs text-slate-600">Laporan ini hanya mencakup obat yang dipilih. Obat lain tidak ikut diperiksa atau diubah stoknya.</p>
+    @endif
+    @if($uncheckedCount > 0)
+        <p role="note" data-nightly-incomplete class="mt-3 rounded border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">{{ $uncheckedCount }} obat belum diperiksa. {{ $check->status === 'draft' ? 'Simpan draf untuk melanjutkan nanti, atau kirim hanya hasil yang sudah diperiksa setelah konfirmasi.' : 'Pemeriksaan dikirim sebagian. Persetujuan hanya mencakup '.$checkedCount.' obat yang sudah diperiksa.' }} Obat yang belum diperiksa tidak dianggap kosong dan stoknya tidak disesuaikan.</p>
     @endif
     @if($editable)
         <form method="POST" action="{{ route('nightly.destroy', $check->id) }}" class="no-print mt-3" data-confirm-cancel-draft>
@@ -37,6 +39,21 @@
         </form>
     @endif
 </div>
+
+@if(!$editable)
+    <div role="note" data-nightly-readonly class="mb-4 rounded border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+        <strong>Mode lihat saja.</strong>
+        @if(!auth()->user()->can('operate-inventory'))
+            Akun Anda hanya memiliki akses melihat laporan, bukan mengisi hasil hitung.
+        @elseif($check->status === 'draft')
+            Draf ini dibuat oleh {{ $check->creator }}. Hanya akun pembuat draf yang dapat mengisi atau menambah obat. Gunakan akun pembuat untuk melanjutkan pemeriksaan.
+        @elseif($check->status === 'submitted')
+            Laporan sudah dikirim untuk ditinjau. Jika perlu diperbaiki, kepala apoteker dapat mengembalikannya melalui Kembalikan untuk Koreksi agar pembuat laporan bisa mengisi lagi.
+        @else
+            Laporan sudah disetujui dan tidak dapat diedit. Gunakan pemeriksaan berikutnya untuk mencatat hasil hitung baru; riwayat laporan ini tetap dipertahankan.
+        @endif
+    </div>
+@endif
 
 @if(session('status'))
     <div role="status" class="mb-4 rounded-lg border border-[#b2d4ee] bg-[#edf5fb] p-3 text-sm font-semibold text-[#266194]">
@@ -63,6 +80,12 @@
     @csrf
     <input type="hidden" name="batch_counts_payload" data-nightly-batch-payload>
     <input type="hidden" name="observed_revision" value="{{ old('observed_revision', $observedRevision) }}">
+    <input type="hidden" name="confirm_partial" value="0" data-nightly-confirm-partial>
+    <div class="no-print mb-3 flex justify-end">
+        <button type="button" class="btn inline-flex items-center gap-2 text-xs" data-nightly-add-open aria-controls="nightly-add-dialog" @disabled($availableMedicines->isEmpty()) title="{{ $availableMedicines->isEmpty() ? 'Semua obat yang tersedia sudah masuk laporan' : 'Tambahkan obat ke draf pemeriksaan' }}">
+            <span data-nightly-add-icon aria-hidden="true"></span> Tambah Obat
+        </button>
+    </div>
 @else
 <div>
 @endif
@@ -199,6 +222,31 @@
             <button class="btn bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-bold text-xs" name="action" value="save">Simpan Draf</button>
             <button class="btn bg-[#3277B2] hover:bg-[#266194] text-white font-bold text-xs" name="action" value="submit">Kirim ke Kepala Apoteker</button>
         </div>
+        <dialog id="nightly-add-dialog" class="no-print m-auto w-[calc(100%_-_2rem)] max-w-xl max-h-[calc(100dvh_-_2rem)] overflow-y-auto rounded-lg border border-slate-200 bg-white p-4 shadow-lg" aria-labelledby="nightly-add-title" data-nightly-add-dialog @if(old('action') === 'add' && $errors->has('medicine_ids')) data-reopen @endif>
+            <div class="mb-3 flex items-center justify-between gap-3">
+                <h2 id="nightly-add-title" class="text-base font-bold text-slate-900">Tambah Obat ke Pemeriksaan</h2>
+                <button type="button" class="flex h-8 w-8 shrink-0 items-center justify-center rounded hover:bg-slate-100" data-nightly-add-close aria-label="Tutup pilihan obat" title="Tutup pilihan obat"><span data-nightly-close-icon aria-hidden="true"></span></button>
+            </div>
+            <p class="mb-3 text-xs text-slate-600">Pilih obat tambahan. Isian pemeriksaan yang sedang dikerjakan ikut disimpan sebagai draf, tanpa mengubah stok.</p>
+            @if(old('action') === 'add' && $errors->has('medicine_ids'))<p class="mb-3 text-xs text-rose-700" role="alert">{{ $errors->first('medicine_ids') }}</p>@endif
+            <label class="label text-xs" for="nightly-add-search">Cari obat yang belum masuk laporan</label>
+            <input id="nightly-add-search" class="field mb-2 w-full text-xs" type="search" placeholder="Ketik nama atau kode obat..." autocomplete="off">
+            <p class="mb-2 text-xs text-slate-500" data-nightly-add-count aria-live="polite">0 obat dipilih</p>
+            @php($addedSelection = is_array(old('medicine_ids')) ? old('medicine_ids') : [])
+            <div class="max-h-[40dvh] overflow-y-auto rounded border border-slate-200">
+                @foreach($availableMedicines as $medicine)
+                    <label class="flex items-start gap-3 border-b border-slate-100 px-3 py-2 text-xs last:border-0 hover:bg-slate-50" data-nightly-add-option data-search="{{ Illuminate\Support\Str::lower($medicine->name.' '.$medicine->code) }}">
+                        <input class="mt-0.5 shrink-0" type="checkbox" name="medicine_ids[]" value="{{ $medicine->id }}" @checked(in_array($medicine->id, $addedSelection))>
+                        <span class="min-w-0 break-words"><span class="font-semibold text-slate-800">{{ $medicine->name }}</span><span class="mt-0.5 block text-slate-500">{{ $medicine->code }} &middot; {{ $medicine->unit?->name ?? 'Satuan belum diatur' }}</span></span>
+                    </label>
+                @endforeach
+                <p class="p-3 text-xs text-slate-500" data-nightly-add-empty hidden>Tidak ada obat yang sesuai pencarian.</p>
+            </div>
+            <div class="mt-4 flex flex-wrap justify-end gap-2">
+                <button type="button" class="btn text-xs" data-nightly-add-close>Batal</button>
+                <button type="submit" class="btn bg-[#3277B2] text-xs text-white hover:bg-[#266194]" name="action" value="add">Tambahkan ke Pemeriksaan</button>
+            </div>
+        </dialog>
     @endif
 @if($editable)
 </form>
@@ -210,7 +258,7 @@
     @can('finalize-opname')
         <form class="no-print card my-6 p-4" method="POST" action="{{ route('nightly.review',$check->id) }}">
             @csrf
-            <p class="mb-3 text-xs text-slate-600">Persetujuan memperbarui total dan batch hanya untuk {{ $items->count() }} obat dalam laporan ini. Obat lain tidak berubah. Jika stok berubah setelah laporan dikirim, kembalikan untuk koreksi dan hitung ulang.</p>
+            <p class="mb-3 text-xs text-slate-600">Persetujuan memperbarui total dan batch hanya untuk {{ $checkedCount }} obat yang sudah diperiksa dalam laporan ini. {{ $uncheckedCount }} obat belum diperiksa dan stoknya tidak berubah. Jika stok berubah setelah laporan dikirim, kembalikan untuk koreksi dan hitung ulang.</p>
             <div class="mb-4 max-h-64 overflow-auto">
                 <table class="w-full text-left text-xs">
                     <thead><tr><th class="p-2">Obat</th><th class="p-2">Stok sistem sekarang</th><th class="p-2">Hasil hitung</th><th class="p-2">Perubahan jika disetujui</th></tr></thead>
@@ -225,7 +273,7 @@
             <label class="label text-xs font-semibold text-slate-700" for="review">Catatan tinjauan (wajib jika dikembalikan)</label>
             <textarea class="field w-full text-xs" id="review" name="review_note" maxlength="2000" rows="3" placeholder="Tuliskan catatan arahan atau alasan koreksi..."></textarea>
             <div class="mt-4 flex gap-3">
-                <button class="btn bg-[#3277B2] hover:bg-[#266194] text-white font-bold text-xs" name="action" value="approve" data-confirm-stock-review>Setujui &amp; Sesuaikan Stok</button>
+                <button class="btn bg-[#3277B2] hover:bg-[#266194] text-white font-bold text-xs" name="action" value="approve" data-confirm-stock-review data-checked-count="{{ $checkedCount }}" data-unchecked-count="{{ $uncheckedCount }}">Setujui &amp; Sesuaikan Stok</button>
                 <button class="btn bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-bold text-xs" name="action" value="return">Kembalikan untuk Koreksi</button>
             </div>
         </form>
@@ -240,9 +288,10 @@
     <p class="mt-1.5 text-xs text-slate-500">{{ $check->status==='approved'?'Berdasarkan hasil pemeriksaan yang disetujui.':'Draf rekap, belum disetujui apoteker.' }} Tujuan supplier dan jumlah pesanan akhir ditentukan apoteker. Laporan ini tidak mengirim pesanan otomatis.</p>
     <pre class="mt-4 whitespace-pre-wrap rounded-xl bg-slate-50 p-4 font-mono text-xs text-slate-800 border border-slate-200">{{ $summary }}</pre>
     <div class="no-print mt-4 flex flex-wrap gap-3">
-        <button type="button" class="btn bg-[#3277B2] hover:bg-[#266194] text-white font-bold text-xs" onclick="window.print()">Cetak / Simpan PDF</button>
+        <a class="btn bg-[#3277B2] hover:bg-[#266194] text-white font-bold text-xs" href="{{ route('nightly.print', $check->id) }}" target="_blank" rel="noopener" data-nightly-print>Cetak / Simpan PDF</a>
         <button type="button" class="btn bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-bold text-xs" onclick="navigator.clipboard.writeText(document.getElementById('nightly-summary').value).then(()=>this.textContent='Tersalin').catch(()=>document.getElementById('nightly-summary').select())">Salin Ringkasan WAG</button>
     </div>
+    <p class="no-print mt-2 text-xs text-slate-500">Laporan cetak memakai data terakhir yang disimpan. Simpan Draf terlebih dahulu jika ada perubahan.</p>
     <textarea id="nightly-summary" aria-label="Ringkasan untuk disalin" readonly class="no-print field mt-3 text-xs font-mono" rows="5">{{ $summary }}</textarea>
 </section>
 </x-layouts.app>

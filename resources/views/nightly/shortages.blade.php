@@ -101,7 +101,7 @@
     </div>
     <div class="mt-4">{{ $rows->links() }}</div>
 
-    <section class="mt-8">
+    <section id="stok-minimum" class="mt-8 scroll-mt-24">
         <div class="mb-3 flex items-center gap-2">
             <span class="h-2 w-2 rounded-full bg-[#3277B2]"></span>
             <h3 class="font-bold text-slate-900 text-base tracking-tight">Stok Sistem pada atau di Bawah Minimum</h3>

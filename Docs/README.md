@@ -4,6 +4,14 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 
 ## Start Here
 
+- [Partial daily submission and read-only explanations](30_implemented/2026-10-22-partial-daily-submission/implementation_report.md)
+
+- [Dashboard stock monitoring alignment](30_implemented/2026-10-22-dashboard-stock-monitoring/implementation_report.md)
+
+- [Dedicated daily-check print report](30_implemented/2026-10-21-daily-check-print-report/implementation_report.md)
+
+- [Add medicines to daily drafts](30_implemented/2026-10-21-add-medicines-to-draft/implementation_report.md)
+
 - [Selected daily physical checks](30_implemented/2026-10-21-selected-daily-check/implementation_report.md)
 
 - [Product overview](00_current/product_overview.md)

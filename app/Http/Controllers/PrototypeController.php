@@ -8,7 +8,7 @@ use App\Models\InventoryMovement;
 use App\Models\Medicine;
 use App\Models\StockBalance;
 use App\Models\SystemSetting;
-use App\Queries\LatestNightlyItems;
+use App\Queries\MinimumStockAlerts;
 use Illuminate\Support\Facades\DB;
 
 class PrototypeController extends Controller
@@ -16,12 +16,10 @@ class PrototypeController extends Controller
     public function dashboard()
     {
         $expiryWarningMonths = (int) SystemSetting::value('expiry_warning_months', 3);
-        $shortageQuery = LatestNightlyItems::query()
-            ->join('locations as l', 'l.id', '=', 'c.location_id')
-            ->where(fn ($q) => $q->where('i.quantity', 0)->orWhere('i.is_low', true));
+        $shortageQuery = MinimumStockAlerts::query();
         $shortageCount = (clone $shortageQuery)->count();
-        $shortages = $shortageQuery->select('i.*', 'c.date', 'l.name as location')
-            ->orderBy('i.quantity')->orderBy('i.id')->limit(8)->get();
+        $shortages = $shortageQuery->orderByRaw('COALESCE(b.quantity, 0)')
+            ->orderBy('m.name')->orderBy('l.name')->limit(8)->get();
 
         $start = now('Asia/Jakarta')->startOfDay()->subDays(6);
         $movements = InventoryMovement::whereBetween('occurred_at', [$start, now('Asia/Jakarta')])->get();
@@ -34,7 +32,7 @@ class PrototypeController extends Controller
 
         return view('dashboard', [
             'expiryWarningMonths' => $expiryWarningMonths,
-            'hasApprovedChecks' => DB::table('nightly_checks')->where('status', 'approved')->exists(),
+            'hasMonitoringParameters' => DB::table('stock_parameters')->whereNotNull('minimum_quantity')->exists(),
             'stats' => [
                 'verified' => Medicine::where('verification_status', 'terverifikasi')->where('is_active', true)
                     ->whereNotNull('unit_id')->whereNotNull('dosage_form')->where('dosage_form', '<>', '')->count(),

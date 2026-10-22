@@ -79,11 +79,11 @@
         </a>
 
         <!-- 3. Kosong / Menipis -->
-        <a href="{{ route('shortages.index') }}" class="card card-interactive p-4 group block {{ $stats['shortages'] > 0 ? 'attention-critical' : '' }}">
+        <a href="{{ route('shortages.index') }}#stok-minimum" data-stock-shortages class="card card-interactive p-4 group block {{ $stats['shortages'] > 0 ? 'attention-critical' : '' }}">
             <div class="flex items-start justify-between">
                 <div>
                     <span class="inline-flex items-center rounded-md {{ $stats['shortages'] > 0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : 'bg-slate-100 text-slate-600' }} px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-                        {{ $stats['shortages'] > 0 ? 'Perlu Restock' : ($hasApprovedChecks ? 'Tidak Ada Kekurangan' : 'Belum Ada Laporan') }}
+                        {{ $stats['shortages'] > 0 ? 'Perlu Restock' : ($hasMonitoringParameters ? 'Di Atas Minimum' : 'Minimum Belum Diatur') }}
                     </span>
                     <h3 class="mt-2 text-xs font-semibold text-slate-500">Kosong / Menipis</h3>
                 </div>
@@ -95,8 +95,8 @@
             </div>
             <p class="mt-2 text-xl font-bold tabular-nums {{ $stats['shortages'] > 0 ? 'text-rose-600' : 'text-slate-900' }}">{{ \App\Support\Quantity::format($stats['shortages']) }}</p>
             <div class="mt-2 flex items-center justify-between text-xs">
-                <span class="text-slate-400 font-normal">Hasil terakhir per obat disetujui</span>
-                <span class="font-bold text-rose-600 group-hover:translate-x-0.5 transition-transform">Tindak Lanjut →</span>
+                <span class="min-w-0 text-slate-400 font-normal">Stok sistem per lokasi</span>
+                <span class="shrink-0 whitespace-nowrap font-bold text-rose-600 group-hover:translate-x-0.5 transition-transform">Tindak Lanjut →</span>
             </div>
         </a>
 
@@ -129,7 +129,7 @@
         </div>
 
         <!-- Perlu Ditindaklanjuti Widget -->
-        <div class="card flex flex-col p-4">
+        <div class="card flex flex-col p-4" data-stock-alerts>
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div class="flex items-center gap-2.5">
                     <span class="grid h-7 w-7 place-items-center rounded-lg bg-rose-50 text-rose-600">
@@ -144,16 +144,16 @@
                         @endif
                     </div>
                 </div>
-                <a class="inline-flex items-center gap-1 text-xs font-bold text-[#3277B2] hover:underline tracking-tight" href="{{ route('shortages.index') }}">
+                <a class="inline-flex items-center gap-1 text-xs font-bold text-[#3277B2] hover:underline tracking-tight" href="{{ route('shortages.index') }}#stok-minimum">
                     Lihat semua
                     <span aria-hidden="true">→</span>
                 </a>
             </div>
-            <p class="mt-2 mb-3 text-xs font-normal text-slate-400">Hasil terakhir per obat dan lokasi yang disetujui</p>
+            <p class="mt-2 mb-3 text-xs font-normal text-slate-400">Stok sistem pada atau di bawah minimum yang diatur per obat dan lokasi.</p>
 
             <div class="flex-1 space-y-2.5 overflow-y-auto max-h-[340px] pr-1">
                 @forelse($shortages as $row)
-                    <a href="{{ route('nightly.show', $row->nightly_check_id) }}" class="group flex items-center justify-between gap-3 rounded-lg border {{ (float) $row->quantity === 0.0 ? 'attention-critical hover:bg-rose-50/90' : 'attention-warning hover:bg-amber-50/90' }} p-3 transition-all">
+                    <a href="{{ route('shortages.index', ['search' => $row->code, 'location_id' => $row->location_id]) }}#stok-minimum" data-stock-alert class="group flex items-center justify-between gap-3 rounded-lg border {{ (float) $row->quantity === 0.0 ? 'attention-critical hover:bg-rose-50/90' : 'attention-warning hover:bg-amber-50/90' }} p-3 transition-all">
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2">
                                 @if((float) $row->quantity === 0.0)
@@ -163,7 +163,10 @@
                                 @endif
                                 <p class="truncate text-sm font-bold text-slate-900 tracking-tight group-hover:text-[#3277B2] transition-colors">{{ $row->name }}</p>
                             </div>
-                            <p class="mt-1 text-xs font-medium text-slate-600 tabular-nums">{{ $row->location }} · {{ \App\Support\Quantity::format($row->quantity) }} {{ $row->unit }} · {{ (float) $row->quantity === 0.0 ? 'Kosong' : 'Menipis' }}</p>
+                            <p class="mt-1 text-xs font-medium text-slate-600 tabular-nums">{{ $row->location }} · {{ \App\Support\Quantity::format($row->quantity) }} {{ $row->unit }} · Minimum {{ \App\Support\Quantity::format($row->minimum_quantity) }} {{ $row->unit }}</p>
+                            @if(!$row->stock_updated_at)
+                                <p class="mt-1 text-xs text-slate-500">Belum ada transaksi stok di lokasi ini.</p>
+                            @endif
                         </div>
                         <span class="text-slate-400 group-hover:text-[#3277B2] group-hover:translate-x-0.5 transition-all">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -178,8 +181,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <p class="text-sm font-bold text-slate-800 tracking-tight">{{ $hasApprovedChecks ? 'Tidak ada kekurangan dilaporkan' : 'Belum ada hasil pemeriksaan' }}</p>
-                        <p class="mt-1 text-xs font-normal text-slate-400">{{ $hasApprovedChecks ? 'Hasil terakhir obat yang sudah diperiksa tidak mencatat kekurangan. Obat yang belum diperiksa belum termasuk.' : 'Daftar ini akan terisi setelah hasil hitung fisik disetujui.' }}</p>
+                        <p class="text-sm font-bold text-slate-800 tracking-tight">{{ $hasMonitoringParameters ? 'Tidak ada stok pada atau di bawah minimum' : 'Batas minimum stok belum diatur' }}</p>
+                        <p class="mt-1 text-xs font-normal text-slate-400">{{ $hasMonitoringParameters ? 'Berlaku untuk obat dan lokasi yang sudah memiliki batas minimum, bukan seluruh master obat.' : 'Minta kepala apoteker mengatur batas minimum per obat dan lokasi pada Parameter Monitoring.' }}</p>
                     </div>
                 @endforelse
             </div>

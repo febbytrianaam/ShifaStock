@@ -31,9 +31,17 @@ export function resetFormBaseline(form) {
     }
 }
 
+export function hasFormChanges(form) {
+    return Boolean(form && baselines.has(form) && (restoredForms.has(form) || snapshot(form) !== baselines.get(form)));
+}
+
 export function allowFormNavigation() {
     leaving = true;
     setTimeout(() => { leaving = false; }, 5000);
+}
+
+export function cancelFormNavigation() {
+    leaving = false;
 }
 
 function hasUnsavedChanges(except = null) {
