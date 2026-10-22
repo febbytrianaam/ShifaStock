@@ -19,12 +19,13 @@ use Symfony\Component\Process\Process;
 require __DIR__.'/../vendor/autoload.php';
 $app = require __DIR__.'/../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
-$phase = in_array($argv[1] ?? '', ['baseline', 'onboarding', 'transfer', 'selected-nightly', 'partial-nightly'], true) ? $argv[1] : 'final';
+$phase = in_array($argv[1] ?? '', ['baseline', 'onboarding', 'transfer', 'selected-nightly', 'partial-nightly', 'nightly-ui'], true) ? $argv[1] : 'final';
 $output = match (true) {
     $phase === 'onboarding' => storage_path('app/qa/onboarding'),
     $phase === 'transfer' => storage_path('app/qa/multi-transfer-browser'),
     $phase === 'selected-nightly' => storage_path('app/qa/selected-nightly-browser'),
     $phase === 'partial-nightly' => storage_path('app/qa/partial-nightly-browser'),
+    $phase === 'nightly-ui' => storage_path('app/qa/nightly-workspace-browser'),
     ($argv[1] ?? '') === 'regression' => storage_path('app/qa/inventory-browser'),
     default => base_path('Docs/Capstone_Testing_Final/Bukti_Pengujian'),
 };
@@ -66,7 +67,7 @@ try {
         'password' => $password, 'role' => Role::Pharmacy, 'is_active' => true]);
     User::create(['username' => 'guest_simulasi', 'name' => 'Guest Simulasi', 'email' => 'guest@simulasi.example.test',
         'password' => $password, 'role' => Role::Guest, 'is_active' => true]);
-    if (in_array($phase, ['onboarding', 'selected-nightly', 'partial-nightly'], true)) {
+    if (in_array($phase, ['onboarding', 'selected-nightly', 'partial-nightly', 'nightly-ui'], true)) {
         foreach (['admin_simulasi' => Role::Administrator, 'apoteker_simulasi' => Role::Pharmacist] as $username => $role) {
             User::create(['username' => $username, 'name' => $role->label(), 'email' => $username.'@simulasi.example.test', 'password' => $password, 'role' => $role, 'is_active' => true]);
         }
@@ -123,10 +124,11 @@ try {
         // Historical reports must still print every row after masters become inactive.
         Medicine::whereIn('id', $printMedicines->pluck('id'))->update(['is_active' => false]);
     }
-    if ($phase === 'partial-nightly') {
-        $stressMedicines = collect(range(1, 30))->map(fn ($n) => Medicine::create([
-            'code' => sprintf('WARN-%03d', $n), 'name' => sprintf('Obat Uji Peringatan %03d', $n).($n === 26 ? ' <img src=x onerror=window.unsafeWarning=1>' : ''),
-            'unit_id' => $unit->id, 'dosage_form' => 'Tablet', 'is_active' => true,
+    if (in_array($phase, ['partial-nightly', 'nightly-ui'], true)) {
+        $stressUnit = $phase === 'nightly-ui' ? Unit::firstOrCreate(['name' => 'Tablet/Kapsul']) : $unit;
+        $stressMedicines = collect(range(1, $phase === 'nightly-ui' ? 167 : 30))->map(fn ($n) => Medicine::create([
+            'code' => sprintf('WARN-%03d', $n), 'name' => sprintf('Obat Uji Peringatan %03d', $n).($n === 26 ? ' <img src=x onerror=window.unsafeWarning=1>' : '').($phase === 'nightly-ui' && $n === 1 ? ' Kombinasi Simulasi Dengan Nama Panjang Untuk Verifikasi Tampilan Responsif' : ''),
+            'unit_id' => $n === 1 ? $stressUnit->id : $unit->id, 'dosage_form' => 'Tablet', 'is_active' => true,
         ]));
         $request = Request::create('/qa-partial-fixture', 'POST', ['date' => now('Asia/Jakarta')->subDay()->toDateString(), 'location_id' => $warehouse->id,
             'scope' => 'selected', 'medicine_ids' => $stressMedicines->pluck('id')->all()]);
@@ -149,12 +151,21 @@ try {
         'transfer' => 'scripts/test-multi-transfer-browser.cjs',
         'selected-nightly' => 'scripts/test-selected-nightly-browser.cjs',
         'partial-nightly' => 'scripts/test-partial-nightly-browser.cjs',
+        'nightly-ui' => 'scripts/test-nightly-workspace-browser.cjs',
         default => 'scripts/capstone-final-browser.cjs',
     };
     $browser = new Process(['node', base_path($browserScript)], base_path(), $env + [
         'FINAL_META' => $private.'/metadata.json', 'FINAL_PASSWORD' => $password, 'FINAL_OUTPUT' => $output, 'FINAL_PHP' => PHP_BINARY]);
     $browser->setTimeout(300);
     $code = $browser->run(fn ($type, $text) => print str_replace($password, '[disembunyikan]', $text));
+    if ($phase === 'nightly-ui' && $code === 0) {
+        $report = app(\App\Services\InventoryReconciliationService::class)->report();
+        if ((float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $warehouse->id)->value('quantity') !== 50.0
+            || (float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $pharmacy->id)->value('quantity') !== 20.0
+            || StockBalance::where('medicine_id', $other->id)->exists()
+            || $report['mismatched_pairs'] || $report['batch_identity_issues']) throw new RuntimeException('Pengujian UI mengubah stok di luar draf.');
+        echo "PASS UI: stok Gudang tetap 50 dan Apotek tetap 20; rekonsiliasi sesuai.\n";
+    }
     if ($phase === 'partial-nightly' && $code === 0) {
         $report = app(\App\Services\InventoryReconciliationService::class)->report();
         if ((float) StockBalance::where('medicine_id', $medicine->id)->where('location_id', $warehouse->id)->value('quantity') !== 50.0

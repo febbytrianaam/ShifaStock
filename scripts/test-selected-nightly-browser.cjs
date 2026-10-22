@@ -111,6 +111,7 @@ const assert = require('node:assert/strict');
             await page.getByRole('button', { name: 'Perbaiki isian', exact: true }).click();
         });
         await record('Print warns about unsaved draft input instead of silently printing older counts', async () => {
+            await page.locator('[data-nightly-row-toggle]').click();
             await page.locator('input[name$="[note]"]').fill('Catatan cetak belum disimpan');
             const before = page.context().pages().length;
             await page.locator('[data-nightly-print]').click();
@@ -122,7 +123,7 @@ const assert = require('node:assert/strict');
             await page.locator('input[name$="[note]"]').fill('');
         });
         await record('Add picker excludes existing medicines; close and Escape preserve unsaved desktop/mobile counts', async () => {
-            await page.locator('[data-nightly-batch-details]').evaluate((element) => { element.open = true; });
+            assert(await page.locator('[data-nightly-row-details]').isVisible());
             await page.locator('[data-nightly-batch-count]').fill('20');
             await page.locator('input[name$="[requested_quantity]"]').fill('30');
             await page.locator('input[name$="[note]"]').fill('Catatan sebelum tambah obat');
@@ -200,7 +201,7 @@ const assert = require('node:assert/strict');
             await page.locator('[data-nightly-row]').filter({ hasText: 'FINAL-002' }).locator('input[name$="[quantity]"]').fill('0');
         });
         await record('Explicit zero and requested quantity submit with per-batch zero counts', async () => {
-            await page.locator('[data-nightly-batch-details]').first().evaluate((element) => { element.open = true; });
+            await page.locator('[data-nightly-row-toggle]').first().click();
             await page.locator('[data-nightly-batch-count]').fill('0');
             assert.equal(await page.locator('[data-nightly-row]').filter({ hasText: 'FINAL-001' }).locator('input[name$="[quantity]"]').inputValue(), '0');
             await page.getByRole('button', { name: 'Kirim ke Kepala Apoteker', exact: true }).click();
@@ -214,6 +215,7 @@ const assert = require('node:assert/strict');
         await record('Pharmacist approves selected report using stock-review confirmation', async () => {
             await login('apoteker_simulasi');
             await goto(reportUrl);
+            await page.getByRole('tab', { name: 'Tinjauan Apoteker', exact: true }).click();
             assert((await page.locator('body').innerText()).includes('hanya untuk 2 obat'));
             await page.getByRole('button', { name: 'Setujui & Sesuaikan Stok', exact: true }).click();
             await page.getByRole('button', { name: 'Ya, setujui dan sesuaikan', exact: true }).click();

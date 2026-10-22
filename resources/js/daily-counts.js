@@ -1,6 +1,7 @@
 import Swal from 'sweetalert2';
 import { createElement, Plus, X } from 'lucide';
 import { hasFormChanges } from './form-safety';
+import { initNightlyWorkspace, openNightlyDetails } from './nightly-workspace';
 
 export function initDailyCounts() {
     initNightlyStart();
@@ -22,6 +23,7 @@ export function initDailyCounts() {
         inputs.forEach((input) => input.addEventListener('input', sync));
         sync();
     });
+    initNightlyWorkspace();
 }
 
 function initNightlyPrint() {
@@ -33,6 +35,7 @@ function initNightlyPrint() {
             if (!hasFormChanges(form)) return;
             event.preventDefault();
             void Swal.fire({ title: 'Simpan isian sebelum mencetak', text: 'Masih ada perubahan yang belum disimpan. Tekan Simpan Draf agar hasil hitung terbaru masuk ke laporan cetak.', icon: 'warning', confirmButtonText: 'Kembali ke isian' }).then(() => {
+                document.querySelector('[data-nightly-view="list"]')?.click();
                 const save = form.querySelector('button[value="save"]');
                 save?.focus();
                 save?.scrollIntoView({ block: 'center' });
@@ -193,8 +196,7 @@ export function prepareDailyCounts(form, submitter) {
         const row = input.closest('[data-nightly-row]');
         document.dispatchEvent(new CustomEvent('nightly:reveal-row', { detail: row }));
         row.hidden = false;
-        const details = row.querySelector('[data-nightly-batch-details]');
-        if (details) details.open = true;
+        openNightlyDetails(row);
         input.focus();
         input.scrollIntoView({ block: 'center', inline: 'center' });
     });

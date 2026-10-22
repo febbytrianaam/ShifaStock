@@ -1,3 +1,4 @@
+@props(['title' => 'Dashboard', 'hideDescription' => false])
 <!doctype html>
 <html lang="id">
 <head>
@@ -170,7 +171,7 @@
         </header>
         <x-uat-notice />
         <div class="p-4 md:p-6" data-tour-main>
-            @if($pageDescription)
+            @if($pageDescription && !$hideDescription)
                 <div class="mb-5 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium leading-6 text-slate-600">
                     {{ $pageDescription }}
                 </div>

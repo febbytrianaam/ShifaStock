@@ -1,6 +1,6 @@
 @props(['item', 'batches', 'balances', 'editable'])
-<details class="mt-2 min-w-64 text-xs" data-nightly-batch-details @if($errors->has('items.'.$item->id.'.batch_counts')) open @endif>
-    <summary class="cursor-pointer font-semibold text-blue-700">Hasil hitung per batch</summary>
+<section class="text-xs" data-nightly-batch-details>
+    <h3 class="font-semibold text-blue-700">Hasil hitung per batch</h3>
     <div class="mt-2 space-y-2 border-t border-slate-200 pt-2">
         @forelse($batches as $batch)
             @if($editable || array_key_exists($batch->id, $item->saved_batch_counts))
@@ -25,4 +25,4 @@
         @endif
         @error('items.'.$item->id.'.batch_counts')<p class="text-rose-700" role="alert">{{ $message }}</p>@enderror
     </div>
-</details>
+</section>

@@ -62,7 +62,7 @@ const assert = require('node:assert/strict');
             await ready();
             reportUrl = new URL(page.url()).pathname;
             assert.equal(await page.locator('[data-nightly-row]').count(), 2);
-            await page.locator('[data-nightly-batch-details]').first().evaluate((details) => { details.open = true; });
+            await page.locator('[data-nightly-row-toggle]').first().click();
             await page.locator('[data-nightly-batch-count]').fill('18');
             await page.getByRole('button', { name: 'Simpan Draf', exact: true }).click();
             await ready();
@@ -100,6 +100,7 @@ const assert = require('node:assert/strict');
         await record('Apoteker menyetujui hanya obat terhitung dan melihat peringatan obat belum diperiksa', async () => {
             await login('apoteker_simulasi');
             await goto(reportUrl);
+            await page.getByRole('tab', { name: 'Tinjauan Apoteker', exact: true }).click();
             await page.getByRole('button', { name: 'Setujui & Sesuaikan Stok', exact: true }).click();
             assert((await page.locator('.swal2-popup').innerText()).includes('1 obat belum diperiksa dan tidak akan diubah stoknya'));
             await capture('Review_Pemeriksaan_Sebagian.png');

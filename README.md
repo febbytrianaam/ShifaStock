@@ -14,7 +14,7 @@ Aplikasi berfokus pada pengelolaan obat, bukan pelayanan pasien atau integrasi N
 | Penerimaan | Input banyak baris, pilihan obat searchable, nomor faktur supplier, konversi satuan, edit/batalkan draf, posting ke lokasi tujuan, dan peringatan faktur ganda |
 | Pergerakan stok | Stok awal per batch, transfer banyak obat dalam satu referensi dengan penyimpanan atomik, pengeluaran, retur PBF, serta kondisi khusus dengan batch wajib |
 | Pemilihan batch | Mengikuti obat dan lokasi; FEFO otomatis untuk transfer/pengeluaran tanpa pilihan batch eksplisit, dengan pengecualian batch kedaluwarsa |
-| Pemeriksaan harian | Semua obat atau obat tertentu, tambah obat ke draf, kirim sebagian dengan konfirmasi, dropdown satuan master dan hitung per batch; persetujuan hanya menyesuaikan obat yang sudah diperiksa, dengan perlindungan perubahan stok |
+| Pemeriksaan harian | Daftar responsif dengan pencarian/pagination dan progres, rincian batch/permintaan/catatan, tambah obat ke draf, serta kirim sebagian dengan konfirmasi; tinjauan apoteker hanya menyesuaikan obat yang sudah diperiksa |
 | Opname periodik | Snapshot stok, isian fisik, finalisasi, dan Mulai Hitung Ulang dengan konfirmasi serta pencatatan isian lama di audit log |
 | Monitoring | Stok kosong/menipis, parameter minimum stok, kedaluwarsa beserta lokasi, dan pintasan tindak lanjut |
 | Pelaporan | Kartu stok per obat/lokasi/batch/periode, cetak dengan identitas klinik, laporan persediaan, dan riwayat pemeriksaan |
@@ -98,6 +98,8 @@ Master obat dapat dimasukkan melalui menu Data Obat, termasuk preview/import ref
 
 ## Pengujian
 
+**Antarmuka pemeriksaan harian, 22 Oktober 2026:** daftar ringkas dengan Rincian, progres dan status simpan, tab tinjauan/ringkasan, serta layout desktop/tablet/HP. Tabel mengikuti lebar halaman tanpa batas 1360 px; pengujian UI mencakup Full HD, QHD, dan 4K. Pengujian ulang sebelum publikasi lulus **157 tes / 1621 assertions** dan **35 kasus browser** (12 UI, 7 kirim sebagian, 16 operasional), beserta build frontend. Tidak ada perubahan aturan stok atau hak akses. Hasil aktual tiap tahap dan batasan pengujian tercatat pada [laporan implementasi](Docs/30_implemented/2026-10-22-daily-check-workspace/implementation_report.md).
+
 **Pemeriksaan sebagian, 22 Oktober 2026:** **157 tes / 1621 assertions**, **7 tes browser pemeriksaan sebagian**, **15 regresi harian**, dan **16 regresi operasional** lulus. Obat yang belum diperiksa tetap kosong pada isian, tidak dianggap stok 0, dan tidak disesuaikan saat persetujuan. Peringatan dikelompokkan dan mode lihat saja menjelaskan akun pembuat/status laporan. Semua transaksi uji memakai database sementara. [Laporan implementasi](Docs/30_implemented/2026-10-22-partial-daily-submission/implementation_report.md).
 
 **Audit widget dashboard, 22 Oktober 2026:** seluruh widget cocok dengan query pembanding read-only pada database UAT. Pengujian fokus **25 tes / 254 assertions** lulus. Tabel stok dashboard adalah pratinjau maksimal 12 baris; pencariannya bukan pencarian seluruh inventori. [Rincian audit](Docs/30_implemented/2026-10-22-dashboard-stock-monitoring/implementation_report.md#follow-up-audit-of-other-widgets).
@@ -127,6 +129,8 @@ php scripts/test-inventory.php
 ```
 
 Runner memakai SQLite `:memory:`, melewati cache konfigurasi lokal, dan tidak memakai database klinik. Jika ekstensi tersedia tetapi belum aktif, runner mencoba memuat `pdo_sqlite` untuk proses pengujian saja. Laporan JUnit tersimpan di `storage/app/qa/inventory/phpunit-results.xml` dan diabaikan Git.
+
+Untuk regresi browser antarmuka pemeriksaan harian, jalankan `php scripts/capstone-final-browser.php nightly-ui` setelah build frontend. Runner memerlukan Playwright/Chrome dan izin membuat/menghapus database MySQL sementara. Data simulasi 167 obat, akun, dan password dibuat untuk proses pengujian; bukan akun klinik/UAT persisten. Hasil JSON dan screenshot lokal disimpan di `storage/app/qa/nightly-workspace-browser/` dan diabaikan Git.
 
 Untuk komputer lambat, timeout dapat dinaikkan. Contoh PowerShell:
 

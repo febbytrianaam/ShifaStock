@@ -523,9 +523,20 @@ function filterNightlyRows() {
     const pageLabel = `Halaman ${nightlyPage} dari ${totalPages}`;
     document.getElementById('nightly-result-count').textContent = range;
     document.getElementById('nightly-page-info').textContent = pageLabel;
-    document.getElementById('nightly-page-info-bottom').textContent = pageLabel;
-    for (const id of ['nightly-prev', 'nightly-prev-bottom']) document.getElementById(id).disabled = nightlyPage === 1;
-    for (const id of ['nightly-next', 'nightly-next-bottom']) document.getElementById(id).disabled = nightlyPage === totalPages;
+    for (const id of ['nightly-page-info-bottom']) {
+        const label = document.getElementById(id);
+        if (label) label.textContent = pageLabel;
+    }
+    for (const id of ['nightly-prev', 'nightly-prev-bottom']) {
+        const button = document.getElementById(id);
+        if (button) button.disabled = nightlyPage === 1;
+    }
+    for (const id of ['nightly-next', 'nightly-next-bottom']) {
+        const button = document.getElementById(id);
+        if (button) button.disabled = nightlyPage === totalPages;
+    }
+    const empty = document.querySelector('[data-nightly-empty]');
+    if (empty) empty.hidden = matches.length > 0;
 }
 document.addEventListener('nightly:reveal-row', (event) => {
     const row = event.detail;
@@ -673,12 +684,12 @@ document.addEventListener('click', (event) => {
     if (event.target.closest('#nightly-prev, #nightly-prev-bottom')) {
         nightlyPage = Math.max(1, nightlyPage - 1);
         filterNightlyRows();
-        document.getElementById('nightly-search')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('nightly-table-scroll')?.scrollTo({ top: 0 });
     }
     if (event.target.closest('#nightly-next, #nightly-next-bottom')) {
         nightlyPage++;
         filterNightlyRows();
-        document.getElementById('nightly-search')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('nightly-table-scroll')?.scrollTo({ top: 0 });
     }
     const documentButton = event.target.closest('[data-document]');
     if (documentButton) {
@@ -828,7 +839,6 @@ document.addEventListener('input', (event) => {
         nightlyPage = 1;
         filterNightlyRows();
     }
-    if (event.target.matches('[data-nightly-row] input')) filterNightlyRows();
     if (!event.target.matches('[data-opname-input]')) return;
     const input = event.target;
     const row = input.closest('[data-opname-row]');
@@ -850,7 +860,6 @@ document.addEventListener('change', (event) => {
         nightlyPage = 1;
         filterNightlyRows();
     }
-    if (event.target.matches('[data-nightly-row] input')) filterNightlyRows();
 });
 initialize();
 document.addEventListener('livewire:navigated', initialize);
