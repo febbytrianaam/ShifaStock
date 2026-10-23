@@ -26,6 +26,10 @@ Gunakan `php scripts/uat.php migrate` untuk migrasi tambahan ke database UAT yan
 
 Pada Pemeriksaan Stok > Harian, pilih **Semua obat** atau **Obat tertentu**. Pilihan kedua menyediakan pencarian dan centang obat. Daftar awal bisa diisi bertahap: kosongkan jumlah yang belum diperiksa, dan isi 0 hanya jika sudah dihitung dan benar-benar kosong. **Simpan Draf** menyimpan isian yang belum lengkap. Saat mengirim sebagian, konfirmasi menampilkan jumlah yang sudah/belum diperiksa dan menyediakan **Kirim N obat**, **Simpan Draf**, serta **Kembali**. Persetujuan hanya menyesuaikan stok obat yang benar-benar sudah diperiksa; obat lain tidak dianggap kosong. Satu laporan per tanggal/lokasi tetap berlaku; tombol mulai membuka laporan yang sudah ada. Ini tetap hitung fisik, bukan pengajuan pembelian terpisah tanpa perubahan stok.
 
+Penjelasan **Memahami angka pemeriksaan stok** tersedia sebelum form mulai pemeriksaan. Stok awal adalah posisi persediaan saat mulai memakai sistem, bukan isian ulang harian. Stok sistem berasal dari transaksi yang dicatat; jumlah fisik berasal dari hitungan langsung pada lokasi pemeriksaan. Jika sistem 10 tablet tetapi fisiknya 2, jumlah fisik diisi 2 dan setelah persetujuan stok menjadi 2, bukan 8. Obat terpakai tidak otomatis mengurangi sistem tanpa pencatatan pengeluaran. Pada halaman hitung, buka **Stok sistem dan jumlah fisik** untuk membaca pengingat tanpa meninggalkan isian.
+
+Judul kolom **Obat**, **Stok sistem**, **Jumlah fisik / satuan**, dan **Status** memiliki ikon bantuan. Arahkan kursor atau fokuskan judul dengan keyboard untuk membaca artinya; klik mempertahankan penjelasan, dan Escape atau klik di luar menutupnya. Pada HP, tombol bantuan kolom tersedia di dalam **Stok sistem dan jumlah fisik**. Kolom tinjauan apoteker juga menjelaskan hasil tersimpan dan perubahan jika disetujui; perubahan tersebut bukan jumlah pemakaian pasien. Membuka bantuan tidak menyimpan atau mengubah hitungan.
+
 Draf dapat dilanjutkan bersama oleh petugas dan kepala apoteker yang memiliki izin operasional. Buka laporan yang sama dari daftar; nama **Dibuat oleh** tidak berubah meskipun pengguna lain menyimpan pekerjaan. **Dikerjakan terakhir** menunjukkan penyimpan terakhir, **Rincian** menunjukkan pembaru terakhir per obat, dan tab **Aktivitas** mencatat pembuat, penyimpanan, penambahan, pengiriman, serta tinjauan beserta nama dan waktunya. Riwayat sebelum fitur ini tersedia ditandai **Belum tercatat**, bukan diisi ulang dengan perkiraan. Pembatalan draf tetap hanya untuk pembuat.
 
 Jika pengguna lain sudah menyimpan sejak halaman dibuka, sistem menolak isian versi lama agar tidak menimpa pekerjaan terbaru. Isian yang belum tersimpan tetap ditampilkan; gunakan **Buka versi terbaru di tab baru**, bandingkan dengan isian Anda, lalu lanjutkan dari versi terbaru. Jangan langsung memuat ulang tab lama sebelum memeriksa isian yang masih diperlukan. Tidak ada penggabungan atau penyimpanan otomatis.
@@ -47,6 +51,12 @@ Untuk menambah obat yang tertinggal, buka draf yang sedang dikerjakan lalu tekan
 Widget **Kosong / Menipis** dan **Perlu Ditindaklanjuti** di dashboard memakai stok transaksi dan batas minimum yang diatur per obat/lokasi, bukan menunggu pemeriksaan harian disetujui. Klik item untuk membuka Monitoring pada obat dan lokasi tersebut. Angka dihitung per obat/lokasi, sehingga obat yang sama di dua lokasi dapat dihitung dua kali. Obat tanpa batas minimum belum termasuk penilaian ini. Tabel stok dashboard menampilkan maksimal 12 baris positif terbaru; pencarian hanya mencakup baris tersebut. Status Tersedia berarti jumlah lebih dari nol, bukan otomatis di atas minimum.
 
 ## Akun Simulasi
+
+### Pencatatan Obat Keluar
+
+Pengeluaran untuk pelayanan atau pemakaian internal dicatat lewat **Pengeluaran Obat**, bukan menunggu pemeriksaan stok. ShifaStock tidak terhubung ke Neoklinik, sehingga catatan di sana tidak otomatis mengurangi stok ShifaStock. Untuk pengeluaran dari Apotek, lokasi sumbernya Apotek; jumlah adalah yang keluar, bukan sisanya. Contoh stok 20, keluar 3: jumlah diisi 3 dan setelah berhasil disimpan stok menjadi 17.
+
+Referensi transaksi otomatis, sedangkan referensi sumber opsional dapat berisi nomor resep/rekap tanpa identitas pasien. Batch kosong memakai FEFO yang masih layak. Penyimpanan berhasil langsung mengurangi stok sumber/batch dan mencatat mutasi kartu stok, tanpa persetujuan pemeriksaan harian. Jangan mengulangi pengeluaran yang sama, termasuk yang sudah tercakup dalam penyesuaian pemeriksaan. Transfer antar lokasi dan retur supplier tetap melalui menu masing-masing. Panduan ini juga tersedia di atas form Pengeluaran Obat.
 
 ### Jika Login Menampilkan 419
 

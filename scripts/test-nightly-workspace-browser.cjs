@@ -25,9 +25,9 @@ const assert = require('node:assert/strict');
         results.at(-1).status = 'Lulus';
         console.log('PASS ' + name);
     };
-    const capture = async (file) => {
+    const capture = async (file, options = {}) => {
         assert(!(await page.locator('body').innerText()).includes(password));
-        await page.screenshot({ path: path.join(output, file) });
+        await page.screenshot({ ...options, path: path.join(output, file) });
     };
     const login = async (username) => {
         if (page) await page.close();
@@ -73,6 +73,24 @@ const assert = require('node:assert/strict');
             await new Promise((resolve) => setTimeout(resolve, 150));
         }
         browser = await chromium.launch({ headless: true, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe' });
+        await record('Penjelasan stok awal, sistem, fisik, dan persetujuan terlihat sebelum form pada desktop, tablet, dan HP', async () => {
+            await login('petugas_simulasi');
+            await goto('/pengecekan-malam');
+            for (const viewport of [{ width: 1440, height: 900 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
+                await page.setViewportSize(viewport);
+                await page.waitForFunction(() => innerWidth >= 768 || document.getElementById('sidebar').getBoundingClientRect().right <= 1);
+                const guide = page.locator('[data-nightly-start-guide]');
+                assert(await guide.isVisible());
+                const text = await guide.innerText();
+                for (const expected of ['Stok awal', 'Stok sistem', 'Jumlah fisik', 'jika pengeluarannya belum dicatat', 'belum mengubah stok', 'bukan dikurangi 2 menjadi 8']) assert(text.includes(expected));
+                const dimensions = await page.evaluate(() => ({ width: innerWidth, document: document.documentElement.scrollWidth,
+                    guideBottom: document.querySelector('[data-nightly-start-guide]').getBoundingClientRect().bottom,
+                    formTop: document.querySelector('[data-nightly-start-form]').getBoundingClientRect().top }));
+                assert(dimensions.document <= dimensions.width + 1, JSON.stringify(dimensions));
+                assert(dimensions.formTop >= dimensions.guideBottom, JSON.stringify(dimensions));
+                await capture(`Penjelasan_Pemeriksaan_${viewport.width}.png`, { fullPage: true });
+            }
+        });
         await record('167 obat: default 10 per halaman, footer terlihat, tanpa scroll horizontal desktop', async () => {
             await login('petugas_simulasi');
             await goto(`/pengecekan-malam/${meta.stress_check}`);
@@ -82,6 +100,27 @@ const assert = require('node:assert/strict');
             assert((await page.locator('#nightly-page-info').innerText()).includes('1 dari 17'));
             await checkFrame();
             await capture('Pemeriksaan_Ringkas_Desktop.png');
+        });
+        await record('Penjelasan di laporan dapat dibuka dengan keyboard tanpa mengubah jumlah fisik', async () => {
+            const guide = page.locator('[data-nightly-count-guide]');
+            assert.equal(await guide.getAttribute('open'), null);
+            await guide.locator('summary').focus();
+            await page.keyboard.press('Enter');
+            assert.notEqual(await guide.getAttribute('open'), null);
+            assert((await guide.innerText()).includes('stok sistem menjadi 2, bukan 8'));
+            assert.equal(await quantity(0).inputValue(), '');
+            await capture('Penjelasan_Hitung_Desktop.png');
+            await page.keyboard.press('Enter');
+            assert.equal(await guide.getAttribute('open'), null);
+            await checkFrame();
+            await resize({ width: 390, height: 844 });
+            await guide.locator('summary').click();
+            await capture('Penjelasan_Hitung_Mobile.png');
+            assert(await page.getByRole('button', { name: 'Simpan Draf', exact: true }).isVisible());
+            assert((await guide.locator(':scope > div').boundingBox()).height <= 121);
+            await guide.locator('summary').click();
+            await checkFrame();
+            await resize({ width: 1440, height: 900 });
         });
         await record('Desktop: kolom proporsional memenuhi area kerja, sejajar header, tanpa ruang kosong di kanan', async () => {
             for (const viewport of [{ width: 1440, height: 900 }, { width: 1920, height: 1080 }, { width: 2560, height: 1440 }, { width: 3840, height: 2160 }]) {
@@ -112,6 +151,63 @@ const assert = require('node:assert/strict');
                 await capture(`Desktop_${viewport.width}x${viewport.height}.png`);
                 if (viewport.width === 2560) await capture('Pemeriksaan_Layar_Lebar.png');
             }
+            await resize({ width: 1440, height: 900 });
+        });
+        await record('Hover header menampilkan deskripsi yang tidak terpotong tabel dan tidak mengubah layout', async () => {
+            for (const column of ['medicine', 'system', 'physical', 'status']) {
+                const button = page.locator(`.nightly-columns [data-nightly-column-help="${column}"]`);
+                const tip = page.locator(`#nightly-help-${column}`);
+                const before = await page.locator('.nightly-columns').boundingBox();
+                await button.hover();
+                await tip.waitFor({ state: 'visible' });
+                const box = await tip.boundingBox();
+                assert(box.x >= 0 && box.y >= 0 && box.x + box.width <= 1440 && box.y + box.height <= 900, JSON.stringify(box));
+                assert.deepEqual(await page.locator('.nightly-columns').boundingBox(), before);
+                await tip.hover();
+                assert(await tip.isVisible());
+                if (column === 'system') await capture('Tooltip_Header_Desktop.png');
+                await page.locator('[data-nightly-creator]').hover();
+                await tip.waitFor({ state: 'hidden' });
+            }
+            await checkFrame();
+        });
+        await record('Tooltip keyboard dan klik dapat ditutup dengan Escape atau klik luar tanpa mengirim form', async () => {
+            const before = posts;
+            const button = page.locator('.nightly-columns [data-nightly-column-help="physical"]');
+            const tip = page.locator('#nightly-help-physical');
+            await button.focus();
+            assert(await tip.isVisible());
+            await page.keyboard.press('Escape');
+            await tip.waitFor({ state: 'hidden' });
+            await button.click();
+            assert(await tip.isVisible());
+            await page.locator('#nightly-search').click();
+            await tip.waitFor({ state: 'hidden' });
+            assert.equal(posts, before);
+            assert.equal(await quantity(0).inputValue(), '');
+        });
+        await record('HP: keterangan kolom dapat diketuk dan tetap di dalam layar tanpa mengubah input', async () => {
+            const before = posts;
+            for (const viewport of [{ width: 320, height: 740 }, { width: 390, height: 844 }]) {
+                await resize(viewport);
+                const guide = page.locator('[data-nightly-count-guide]');
+                await guide.locator('summary').click();
+                for (const column of ['system', 'physical', 'status']) {
+                    const button = page.locator(`.nightly-mobile-column-help [data-nightly-column-help="${column}"]`);
+                    await button.click();
+                    const tip = page.locator(`#nightly-help-${column}`);
+                    assert(await tip.isVisible());
+                    const box = await tip.boundingBox();
+                    assert(box.x >= 0 && box.y >= 0 && box.x + box.width <= viewport.width && box.y + box.height <= viewport.height, JSON.stringify(box));
+                    if (column === 'physical') await capture(`Tooltip_Header_${viewport.width}.png`);
+                    await page.keyboard.press('Escape');
+                    await tip.waitFor({ state: 'hidden' });
+                }
+                await guide.locator('summary').click();
+                await checkFrame();
+            }
+            assert.equal(posts, before);
+            assert.equal(await quantity(0).inputValue(), '');
             await resize({ width: 1440, height: 900 });
         });
         await record('Input di filter Belum dicek tidak menghilang saat diketik; 0 dihitung sebagai diperiksa', async () => {

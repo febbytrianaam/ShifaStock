@@ -7,6 +7,10 @@ This folder records shipped work as historical truth. Each feature folder contai
 
 ## Index
 
+- [2026-10-23 Medicine issue explanations](2026-10-23-issue-guidance/)
+
+- [2026-10-23 Daily stock-count explanations](2026-10-23-daily-count-guidance/)
+
 - [2026-10-22 Shared daily drafts and operator activity](2026-10-22-shared-daily-check/)
 
 - [2026-10-22 Compact daily check workspace](2026-10-22-daily-check-workspace/)

@@ -80,6 +80,80 @@ class SelectedNightlyCheckTest extends TestCase
             ->assertSee('Obat Pilihan')->assertViewHas('items', fn ($items) => $items->count() === 1 && $items->first()->medicine_id === $this->first->id);
     }
 
+    public function test_start_page_explains_initial_system_and_physical_stock_without_duplicate_description(): void
+    {
+        $this->get(route('preview.nightly'))->assertOk()
+            ->assertSee('data-nightly-start-guide', false)
+            ->assertSee('Memahami angka pemeriksaan stok')
+            ->assertSee('Tidak perlu diisi ulang setiap pemeriksaan.')
+            ->assertSee('jika pengeluarannya belum dicatat.')
+            ->assertSee('biarkan kosong jika belum diperiksa.')
+            ->assertSee('stok sistem menjadi 2, bukan dikurangi 2 menjadi 8.')
+            ->assertSee('Menyimpan draf atau mengirim laporan belum mengubah stok.')
+            ->assertDontSee('Pilih lokasi dan cakupan: semua obat atau obat tertentu.');
+        $this->assertDatabaseCount('nightly_checks', 0);
+        $this->assertDatabaseCount('inventory_movements', 0);
+    }
+
+    public function test_count_page_has_collapsed_location_specific_explanation(): void
+    {
+        $id = $this->start();
+        $response = $this->get(route('nightly.show', $id))->assertOk()
+            ->assertSee('Stok sistem dan jumlah fisik')
+            ->assertSee('hasil hitung langsung di Apotek')
+            ->assertSee('stok sistem menjadi 2, bukan 8.');
+        $document = new \DOMDocument;
+        $document->loadHTML($response->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+        $guide = (new \DOMXPath($document))->query('//details[@data-nightly-count-guide]')->item(0);
+        $this->assertInstanceOf(\DOMElement::class, $guide);
+        $this->assertFalse($guide->hasAttribute('open'));
+        $this->assertDatabaseCount('inventory_movements', 0);
+    }
+
+    public function test_guest_can_read_the_explanation_without_receiving_edit_controls(): void
+    {
+        $id = $this->start();
+        $this->actingAs(User::factory()->create(['role' => Role::Guest]));
+        $this->get(route('preview.nightly'))->assertOk()->assertSee('data-nightly-start-guide', false)
+            ->assertDontSee('data-nightly-start-form', false);
+        $this->get(route('nightly.show', $id))->assertOk()->assertSee('data-nightly-count-guide', false)
+            ->assertDontSee('data-nightly-count-form', false);
+    }
+
+    public function test_column_help_has_accessible_non_submitting_triggers_and_shared_descriptions(): void
+    {
+        $id = $this->start();
+        $response = $this->get(route('nightly.show', $id))->assertOk()
+            ->assertSee('bukan persetujuan laporan.')->assertSee('kosong berarti belum diperiksa.');
+        $document = new \DOMDocument;
+        $document->loadHTML($response->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING);
+        $xpath = new \DOMXPath($document);
+        $buttons = $xpath->query('//button[@data-nightly-column-help]');
+        $this->assertCount(8, $buttons);
+        foreach ($buttons as $button) {
+            $this->assertSame('button', $button->getAttribute('type'));
+            $this->assertNotEmpty($button->getAttribute('aria-label'));
+            $this->assertSame($button->getAttribute('popovertarget'), $button->getAttribute('aria-describedby'));
+            $tip = $document->getElementById($button->getAttribute('popovertarget'));
+            $this->assertInstanceOf(\DOMElement::class, $tip);
+            $this->assertSame('tooltip', $tip->getAttribute('role'));
+        }
+        $this->assertCount(0, $xpath->query('//*[@class="nightly-columns"][@aria-hidden="true"]'));
+        $this->assertDatabaseCount('inventory_movements', 0);
+    }
+
+    public function test_review_headers_explain_saved_counts_and_adjustment_not_patient_usage(): void
+    {
+        $id = $this->start();
+        DB::table('nightly_checks')->where('id', $id)->update(['status' => 'submitted']);
+        $this->actingAs($this->pharmacist)->get(route('nightly.show', $id))->assertOk()
+            ->assertSee('data-nightly-column-help="counted"', false)
+            ->assertSee('data-nightly-column-help="difference"', false)
+            ->assertSee('Hasil hitung dikurangi stok sistem sekarang.')
+            ->assertSee('bukan jumlah pemakaian pasien.');
+        $this->assertDatabaseCount('inventory_movements', 0);
+    }
+
     public function test_selection_is_required_unique_and_limited_to_eligible_master_medicines(): void
     {
         $base = ['date' => '2026-01-01', 'location_id' => $this->location->id, 'scope' => 'selected'];

@@ -1,5 +1,19 @@
 # Testing Strategy
 
+## Guidance Publication Verification
+
+2026-10-23, approximately 15:45 WIB: the final combined guidance/tooltip feature tree again passed **179 tests / 1885 assertions**, about 50 seconds, on SQLite `:memory:`. Browser counts below are retained from their actual earlier same-day executions, not newly run at commit time. Publication includes the explanations, help controls, tests, README/current/operator guidance, and implementation reports; unrelated Capstone/private/ignored artifacts are excluded. [Publication record](../30_implemented/2026-10-23-issue-guidance/implementation_report.md#publication-verification).
+
+## Medicine Issue Guidance
+
+2026-10-23 WIB, working tree on `ba7045c`: the full isolated SQLite suite passed **179 tests / 1885 assertions**, and temporary-MySQL operational HTTP browser suite **17/17**. Two new rendered-page tests cover content/order/hints, Guest restrictions, and no viewing writes. One new browser case checks manual/no-Neoklinik copy, issued-not-remaining quantity, FEFO/posting explanation, desktop/tablet/phone geometry, and unchanged form defaults. Build, runner syntax, whitespace, reconciliation, and temporary-database cleanup passed; desktop/mobile full-page screenshots were opened. This does not rerun the separate 20-case daily-workspace suite, MySQL competing workers, or add a dedicated browser issue posting. [Evidence](../30_implemented/2026-10-23-issue-guidance/implementation_report.md).
+
+## Daily Count Guidance
+
+Tooltip follow-up on the same date: latest isolated SQLite run passed **177 tests / 1861 assertions** and actual HTTP workspace suite **20/20**. Added coverage verifies accessible non-submitting header controls, shared description targets, review meaning, hover/pointer persistence, keyboard/Escape/click-outside, mobile 320/390 px tapping/clamping, and unchanged quantities/POST count. Existing workspace geometry tests were retained, not relaxed. Build/syntax/whitespace, stock postconditions, cleanup, and desktop/phone visual review passed. The earlier 175/17 results below are the initial explanation stage. [Tooltip evidence](../30_implemented/2026-10-23-daily-count-guidance/implementation_report.md#follow-up-column-tooltips).
+
+2026-10-23 WIB, working tree on `ba7045c`: isolated SQLite suite passed **175 tests / 1805 assertions**; actual HTTP workspace suite on temporary MySQL passed **17/17**. Three new rendered-page tests cover the explanation, default collapse/actual location, no inventory writes from viewing, and Guest restrictions. Two new browser cases cover guidance above the start form at desktop/tablet/phone sizes and native keyboard/mobile expansion without changing counts. Initial 320 px list-area failures were corrected through disclosure spacing, not weaker assertions. Build, CJS syntax, whitespace, stock postconditions, and temporary-database cleanup passed; responsive screenshots were opened. No new operational/MySQL-race/PDF/physical-printer test is claimed. [Details](../30_implemented/2026-10-23-daily-count-guidance/implementation_report.md).
+
 ## Shared Daily Draft Verification
 
 Pre-publication rerun, approximately 23:30 WIB: the final feature tree again passed **172 tests / 1777 assertions**, about 51 seconds, on isolated SQLite. This is a fresh backend execution only; the 38 browser cases, ten MySQL races, and build below remain the earlier same-feature executions. Public login 419 triage used a fresh HTTPS context and one nonexistent account: CSRF round-trip passed, but no valid-user login or exact cause of the original report was established. No auth code was changed.

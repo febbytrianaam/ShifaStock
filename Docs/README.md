@@ -4,6 +4,10 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 
 ## Start Here
 
+- [Medicine issue explanations](30_implemented/2026-10-23-issue-guidance/implementation_report.md)
+
+- [Daily stock-count explanations](30_implemented/2026-10-23-daily-count-guidance/implementation_report.md)
+
 - [Shared daily drafts and operator activity](30_implemented/2026-10-22-shared-daily-check/implementation_report.md)
 
 - [Partial daily submission and read-only explanations](30_implemented/2026-10-22-partial-daily-submission/implementation_report.md)

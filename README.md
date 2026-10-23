@@ -22,6 +22,8 @@ Aplikasi berfokus pada pengelolaan obat, bukan pelayanan pasien atau integrasi N
 
 Pencarian obat dan batch terhubung ke backend. Validasi dan konfirmasi tindakan penting menggunakan SweetAlert.
 
+Panduan di Pemeriksaan Stok menjelaskan stok awal, stok sistem, jumlah fisik, dan kapan persetujuan menyesuaikan stok. Judul kolom memiliki bantuan yang dapat dibuka lewat hover, keyboard, atau ketukan pada HP. Pengeluaran Obat menjelaskan pencatatan manual tanpa sinkronisasi Neoklinik, jumlah keluar versus sisa stok, FEFO, serta pencegahan pencatatan ganda.
+
 ## Role Dan Hak Akses
 
 | Role | Username Demo Lokal | Tanggung Jawab Default |
@@ -97,6 +99,8 @@ Buka [ShifaStock lokal](http://127.0.0.1:8000). Untuk pengembangan frontend, jal
 Master obat dapat dimasukkan melalui menu Data Obat, termasuk preview/import referensi yang disediakan. Seed referensi tidak berarti stok fisik sudah tersedia; catat stok awal atau penerimaan sesuai batch dan lokasi sebenarnya.
 
 ## Pengujian
+
+**Panduan operasional dan bantuan kolom, 23 Oktober 2026:** verifikasi tahap implementasi lulus **179 tes / 1885 assertions**, **20 kasus browser pemeriksaan stok**, dan **17 kasus browser operasional**, beserta build frontend. Pengujian memakai database terpisah, dengan pemeriksaan desktop, tablet, HP, bantuan keyboard, dan isian yang tetap utuh. Angka tiap tahap serta batasannya tercatat pada [panduan pemeriksaan](Docs/30_implemented/2026-10-23-daily-count-guidance/implementation_report.md) dan [panduan pengeluaran](Docs/30_implemented/2026-10-23-issue-guidance/implementation_report.md).
 
 **Draf pemeriksaan bersama, 22 Oktober 2026:** pengujian working tree pada `af37ff0` lulus **172 tes / 1777 assertions**, **38 kasus browser** (15 UI, 7 kirim sebagian, 16 operasional), dan **10 skenario MySQL bersamaan**, termasuk penyimpanan dua operator pada versi draf yang sama. Build frontend dan verifikasi isolasi UAT lulus. Pembuat tetap tercatat, pembaruan per obat mengikuti pelaksana sebenarnya, dan versi lama tidak menimpa pekerjaan terbaru. Migrasi tambahan hanya diterapkan ke UAT lokal, tanpa reset data/matriks. [Laporan implementasi](Docs/30_implemented/2026-10-22-shared-daily-check/implementation_report.md).
 

@@ -3,6 +3,14 @@
     $editable = auth()->user()->can('operate-inventory') && $check->status === 'draft';
     $reviewable = $check->status === 'submitted' && auth()->user()->can('finalize-opname');
     $statusLabels = ['draft' => 'Draf', 'submitted' => 'Menunggu tinjauan', 'approved' => 'Disetujui'];
+    $columnHelp = [
+        'medicine' => ['Obat', 'Nama dan kode obat dalam laporan, mengikuti Data Obat saat obat ditambahkan ke pemeriksaan.'],
+        'system' => ['Stok sistem', 'Stok pada lokasi pemeriksaan saat halaman dibuka, berdasarkan stok awal dan transaksi yang tercatat. Ini bukan hasil hitung fisik. Obat terpakai belum mengurangi angka ini jika pengeluarannya belum dicatat.'],
+        'physical' => ['Jumlah fisik / satuan', 'Jumlah obat yang benar-benar dihitung di lokasi ini, dalam satuan stok obat. Isi 0 jika sudah dihitung dan habis; kosong berarti belum diperiksa. Jika hitungan per batch diisi, jumlah dijumlahkan dari batch.'],
+        'status' => ['Status', 'Belum dicek berarti jumlah masih kosong; Kosong berarti hasil hitung 0; Menipis berarti ditandai menipis; Diperiksa berarti jumlah sudah terisi. Ini status per obat, bukan persetujuan laporan.'],
+        'counted' => ['Hasil hitung', 'Jumlah fisik yang tersimpan saat laporan dikirim. Hanya obat yang sudah diperiksa yang masuk penyesuaian setelah disetujui apoteker.'],
+        'difference' => ['Perubahan jika disetujui', 'Hasil hitung dikurangi stok sistem sekarang. Nilai negatif berarti stok berkurang, positif berarti bertambah, dan 0 berarti tetap. Ini penyesuaian hasil pemeriksaan, bukan jumlah pemakaian pasien.'],
+    ];
 @endphp
 <section class="nightly-workspace" data-nightly-workspace data-nightly-initial-view="{{ request()->has('activity_page') ? 'activity' : 'list' }}">
     <header class="nightly-head">
@@ -22,6 +30,19 @@
             @endif
         </div>
     </header>
+    <details class="nightly-count-guide" data-nightly-count-guide>
+        <summary>Stok sistem dan jumlah fisik</summary>
+        <div>
+            <div class="nightly-mobile-column-help" aria-label="Keterangan kolom pemeriksaan">
+                @foreach(['medicine', 'system', 'physical', 'status'] as $column)
+                    <x-nightly-column-help :column="$column" :label="$columnHelp[$column][0]" />
+                @endforeach
+            </div>
+            <p><strong>Stok sistem</strong> berasal dari stok awal dan transaksi yang sudah tercatat. <strong>Jumlah fisik</strong> adalah hasil hitung langsung di {{ $check->location }}, sesuai satuan obat; bukan angka yang harus disamakan dengan stok sistem.</p>
+            <p><strong>Contoh:</strong> sistem 10 tablet, fisik 2 tablet. Jumlah fisik diisi 2. Setelah disetujui, stok sistem menjadi 2, bukan 8.</p>
+            <p>Isi 0 jika sudah dihitung dan habis; kosong berarti belum diperiksa. Simpan draf atau kirim laporan belum mengubah stok. Penyesuaian hanya untuk obat yang diperiksa, setelah kepala apoteker menyetujui. Stok awal tidak perlu diisi ulang setiap pemeriksaan.</p>
+        </div>
+    </details>
     <div class="nightly-notices">
         @if(!$editable)
             <p role="note" data-nightly-readonly class="nightly-notice"><strong>Mode lihat saja.</strong>
@@ -64,7 +85,11 @@
                 <div><button id="nightly-prev" class="nightly-icon" type="button" aria-label="Halaman sebelumnya" title="Halaman sebelumnya"><span data-nightly-icon="previous" aria-hidden="true"></span></button><span id="nightly-page-info">Halaman 1</span><button id="nightly-next" class="nightly-icon" type="button" aria-label="Halaman berikutnya" title="Halaman berikutnya"><span data-nightly-icon="next" aria-hidden="true"></span></button></div>
             </div>
             <div id="nightly-table-scroll" class="nightly-list" tabindex="0" aria-label="Daftar hasil hitung obat">
-                <div class="nightly-columns" aria-hidden="true"><span>Obat</span><span>Stok sistem</span><span>Jumlah fisik / satuan</span><span>Status</span></div>
+                <div class="nightly-columns" role="group" aria-label="Keterangan kolom pemeriksaan">
+                    @foreach(['medicine', 'system', 'physical', 'status'] as $column)
+                        <span><x-nightly-column-help :column="$column" :label="$columnHelp[$column][0]" /></span>
+                    @endforeach
+                </div>
                 @foreach($items as $i) @include('nightly.partials.medicine-row') @endforeach
                 <p class="p-5 text-center text-xs text-slate-500" data-nightly-empty hidden>Tidak ada obat yang sesuai. Ubah pencarian atau filter.</p>
             </div>
@@ -87,7 +112,12 @@
             <form class="nightly-panel" method="POST" action="{{ route('nightly.review', $check->id) }}">
                 @csrf
                 <p class="text-xs text-slate-600">Persetujuan memperbarui total dan batch hanya untuk {{ $checkedCount }} obat yang sudah diperiksa dalam laporan ini. {{ $uncheckedCount }} obat belum diperiksa dan stoknya tidak berubah. Jika stok berubah setelah laporan dikirim, kembalikan untuk koreksi dan hitung ulang.</p>
-                <div class="nightly-scroll-panel"><table class="w-full text-left text-xs"><thead><tr><th class="p-2">Obat</th><th class="p-2">Stok sistem sekarang</th><th class="p-2">Hasil hitung</th><th class="p-2">Perubahan jika disetujui</th></tr></thead><tbody>
+                <div class="nightly-scroll-panel"><table class="w-full text-left text-xs"><thead><tr>
+                    <th class="p-2"><x-nightly-column-help column="medicine" label="Obat" /></th>
+                    <th class="p-2"><x-nightly-column-help column="system" label="Stok sistem sekarang" /></th>
+                    <th class="p-2"><x-nightly-column-help column="counted" label="Hasil hitung" /></th>
+                    <th class="p-2"><x-nightly-column-help column="difference" label="Perubahan jika disetujui" /></th>
+                </tr></thead><tbody>
                     @foreach($items->whereNotNull('quantity') as $item)
                         @php($systemQuantity = (float) ($systemBalances[$item->medicine_id] ?? 0))
                         <tr class="border-t border-slate-100"><td class="p-2">{{ $item->name }}</td><td class="p-2">{{ \App\Support\Quantity::format($systemQuantity) }} {{ $item->unit }}</td><td class="p-2">{{ \App\Support\Quantity::format($item->quantity) }} {{ $item->unit }}</td><td class="p-2">{{ \App\Support\Quantity::format($item->quantity - $systemQuantity) }} {{ $item->unit }}</td></tr>
@@ -127,4 +157,7 @@
         <div class="text-xs">{{ $activities->links() }}</div>
     </section>
 </section>
+@foreach($columnHelp as $column => [$label, $description])
+    <div id="nightly-help-{{ $column }}" role="tooltip" popover="auto" class="nightly-column-tooltip"><strong>{{ $label }}</strong><p>{{ $description }}</p></div>
+@endforeach
 </x-layouts.app>

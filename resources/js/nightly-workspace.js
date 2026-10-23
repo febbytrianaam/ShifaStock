@@ -1,5 +1,6 @@
-import { createElement, ArrowLeft, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Printer, Save, Send, ClipboardCopy, Trash2 } from 'lucide';
+import { createElement, ArrowLeft, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Printer, Save, Send, ClipboardCopy, Trash2, CircleHelp } from 'lucide';
 import { hasFormChanges } from './form-safety';
+import { initNightlyColumnHelp } from './nightly-column-help';
 
 function fitWorkspace() {
     const workspace = document.querySelector('[data-nightly-workspace]');
@@ -22,6 +23,8 @@ export function initNightlyWorkspace() {
     const workspace = document.querySelector('[data-nightly-workspace]');
     if (!workspace || workspace.dataset.ready) return;
     workspace.dataset.ready = '1';
+    workspace.querySelectorAll('[data-nightly-help-icon]').forEach((node) => node.replaceChildren(createElement(CircleHelp, { width: 12, height: 12 })));
+    initNightlyColumnHelp(workspace);
     fitWorkspace();
     const icons = { back: ArrowLeft, next: ArrowRight, previous: ChevronLeft, down: ChevronDown, print: Printer, save: Save, send: Send, copy: ClipboardCopy, cancel: Trash2 };
     workspace.querySelectorAll('[data-nightly-icon]').forEach((node) => node.replaceChildren(createElement(node.dataset.nightlyIcon === 'next' && node.closest('#nightly-next') ? ChevronRight : icons[node.dataset.nightlyIcon], { width: 14, height: 14 })));

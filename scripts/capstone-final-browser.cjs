@@ -84,6 +84,30 @@ const crypto = require('node:crypto');
             await ready();
         });
         if (meta.phase !== 'baseline') {
+            await record('Panduan pengeluaran menjelaskan pencatatan manual, jumlah keluar, FEFO, dan stok pada desktop/tablet/HP', async () => {
+                await goto('/obat-keluar');
+                const initialQuantity = await page.locator('#issue-quantity').inputValue();
+                const initialReference = await page.locator('#issue-reference').inputValue();
+                for (const viewport of [{ width: 1440, height: 900 }, { width: 768, height: 1024 }, { width: 390, height: 844 }]) {
+                    await page.setViewportSize(viewport);
+                    await page.waitForFunction(() => innerWidth >= 768 || document.getElementById('sidebar').getBoundingClientRect().right <= 1);
+                    const text = await page.locator('[data-issue-guide]').innerText();
+                    for (const expected of ['tidak terhubung ke Neoklinik', 'bukan sisa stok', 'FEFO', 'tidak menunggu persetujuan', 'menjadi 17 tablet', 'pencatatan ganda']) assert(text.includes(expected));
+                    const layout = await page.evaluate(() => ({ width: innerWidth, page: document.documentElement.scrollWidth,
+                        guideBottom: document.querySelector('[data-issue-guide]').getBoundingClientRect().bottom,
+                        formTop: document.querySelector('[data-issue-form]').getBoundingClientRect().top }));
+                    assert(layout.page <= layout.width + 1 && layout.formTop >= layout.guideBottom, JSON.stringify(layout));
+                    assert(!(await page.locator('body').innerText()).includes(password));
+                    await page.screenshot({ path: path.join(output, `Panduan_Pengeluaran_${viewport.width}.png`), fullPage: true });
+                }
+                assert.equal(await page.locator('#issue-quantity').inputValue(), initialQuantity);
+                assert.equal(await page.locator('#issue-reference').inputValue(), initialReference);
+                assert((await page.locator('#issue-quantity-help').innerText()).includes('bukan sisa stok'));
+                await page.setViewportSize({ width: 1440, height: 900 });
+            });
+            await goto('/dashboard');
+        }
+        if (meta.phase !== 'baseline') {
             await record('Dashboard minimum stok memakai stok transaksi tanpa menunggu pemeriksaan harian', async () => {
                 assert.equal((await page.locator('[data-stock-shortages] > p').innerText()).trim(), '2');
                 assert.equal(await page.locator('[data-stock-shortages]').getByText('Tindak Lanjut →', { exact: true })

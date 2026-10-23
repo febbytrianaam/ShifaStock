@@ -1,9 +1,30 @@
-<x-layouts.app title="Pengecekan Stok Malam">
+<x-layouts.app title="Pengecekan Stok Malam" :hide-description="true">
     <x-page-tabs :links="[
         ['route' => 'preview.nightly', 'label' => 'Harian', 'can' => 'view-nightly-checks', 'active' => ['preview.nightly', 'nightly.show']],
         ['route' => 'preview.opname', 'label' => 'Opname Periodik', 'can' => 'view-opname'],
         ['route' => 'nightly.history', 'label' => 'Riwayat', 'can' => 'view-nightly-history'],
     ]" />
+
+    <section aria-labelledby="nightly-guide-title" data-nightly-start-guide class="mb-5 border-b border-slate-200 pb-5 text-sm leading-relaxed text-slate-600">
+        <h2 id="nightly-guide-title" class="text-base font-semibold text-slate-900">Memahami angka pemeriksaan stok</h2>
+        <p class="mt-1">Pemeriksaan membandingkan catatan stok dengan jumlah obat yang benar-benar ada di lokasi yang dipilih, baik Apotek maupun Gudang.</p>
+        <dl class="mt-4 grid gap-4 md:grid-cols-3">
+            <div class="min-w-0">
+                <dt class="font-semibold text-slate-800">Stok awal</dt>
+                <dd class="mt-1">Persediaan saat mulai memakai sistem, dicatat per obat, batch, dan lokasi. Tidak perlu diisi ulang setiap pemeriksaan.</dd>
+            </div>
+            <div class="min-w-0">
+                <dt class="font-semibold text-slate-800">Stok sistem</dt>
+                <dd class="mt-1">Jumlah dari stok awal dan transaksi yang sudah tercatat, seperti penerimaan, transfer, pengeluaran, serta retur. Obat yang dipakai tidak otomatis mengurangi angka ini jika pengeluarannya belum dicatat.</dd>
+            </div>
+            <div class="min-w-0">
+                <dt class="font-semibold text-slate-800">Jumlah fisik</dt>
+                <dd class="mt-1">Hasil menghitung obat langsung di lokasi pemeriksaan, sesuai satuan obat. Tidak harus sama dengan stok sistem. Isi 0 jika sudah dihitung dan habis; biarkan kosong jika belum diperiksa.</dd>
+            </div>
+        </dl>
+        <p class="mt-4"><strong class="text-slate-800">Contoh:</strong> stok sistem 10 tablet, tetapi fisiknya tinggal 2 tablet. Jumlah fisik diisi <strong class="text-slate-800">2</strong>. Setelah disetujui, stok sistem menjadi 2, bukan dikurangi 2 menjadi 8.</p>
+        <p class="mt-2"><strong class="text-slate-800">Kapan stok berubah?</strong> Menyimpan draf atau mengirim laporan belum mengubah stok. Stok baru disesuaikan setelah kepala apoteker menyetujui hasil pemeriksaan, hanya untuk obat yang sudah diperiksa. Obat yang belum diperiksa tidak dianggap kosong.</p>
+    </section>
 
     @if($errors->any())
         <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">

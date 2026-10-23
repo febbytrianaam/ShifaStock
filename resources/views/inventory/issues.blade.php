@@ -1,4 +1,25 @@
-<x-layouts.app title="Pengeluaran Obat">
+<x-layouts.app title="Pengeluaran Obat" :hide-description="true">
+    <section aria-labelledby="issue-guide-title" data-issue-guide class="mb-5 border-b border-slate-200 pb-5 text-sm leading-relaxed text-slate-600">
+        <h2 id="issue-guide-title" class="text-base font-semibold text-slate-900">Catat obat yang keluar dari persediaan</h2>
+        <p class="mt-1">Obat untuk pelayanan atau pemakaian internal dicatat di sini. ShifaStock tidak terhubung ke Neoklinik; pencatatan di Neoklinik tidak otomatis mengurangi stok di ShifaStock.</p>
+        <dl class="mt-4 grid gap-4 lg:grid-cols-3">
+            <div class="min-w-0">
+                <dt class="font-semibold text-slate-800">Lokasi dan jumlah</dt>
+                <dd class="mt-1">Untuk obat yang keluar dari Apotek, lokasi sumbernya Apotek. Jumlah adalah banyaknya obat yang keluar, bukan sisa stok. Gunakan satuan stok obat, misalnya tablet, botol, atau tube.</dd>
+            </div>
+            <div class="min-w-0">
+                <dt class="font-semibold text-slate-800">Referensi dan batch</dt>
+                <dd class="mt-1">Nomor referensi transaksi dibuat otomatis. Referensi sumber boleh diisi nomor resep atau rekap pengeluaran tanpa identitas pasien. Batch yang kosong memakai stok dengan kedaluwarsa terdekat secara otomatis (FEFO), bukan batch yang sudah kedaluwarsa.</dd>
+            </div>
+            <div class="min-w-0">
+                <dt class="font-semibold text-slate-800">Setelah disimpan</dt>
+                <dd class="mt-1">Stok lokasi sumber dan batch langsung berkurang, serta mutasinya tercatat di kartu stok. Pengeluaran tidak menunggu persetujuan pemeriksaan harian. Satu penyimpanan mencatat satu jenis obat; FEFO dapat mengambil beberapa batch.</dd>
+            </div>
+        </dl>
+        <p class="mt-4"><strong class="text-slate-800">Contoh:</strong> stok Apotek 20 tablet, keluar 3 tablet. Jumlah diisi <strong class="text-slate-800">3</strong>, bukan sisa 17. Setelah disimpan, stok Apotek menjadi 17 tablet.</p>
+        <p class="mt-2"><strong class="text-slate-800">Hindari pencatatan ganda.</strong> Periksa riwayat sebelum mengulang pengeluaran, terutama jika pemakaian yang sama sudah diperhitungkan dalam penyesuaian stok melalui pemeriksaan.</p>
+        <p class="mt-2">Pemindahan antar lokasi dicatat melalui Transfer Gudang&ndash;Apotek. Pengembalian ke supplier dicatat melalui Retur PBF, bukan Pengeluaran Obat.</p>
+    </section>
     @if(session('status'))
         <div class="mb-4 rounded-lg border border-[#b2d4ee] bg-[#edf5fb] p-3 text-sm font-semibold text-[#266194]">{{ session('status') }}</div>
     @endif
@@ -7,7 +28,7 @@
     @endif
 
     @can('operate-inventory')
-    <form method="POST" action="{{ route('issues.store') }}" class="card mb-5 grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-4" data-required-alert="Lengkapi data pengeluaran obat" novalidate>
+    <form method="POST" action="{{ route('issues.store') }}" class="card mb-5 grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-4" data-issue-form data-required-alert="Lengkapi data pengeluaran obat" novalidate>
         @csrf
         <div>
             <label class="label" for="issue-reference">Referensi</label>
@@ -15,7 +36,8 @@
         </div>
         <div>
             <label class="label" for="issue-source-reference">Referensi sumber</label>
-            <input class="field text-xs" id="issue-source-reference" name="source_reference" value="{{ old('source_reference') }}" placeholder="Resep, tindakan, atau catatan layanan" maxlength="255">
+            <input class="field text-xs" id="issue-source-reference" name="source_reference" value="{{ old('source_reference') }}" placeholder="Nomor resep atau rekap pengeluaran" maxlength="255" aria-describedby="issue-source-help">
+            <p id="issue-source-help" class="mt-1 text-xs text-slate-500">Opsional. Cukup nomor atau kode sumber, tanpa identitas pasien.</p>
         </div>
         <div class="md:col-span-2">
             <label class="label" for="issue-medicine">Obat</label>
@@ -47,7 +69,8 @@
         </div>
         <div>
             <label class="label" for="issue-quantity">Jumlah</label>
-            <input class="field text-xs" id="issue-quantity" name="quantity" type="number" min="0.0001" step="0.0001" value="{{ old('quantity') }}" required>
+            <input class="field text-xs" id="issue-quantity" name="quantity" type="number" min="0.0001" step="0.0001" value="{{ old('quantity') }}" required aria-describedby="issue-quantity-help">
+            <p id="issue-quantity-help" class="mt-1 text-xs text-slate-500">Isi jumlah yang keluar, bukan sisa stok.</p>
         </div>
         <div>
             <label class="label" for="issue-time">Waktu keluar</label>
