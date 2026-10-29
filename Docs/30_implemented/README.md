@@ -7,6 +7,10 @@ This folder records shipped work as historical truth. Each feature folder contai
 
 ## Index
 
+- [2026-10-27 Guided Excel issue import](2026-10-27-issue-import-guided-ui/)
+
+- [2026-10-24 Excel-based Neoklinik medicine issues](2026-10-24-neoklinik-issue-import/)
+
 - [2026-10-23 Medicine issue explanations](2026-10-23-issue-guidance/)
 
 - [2026-10-23 Daily stock-count explanations](2026-10-23-daily-count-guidance/)

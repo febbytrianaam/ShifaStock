@@ -8,6 +8,7 @@ import { initDailyCounts, prepareDailyCounts } from './daily-counts';
 import { initOnboarding } from './onboarding';
 import { initPasswordVisibility } from './password-visibility';
 import { initTransferRows } from './transfer-rows';
+import { initIssueImports } from './issue-imports';
 
 let nightlyPage = 1;
 
@@ -117,6 +118,7 @@ function initialize() {
     initTransferRows({ initSearchableSelects, initStockEntryContexts });
     initRolePreview();
     initDailyCounts();
+    initIssueImports();
     initFormSafety();
     initOnboarding();
     initPasswordVisibility();
@@ -201,7 +203,7 @@ function initSearchableSelects(root = document) {
             input.setAttribute('aria-expanded', 'false');
         };
         const open = () => {
-            if (select.closest('.receipt-entry, .transfer-entry')) {
+            if (select.closest('.receipt-entry, .transfer-entry, .issue-import-mapping')) {
                 const rect = input.getBoundingClientRect();
                 const below = window.innerHeight - rect.bottom - 12;
                 const above = rect.top - 12;
@@ -215,7 +217,7 @@ function initSearchableSelects(root = document) {
             menu.hidden = false;
             input.setAttribute('aria-expanded', 'true');
         };
-        if (select.closest('.receipt-entry, .transfer-entry')) {
+        if (select.closest('.receipt-entry, .transfer-entry, .issue-import-mapping')) {
             window.addEventListener('resize', close);
             document.addEventListener('scroll', (event) => {
                 if (event.target === document || event.target.contains?.(wrapper)) close();

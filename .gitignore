@@ -20,6 +20,8 @@
 /storage/pail
 /vendor
 /LOCAL_DEMO_ACCOUNTS.txt
+# Clinical export contains patient/doctor identifiers; never publish it as a fixture.
+/docs/40_references/REKAP OBTA.xlsx
 Homestead.json
 Homestead.yaml
 Thumbs.db

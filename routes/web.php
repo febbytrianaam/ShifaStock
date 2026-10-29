@@ -68,6 +68,14 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::post('/transfer', [InventoryController::class, 'storeTransfer'])->middleware(['can:view-transfers', 'can:operate-inventory'])->name('transfers.store');
         Route::get('/obat-keluar', [InventoryController::class, 'issues'])->middleware('can:view-issues')->name('preview.issues');
         Route::post('/obat-keluar', [InventoryController::class, 'storeIssue'])->middleware(['can:view-issues', 'can:operate-inventory'])->name('issues.store');
+        Route::middleware('can:view-issues')->prefix('obat-keluar/impor')->name('issue-imports.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\IssueImportController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\IssueImportController::class, 'store'])->middleware(['can:operate-inventory', 'throttle:10,1'])->name('store');
+            Route::get('/{issueImport}', [\App\Http\Controllers\IssueImportController::class, 'show'])->whereNumber('issueImport')->name('show');
+            Route::delete('/{issueImport}', [\App\Http\Controllers\IssueImportController::class, 'destroy'])->middleware('can:operate-inventory')->whereNumber('issueImport')->name('destroy');
+            Route::post('/{issueImport}/pemetaan', [\App\Http\Controllers\IssueImportController::class, 'mappings'])->middleware('can:operate-inventory')->whereNumber('issueImport')->name('mappings');
+            Route::post('/{issueImport}/posting', [\App\Http\Controllers\IssueImportController::class, 'post'])->middleware('can:operate-inventory')->whereNumber('issueImport')->name('post');
+        });
         Route::get('/saldo-awal', fn () => redirect('/stok-awal'))->middleware('can:view-opening-balances');
         Route::post('/saldo-awal', [InventoryController::class, 'storeOpeningBalance'])->middleware(['can:view-opening-balances', 'can:operate-inventory']);
         Route::get('/stok-awal', [InventoryController::class, 'openingBalances'])->middleware('can:view-opening-balances')->name('opening-balances.index');

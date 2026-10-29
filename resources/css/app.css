@@ -81,6 +81,38 @@
     .transfer-entry td .field { border: 0; border-radius: 0; box-shadow: none; min-height: 44px; background: transparent; }
     .transfer-entry td:focus-within { outline: 1px solid #60a5fa; outline-offset: -1px; }
     .transfer-entry .searchable-select-menu { position: fixed; right: auto; margin-top: 0; }
+    .issue-import-mapping .searchable-select-menu { position: fixed; right: auto; margin-top: 0; }
+    .issue-import-workspace { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 24px; }
+    .issue-import-info { display: grid; min-width: 0; gap: 16px; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+    .issue-import-list-scroll { max-height: 34rem; scroll-padding-top: 48px; }
+    @media (min-width: 1280px) {
+        .issue-import-workspace { grid-template-columns: minmax(0, 1fr) 320px; }
+        .issue-import-info { position: sticky; top: 24px; max-height: var(--issue-import-info-height, calc(100dvh - 6rem)); overflow-y: auto; border-top: 0; border-left: 1px solid #e2e8f0; padding: 0 0 0 24px; }
+        .issue-import-list-scroll { max-height: var(--issue-import-list-height, max(12rem, calc(100dvh - 26rem))); }
+    }
+    .issue-import-match-table > tbody > tr > td, .issue-import-review-table > tbody > tr > td,
+    .issue-import-source-table td { overflow-wrap: anywhere; }
+    .issue-import-source-table th { overflow-wrap: normal; }
+    .issue-import-source-scroll { max-height: 18rem; }
+    @media (max-width: 1023px) {
+        .issue-import-source-scroll { max-height: none; }
+        .issue-import-match-table, .issue-import-match-table > tbody,
+        .issue-import-review-table, .issue-import-review-table > tbody,
+        .issue-import-source-table, .issue-import-source-table > tbody { display: block; width: 100%; }
+        .issue-import-match-table > thead, .issue-import-review-table > thead, .issue-import-source-table > thead { display: none; }
+        .issue-import-match-table > tbody > tr, .issue-import-review-table > tbody > tr,
+        .issue-import-source-table > tbody > tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 4px 0; }
+        .issue-import-match-table > tbody > tr > td:nth-child(n+3),
+        .issue-import-review-table > tbody > tr > td[data-label="Obat"], .issue-import-review-table > tbody > tr > td:last-child,
+        .issue-import-source-table td[data-label="Nama Obat"], .issue-import-source-table td[data-label="Status"],
+        .issue-import-match-table > tbody > tr > td[colspan], .issue-import-review-table > tbody > tr > td[colspan] { grid-column: 1 / -1; }
+        .issue-import-match-table > tbody > tr > td, .issue-import-review-table > tbody > tr > td,
+        .issue-import-source-table td { display: block; min-width: 0; padding: 10px 12px; }
+        .issue-import-match-table > tbody > tr > td[data-label]::before,
+        .issue-import-review-table > tbody > tr > td[data-label]::before, .issue-import-source-table td[data-label]::before {
+            content: attr(data-label); display: block; margin-bottom: 6px; font-size: 11px; font-weight: 600; color: #64748b;
+        }
+    }
     .searchable-select-input { padding-right:2.25rem; }
     .searchable-select-clear {
         @apply absolute right-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-sm font-bold text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:bg-slate-100 focus:text-slate-700 focus:outline-none;

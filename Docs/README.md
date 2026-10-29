@@ -4,6 +4,10 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 
 ## Start Here
 
+- [Guided Excel issue import](30_implemented/2026-10-27-issue-import-guided-ui/implementation_report.md)
+
+- [Excel-based Neoklinik medicine issues](30_implemented/2026-10-24-neoklinik-issue-import/implementation_report.md)
+
 - [Medicine issue explanations](30_implemented/2026-10-23-issue-guidance/implementation_report.md)
 
 - [Daily stock-count explanations](30_implemented/2026-10-23-daily-count-guidance/implementation_report.md)

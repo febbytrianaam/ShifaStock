@@ -29,7 +29,7 @@
             ['opening-balances.index', '+', 'Stok Awal', null, 'view-opening-balances'],
             ['preview.receipts', '↓', 'Penerimaan Obat', null, 'view-receipts', ['preview.receipts', 'receipts.edit']],
             ['preview.transfers', '⇄', 'Transfer Gudang–Apotek', null, 'view-transfers'],
-            ['preview.issues', '↑', 'Pengeluaran Obat', null, 'view-issues'],
+            ['preview.issues', '↑', 'Pengeluaran Obat', null, 'view-issues', ['preview.issues', 'issue-imports.*']],
             ['preview.returns', '↩', 'Retur PBF', null, 'view-returns'],
         ]],
         ['label' => 'PEMERIKSAAN STOK', 'inventory' => false, 'anyCan' => ['view-nightly-checks', 'view-opname', 'view-nightly-history'], 'items' => [

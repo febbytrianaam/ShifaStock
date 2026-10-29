@@ -4,7 +4,7 @@
 
 ShifaStock membantu pencatatan obat masuk, transfer gudang ke apotek, pengeluaran, pemeriksaan fisik, dan tindak lanjut stok. Persediaan dapat ditelusuri per obat, batch, tanggal kedaluwarsa, dan lokasi melalui kartu stok serta laporan.
 
-Aplikasi berfokus pada pengelolaan obat, bukan pelayanan pasien atau integrasi Neoklinik. Dashboard dan transaksi operasional menggunakan database aplikasi, tanpa mode data dummy. Panduan sorotan menu muncul pada login pertama, mengikuti hak akses, dan dapat dibuka ulang dari tombol tanda tanya di topbar.
+Aplikasi berfokus pada pengelolaan obat, bukan pelayanan pasien atau sinkronisasi otomatis Neoklinik. Rekap pengeluaran Neoklinik dapat diimpor melalui Excel dengan pemeriksaan dan konfirmasi petugas. Dashboard dan transaksi operasional menggunakan database aplikasi, tanpa mode data dummy. Panduan sorotan menu muncul pada login pertama, mengikuti hak akses, dan dapat dibuka ulang dari tombol tanda tanya di topbar.
 
 ## ✨ Fitur Utama
 
@@ -13,6 +13,7 @@ Aplikasi berfokus pada pengelolaan obat, bukan pelayanan pasien atau integrasi N
 | Master obat | Pencarian, verifikasi, status aktif, preview/import referensi, satuan stok, dan konversi kemasan beli per obat |
 | Penerimaan | Input banyak baris, pilihan obat searchable, nomor faktur supplier, konversi satuan, edit/batalkan draf, posting ke lokasi tujuan, dan peringatan faktur ganda |
 | Pergerakan stok | Stok awal per batch, transfer banyak obat dalam satu referensi dengan penyimpanan atomik, pengeluaran, retur PBF, serta kondisi khusus dengan batch wajib |
+| Impor pengeluaran | Excel Neoklinik, pencocokan obat/satuan, rincian transaksi, pencarian, pratinjau dan posting atomik, pencegahan impor ganda, hapus pratinjau, serta lanjutkan pemeriksaan setelah pindah tab |
 | Pemilihan batch | Mengikuti obat dan lokasi; FEFO otomatis untuk transfer/pengeluaran tanpa pilihan batch eksplisit, dengan pengecualian batch kedaluwarsa |
 | Pemeriksaan harian | Draf bersama petugas/apoteker dengan identitas pembuat, pelaksana per obat, riwayat aktivitas, dan perlindungan versi lama; daftar responsif, rincian batch, tambah obat, dan kirim sebagian; tinjauan hanya menyesuaikan obat yang diperiksa |
 | Opname periodik | Snapshot stok, isian fisik, finalisasi, dan Mulai Hitung Ulang dengan konfirmasi serta pencatatan isian lama di audit log |
@@ -23,6 +24,8 @@ Aplikasi berfokus pada pengelolaan obat, bukan pelayanan pasien atau integrasi N
 Pencarian obat dan batch terhubung ke backend. Validasi dan konfirmasi tindakan penting menggunakan SweetAlert.
 
 Panduan di Pemeriksaan Stok menjelaskan stok awal, stok sistem, jumlah fisik, dan kapan persetujuan menyesuaikan stok. Judul kolom memiliki bantuan yang dapat dibuka lewat hover, keyboard, atau ketukan pada HP. Pengeluaran Obat menjelaskan pencatatan manual tanpa sinkronisasi Neoklinik, jumlah keluar versus sisa stok, FEFO, serta pencegahan pencatatan ganda.
+
+Impor Excel memakai tiga langkah: pilih file, cocokkan obat, lalu periksa dan simpan. Unggah dan pencocokan belum mengurangi stok. Pilihan otomatis tetap memerlukan konfirmasi; tanggal mulai pencatatan mencegah pengurangan ulang transaksi yang sudah tercakup stok awal/hitung fisik. File asli, identitas pasien/dokter, dan nomor penjualan mentah tidak diarsipkan. Pratinjau dapat dilanjutkan selama belum dihapus atau kedaluwarsa; isian yang belum disimpan tidak disimpan otomatis. [Panduan impor](Docs/00_current/uat_guide.md#impor-pengeluaran-excel-neoklinik).
 
 ## Role Dan Hak Akses
 
@@ -99,6 +102,8 @@ Buka [ShifaStock lokal](http://127.0.0.1:8000). Untuk pengembangan frontend, jal
 Master obat dapat dimasukkan melalui menu Data Obat, termasuk preview/import referensi yang disediakan. Seed referensi tidak berarti stok fisik sudah tersedia; catat stok awal atau penerimaan sesuai batch dan lokasi sebenarnya.
 
 ## Pengujian
+
+**Verifikasi paket impor, 29 Oktober 2026:** eksekusi ulang lulus **213 tes / 2347 assertions**, **16 kelompok pengujian browser**, uji MySQL dua worker dengan perlindungan transaksi ganda, dan build frontend. Semua fixture memakai database sementara, bukan inventori klinik/UAT persisten. Composer validate dan pemeriksaan format juga lulus. [Implementasi dan bukti aktual](Docs/30_implemented/2026-10-27-issue-import-guided-ui/implementation_report.md#publication-verification-29-october-2026). Ini bukan pengganti UAT petugas klinik.
 
 **Panduan operasional dan bantuan kolom, 23 Oktober 2026:** verifikasi tahap implementasi lulus **179 tes / 1885 assertions**, **20 kasus browser pemeriksaan stok**, dan **17 kasus browser operasional**, beserta build frontend. Pengujian memakai database terpisah, dengan pemeriksaan desktop, tablet, HP, bantuan keyboard, dan isian yang tetap utuh. Angka tiap tahap serta batasannya tercatat pada [panduan pemeriksaan](Docs/30_implemented/2026-10-23-daily-count-guidance/implementation_report.md) dan [panduan pengeluaran](Docs/30_implemented/2026-10-23-issue-guidance/implementation_report.md).
 

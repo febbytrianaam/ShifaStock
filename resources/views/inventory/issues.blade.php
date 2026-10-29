@@ -1,7 +1,9 @@
 <x-layouts.app title="Pengeluaran Obat" :hide-description="true">
+    <x-issue-tabs></x-issue-tabs>
     <section aria-labelledby="issue-guide-title" data-issue-guide class="mb-5 border-b border-slate-200 pb-5 text-sm leading-relaxed text-slate-600">
         <h2 id="issue-guide-title" class="text-base font-semibold text-slate-900">Catat obat yang keluar dari persediaan</h2>
         <p class="mt-1">Obat untuk pelayanan atau pemakaian internal dicatat di sini. ShifaStock tidak terhubung ke Neoklinik; pencatatan di Neoklinik tidak otomatis mengurangi stok di ShifaStock.</p>
+        <p class="mt-2">Jika sudah memiliki rekap Excel Neoklinik, gunakan tab <a href="{{ route('issue-imports.index') }}" class="font-semibold text-blue-700">Impor &amp; Riwayat Excel</a> agar tidak mengetik ulang per obat. Jangan catat manual transaksi yang sama dengan yang akan diimpor.</p>
         <dl class="mt-4 grid gap-4 lg:grid-cols-3">
             <div class="min-w-0">
                 <dt class="font-semibold text-slate-800">Lokasi dan jumlah</dt>

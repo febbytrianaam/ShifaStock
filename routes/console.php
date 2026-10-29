@@ -20,3 +20,11 @@ Artisan::command('inventory:clean-demo {--apply : Terapkan manifest uji lokal se
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+Artisan::command('issues:purge-import-drafts', function () {
+    $count = \App\Models\IssueImport::where('status', 'draft')->where('created_at', '<', now()->subDays(7))
+        ->update(['payload' => null, 'status' => 'expired']);
+    $this->info($count.' pratinjau kedaluwarsa dibersihkan; ledger transaksi terposting tetap disimpan.');
+})->purpose('Hapus payload pratinjau impor yang belum diposting setelah tujuh hari');
+
+\Illuminate\Support\Facades\Schedule::command('issues:purge-import-drafts')->daily();
