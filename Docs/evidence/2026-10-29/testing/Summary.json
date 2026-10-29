@@ -1,0 +1,488 @@
+{
+  "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+  "generated_at": "2026-10-29T07:17:51.834Z",
+  "source": "eksekusi ulang pada sesi dokumentasi ini",
+  "phpunit": {
+    "summary": {
+      "tests": 213,
+      "assertions": 2347,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time": 80.679722
+    },
+    "classes": [
+      {
+        "name": "Tests\\Unit\\ExampleTest",
+        "tests": 1,
+        "assertions": 1,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Unit\\QuantityTest",
+        "tests": 1,
+        "assertions": 8,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Unit\\StockSnapshotTest",
+        "tests": 1,
+        "assertions": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\AddNightlyMedicinesTest",
+        "tests": 9,
+        "assertions": 89,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\AdminUserManagementTest",
+        "tests": 2,
+        "assertions": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\CapstoneFunctionalTest",
+        "tests": 13,
+        "assertions": 161,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\DailyBatchCountTest",
+        "tests": 10,
+        "assertions": 131,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\DashboardOnboardingTest",
+        "tests": 6,
+        "assertions": 48,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\DashboardStockMonitoringTest",
+        "tests": 6,
+        "assertions": 45,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\DemoInventoryCleanupTest",
+        "tests": 5,
+        "assertions": 22,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\ErrorPageTest",
+        "tests": 7,
+        "assertions": 43,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\ExampleTest",
+        "tests": 1,
+        "assertions": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\FoundationTest",
+        "tests": 7,
+        "assertions": 48,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\GuestRoleTest",
+        "tests": 8,
+        "assertions": 127,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\InventoryFlowTest",
+        "tests": 5,
+        "assertions": 62,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\InventoryIntegrationTest",
+        "tests": 6,
+        "assertions": 116,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\InventoryReconciliationTest",
+        "tests": 3,
+        "assertions": 13,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\InventoryUsabilityTest",
+        "tests": 2,
+        "assertions": 9,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\IssueGuidanceTest",
+        "tests": 2,
+        "assertions": 24,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\IssueImportTest",
+        "tests": 34,
+        "assertions": 462,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\MultiTransferTest",
+        "tests": 12,
+        "assertions": 188,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\NightlyCheckTest",
+        "tests": 2,
+        "assertions": 39,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\NightlyDraftCancelTest",
+        "tests": 1,
+        "assertions": 6,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\NightlyPrintTest",
+        "tests": 7,
+        "assertions": 58,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\OpnameAuditTest",
+        "tests": 4,
+        "assertions": 50,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\PartialNightlySubmissionTest",
+        "tests": 10,
+        "assertions": 84,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\PrototypeUiTest",
+        "tests": 4,
+        "assertions": 34,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\ReceiptWorkflowTest",
+        "tests": 4,
+        "assertions": 52,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\SelectedNightlyCheckTest",
+        "tests": 17,
+        "assertions": 201,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\SharedNightlyCheckTest",
+        "tests": 15,
+        "assertions": 157,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\StockUnitProtectionTest",
+        "tests": 2,
+        "assertions": 16,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      {
+        "name": "Tests\\Feature\\UatEnvironmentTest",
+        "tests": 6,
+        "assertions": 35,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    ]
+  },
+  "grouped": [
+    {
+      "name": "Pemeriksaan harian dan kolaborasi",
+      "tests": 71,
+      "assertions": 765,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Impor Excel Neoklinik",
+      "tests": 34,
+      "assertions": 462,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Transfer multi-item",
+      "tests": 12,
+      "assertions": 188,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Penerimaan dan posting",
+      "tests": 4,
+      "assertions": 52,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Persediaan, mutasi, dan rekonsiliasi",
+      "tests": 18,
+      "assertions": 216,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Hak akses dan pengguna",
+      "tests": 10,
+      "assertions": 140,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Pengujian fungsional lintas modul",
+      "tests": 13,
+      "assertions": 161,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Stock opname dan audit",
+      "tests": 4,
+      "assertions": 50,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Dashboard dan panduan awal",
+      "tests": 12,
+      "assertions": 93,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Halaman error dan panduan pengeluaran",
+      "tests": 9,
+      "assertions": 67,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Isolasi UAT dan pembersihan simulasi",
+      "tests": 11,
+      "assertions": 57,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "name": "Fondasi, tampilan, dan unit test lainnya",
+      "tests": 15,
+      "assertions": 96,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "playwright": {
+    "checked_at": "2026-10-29T07:07:09.120Z",
+    "simulation": true,
+    "results": [
+      {
+        "name": "Unggah dan riwayat responsif desktop, tablet, dan HP",
+        "status": "Lulus"
+      },
+      {
+        "name": "Unggah tidak langsung posting; obat cocok tetap perlu persetujuan",
+        "status": "Lulus"
+      },
+      {
+        "name": "Beralih ke Input Manual dapat kembali ke impor yang sama tanpa unggah ulang",
+        "status": "Lulus"
+      },
+      {
+        "name": "Nomor, tanggal WIB, dan rincian Excel terbaca tanpa identitas pasien",
+        "status": "Lulus"
+      },
+      {
+        "name": "Dropdown searchable, pemetaan tersimpan, dan validasi SweetAlert",
+        "status": "Lulus"
+      },
+      {
+        "name": "Pratinjau dan pencocokan tidak membuat halaman melebar di empat viewport",
+        "status": "Lulus"
+      },
+      {
+        "name": "Posting FEFO menampilkan dua batch dan tautan kartu stok",
+        "status": "Lulus"
+      },
+      {
+        "name": "Unggah ulang memakai pemetaan tersimpan dan tidak membuat mutasi kedua",
+        "status": "Lulus"
+      },
+      {
+        "name": "Transaksi sumber yang berubah diblokir dan tidak diam-diam dikurangi",
+        "status": "Lulus"
+      },
+      {
+        "name": "Hapus dari detail memakai SweetAlert; Batal mempertahankan draf",
+        "status": "Lulus"
+      },
+      {
+        "name": "Hapus dari riwayat tersedia di HP; dokumen terposting tetap terlindungi",
+        "status": "Lulus"
+      },
+      {
+        "name": "Pilihan tersimpan disembunyikan dan persetujuan tidak otomatis mengikuti perubahan",
+        "status": "Lulus"
+      },
+      {
+        "name": "Cari obat mempertahankan centang dan hanya menandai pilihan yang tampil",
+        "status": "Lulus"
+      },
+      {
+        "name": "Peringatan tanggal dan obat dipisahkan; filter tidak mengubah stok",
+        "status": "Lulus"
+      },
+      {
+        "name": "Daftar panjang di kiri, panel informasi di kanan, dan susunan HP tidak melebar",
+        "status": "Lulus"
+      },
+      {
+        "name": "Guest dapat melihat riwayat namun tidak bisa mengunggah atau posting",
+        "status": "Lulus"
+      }
+    ],
+    "errors": []
+  },
+  "feature_capture": [
+    {
+      "id": "SS-01",
+      "status": "Lulus",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:16:29.810Z",
+      "completed_at": "2026-10-29T07:16:32.972Z"
+    },
+    {
+      "id": "SS-05",
+      "status": "Lulus",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:16:32.972Z",
+      "completed_at": "2026-10-29T07:16:37.886Z"
+    },
+    {
+      "id": "SS-06",
+      "status": "Lulus",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:16:37.886Z",
+      "completed_at": "2026-10-29T07:16:38.950Z"
+    },
+    {
+      "id": "SS-04",
+      "status": "Lulus",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:16:38.951Z",
+      "completed_at": "2026-10-29T07:16:40.350Z"
+    },
+    {
+      "id": "SS-02",
+      "status": "Lulus",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:16:40.350Z",
+      "completed_at": "2026-10-29T07:16:54.999Z"
+    }
+  ],
+  "environment": {
+    "php": "8.5.9",
+    "laravel": "13.35.0",
+    "browser": "Google Chrome headless / Playwright",
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    }
+  }
+}

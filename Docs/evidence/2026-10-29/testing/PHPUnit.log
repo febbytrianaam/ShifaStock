@@ -1,0 +1,15 @@
+Menjalankan tes pada SQLite :memory:; database klinik tidak dipakai.
+PHPUnit 12.5.38 by Sebastian Bergmann and contributors.
+
+Runtime:       PHP 8.5.9
+Configuration: C:\laragon\www\ShifaStock\phpunit.xml
+
+...............................................................  63 / 213 ( 29%)
+............................................................... 126 / 213 ( 59%)
+............................................................... 189 / 213 ( 88%)
+........................                                        213 / 213 (100%)
+
+Time: 01:20.765, Memory: 88.00 MB
+
+OK (213 tests, 2347 assertions)
+Laporan: storage/app/qa/inventory/phpunit-results.xml

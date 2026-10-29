@@ -1,5 +1,11 @@
 # Testing Strategy
 
+## Capstone Evidence Refresh - 29 October 2026
+
+Actual runs on clean application baseline `05ba910ce8804ffc9e049a17e96295bb59714cb9`, starting 14:03 WIB: **213 tests / 2347 assertions**, zero failures/errors/skips on SQLite `:memory:`; **16/16 import-browser groups** on temporary MySQL; MySQL concurrent-import/retry/stock postconditions; and Vite build passed. A separate documentation browser run passed **five feature groups** covering multi-item transfer with FEFO, return/damaged stock, same-number batch location selection, batch monitoring, and a draft created by a pharmacy operator and continued by a pharmacist. Inventory/batch reconciliation had zero discrepancies. These are separate bounded groups, not an expanded manual-UAT total or a rerun of all historical operational browser suites.
+
+The [dated screenshot package](../Capstone_Screenshots/2026-10-29/README.md) contains eight primary and seven supporting 1440 x 900 images, captions, and checksums. [Technical evidence](../evidence/2026-10-29/README.md) includes actual JUnit, browser/MySQL JSON, sanitized logs, documentation-only reproduction scripts, and failure records from initial automation attempts. Test-report PNGs are explicitly documentation generated from actual artifacts, not application features. Feature captures were repeated to handle real onboarding/confirmation and framing; the original same-session backend/import results were reused, not represented as new executions per retry. All images were opened for visual review and sampled for nonblank pixels. Twenty-two existing root screenshot files were hash-verified unchanged; read-only cleanup verification found zero remaining temporary evidence/import databases. No clinic or persistent UAT data changed. Approval/finalization and physical-printer/manual clinic acceptance are not claimed by these screenshots.
+
 ## Guidance Publication Verification
 
 2026-10-23, approximately 15:45 WIB: the final combined guidance/tooltip feature tree again passed **179 tests / 1885 assertions**, about 50 seconds, on SQLite `:memory:`. Browser counts below are retained from their actual earlier same-day executions, not newly run at commit time. Publication includes the explanations, help controls, tests, README/current/operator guidance, and implementation reports; unrelated Capstone/private/ignored artifacts are excluded. [Publication record](../30_implemented/2026-10-23-issue-guidance/implementation_report.md#publication-verification).
@@ -120,7 +126,7 @@ Playwright must be available through Node module resolution. The runners current
 
 `php scripts/capstone-final-browser.php onboarding` creates an isolated MySQL fixture for first-login, role-aware, replay, and mobile guide tests. `php scripts/capstone-final-browser.php regression` runs the existing 13 operational cases with output under ignored `storage/app/qa/inventory-browser/`, preserving historical Capstone evidence. Node must resolve Playwright; Windows Chrome is currently used by these runners. Neither runner logs fixture passwords or writes to the clinic database.
 
-## Latest Recorded Capstone Execution
+## Historical Capstone Execution - 18 October 2026
 
 Executed 2026-10-18 WIB; documented 2026-10-19: 70 PHPUnit tests / 733 assertions, 7 competing-process MySQL scenarios, 13 live HTTP Playwright cases, and Vite build passed. See [actual evidence and limitations](../Capstone_Testing_Final/Ringkasan_Pengujian.md) and the [ten-group functional table](../Capstone_Testing_Final/Hasil_Pengujian_Fungsional.md). Manual staff UAT is not completed. The earlier 58-test screenshot package is historical, not the latest suite total.
 

@@ -7,6 +7,8 @@ This folder records shipped work as historical truth. Each feature folder contai
 
 ## Index
 
+- [2026-10-29 Capstone evidence refresh and dated screenshot package](2026-10-29-capstone-evidence/)
+
 - [2026-10-27 Guided Excel issue import](2026-10-27-issue-import-guided-ui/)
 
 - [2026-10-24 Excel-based Neoklinik medicine issues](2026-10-24-neoklinik-issue-import/)

@@ -1,0 +1,13 @@
+{
+    "status": "Lulus",
+    "checked_at": "2026-10-29T14:07:11+07:00",
+    "stock_total": 80,
+    "batch_total": 80,
+    "unique_source_lines": 3,
+    "checks": [
+        "browser posting FEFO",
+        "overlap and changed data",
+        "concurrent imports",
+        "retry stale preview without duplicate"
+    ]
+}

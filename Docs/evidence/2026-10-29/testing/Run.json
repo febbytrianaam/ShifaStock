@@ -1,0 +1,18 @@
+{
+    "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+    "started_at": "2026-10-29T14:16:13+07:00",
+    "simulation": true,
+    "php": "8.5.9",
+    "laravel": "13.35.0",
+    "viewport": {
+        "width": 1440,
+        "height": 900
+    },
+    "legacy_count": 22,
+    "cleanup": true,
+    "tests_reused_from_same_session": "2026-10-29T14:03:56+07:00",
+    "import_evidence": "storage\/app\/qa\/issue-imports\/acb81f4147f974fe",
+    "completed_at": "2026-10-29T14:16:56+07:00",
+    "legacy_preserved": true,
+    "exit_code": 0
+}

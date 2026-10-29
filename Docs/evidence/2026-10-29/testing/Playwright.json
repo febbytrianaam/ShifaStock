@@ -1,0 +1,71 @@
+{
+  "checked_at": "2026-10-29T07:07:09.120Z",
+  "simulation": true,
+  "results": [
+    {
+      "name": "Unggah dan riwayat responsif desktop, tablet, dan HP",
+      "status": "Lulus"
+    },
+    {
+      "name": "Unggah tidak langsung posting; obat cocok tetap perlu persetujuan",
+      "status": "Lulus"
+    },
+    {
+      "name": "Beralih ke Input Manual dapat kembali ke impor yang sama tanpa unggah ulang",
+      "status": "Lulus"
+    },
+    {
+      "name": "Nomor, tanggal WIB, dan rincian Excel terbaca tanpa identitas pasien",
+      "status": "Lulus"
+    },
+    {
+      "name": "Dropdown searchable, pemetaan tersimpan, dan validasi SweetAlert",
+      "status": "Lulus"
+    },
+    {
+      "name": "Pratinjau dan pencocokan tidak membuat halaman melebar di empat viewport",
+      "status": "Lulus"
+    },
+    {
+      "name": "Posting FEFO menampilkan dua batch dan tautan kartu stok",
+      "status": "Lulus"
+    },
+    {
+      "name": "Unggah ulang memakai pemetaan tersimpan dan tidak membuat mutasi kedua",
+      "status": "Lulus"
+    },
+    {
+      "name": "Transaksi sumber yang berubah diblokir dan tidak diam-diam dikurangi",
+      "status": "Lulus"
+    },
+    {
+      "name": "Hapus dari detail memakai SweetAlert; Batal mempertahankan draf",
+      "status": "Lulus"
+    },
+    {
+      "name": "Hapus dari riwayat tersedia di HP; dokumen terposting tetap terlindungi",
+      "status": "Lulus"
+    },
+    {
+      "name": "Pilihan tersimpan disembunyikan dan persetujuan tidak otomatis mengikuti perubahan",
+      "status": "Lulus"
+    },
+    {
+      "name": "Cari obat mempertahankan centang dan hanya menandai pilihan yang tampil",
+      "status": "Lulus"
+    },
+    {
+      "name": "Peringatan tanggal dan obat dipisahkan; filter tidak mengubah stok",
+      "status": "Lulus"
+    },
+    {
+      "name": "Daftar panjang di kiri, panel informasi di kanan, dan susunan HP tidak melebar",
+      "status": "Lulus"
+    },
+    {
+      "name": "Guest dapat melihat riwayat namun tidak bisa mengunggah atau posting",
+      "status": "Lulus"
+    }
+  ],
+  "errors": []
+}

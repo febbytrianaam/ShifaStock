@@ -1,0 +1,55 @@
+
+   INFO  Preparing database.  
+
+  Creating migration table .............................................................................. 53.92ms DONE
+
+   INFO  Running migrations.  
+
+  0001_01_01_000000_create_users_table .................................................................. 93.96ms DONE
+  0001_01_01_000001_create_cache_table .................................................................. 76.52ms DONE
+  0001_01_01_000002_create_jobs_table ................................................................... 77.00ms DONE
+  2026_10_07_000001_create_inventory_foundation ........................................................ 415.73ms DONE
+  2026_10_07_000002_add_username_to_users ............................................................... 63.15ms DONE
+  2026_10_08_100000_allow_unverified_imported_medicines ................................................ 117.26ms DONE
+  2026_10_08_110000_create_nightly_checks .............................................................. 293.41ms DONE
+  2026_10_09_000001_create_live_inventory_tables ....................................................... 434.01ms DONE
+  2026_10_09_020000_expand_master_medicines ............................................................ 936.51ms DONE
+  2026_10_09_030000_create_role_permissions_table ....................................................... 38.44ms DONE
+  2026_10_09_031000_create_audit_logs_table ............................................................. 92.99ms DONE
+  2026_10_13_000001_create_batch_stock_balances ........................................................ 217.42ms DONE
+  2026_10_13_000002_seed_new_inventory_permissions ...................................................... 28.64ms DONE
+  2026_10_13_000003_create_inventory_receipts .......................................................... 342.45ms DONE
+  2026_10_14_000001_add_prd_completion_tables .......................................................... 496.35ms DONE
+  2026_10_14_000002_finalize_prd_inventory_controls .................................................... 138.98ms DONE
+  2026_10_14_000003_add_superadmin_controls ............................................................. 34.73ms DONE
+  2026_10_15_000001_add_supplier_invoice_number_to_inventory_receipts ................................... 16.99ms DONE
+  2026_10_16_000001_add_batch_counts_to_nightly_check_items ............................................. 20.43ms DONE
+  2026_10_18_000001_add_stock_snapshot_to_stock_opname_sessions ......................................... 20.82ms DONE
+  2026_10_18_000002_create_inventory_write_locks ........................................................ 12.34ms DONE
+  2026_10_20_000001_add_onboarding_seen_at_to_users ..................................................... 45.61ms DONE
+  2026_10_21_000001_expand_guest_read_only_inventory_access ............................................. 65.62ms DONE
+  2026_10_21_150000_add_scope_to_nightly_checks ......................................................... 45.45ms DONE
+  2026_10_22_160000_add_shared_daily_check_tracking .................................................... 220.89ms DONE
+  2026_10_24_000001_create_issue_import_tables ......................................................... 755.60ms DONE
+
+PASS isolated MySQL fixture created
+PASS Unggah dan riwayat responsif desktop, tablet, dan HP
+PASS Unggah tidak langsung posting; obat cocok tetap perlu persetujuan
+PASS Beralih ke Input Manual dapat kembali ke impor yang sama tanpa unggah ulang
+PASS Nomor, tanggal WIB, dan rincian Excel terbaca tanpa identitas pasien
+PASS Dropdown searchable, pemetaan tersimpan, dan validasi SweetAlert
+PASS Pratinjau dan pencocokan tidak membuat halaman melebar di empat viewport
+PASS Posting FEFO menampilkan dua batch dan tautan kartu stok
+PASS Unggah ulang memakai pemetaan tersimpan dan tidak membuat mutasi kedua
+PASS Transaksi sumber yang berubah diblokir dan tidak diam-diam dikurangi
+PASS Hapus dari detail memakai SweetAlert; Batal mempertahankan draf
+PASS Hapus dari riwayat tersedia di HP; dokumen terposting tetap terlindungi
+PASS Pilihan tersimpan disembunyikan dan persetujuan tidak otomatis mengikuti perubahan
+PASS Cari obat mempertahankan centang dan hanya menandai pilihan yang tampil
+PASS Peringatan tanggal dan obat dipisahkan; filter tidak mengubah stok
+PASS Daftar panjang di kiri, panel informasi di kanan, dan susunan HP tidak melebar
+PASS Guest dapat melihat riwayat namun tidak bisa mengunggah atau posting
+PASS concurrent worker posted or skipped
+PASS concurrent stale preview rejected
+PASS MySQL stock=80, batches=80, unique source lines=3
+Evidence: C:\laragon\www\ShifaStock\storage\app/qa/issue-imports/acb81f4147f974fe

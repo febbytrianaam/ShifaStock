@@ -1,0 +1,173 @@
+{
+  "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+  "simulation": true,
+  "groups": [
+    {
+      "id": "SS-01",
+      "status": "Lulus",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:16:29.810Z",
+      "completed_at": "2026-10-29T07:16:32.972Z"
+    },
+    {
+      "id": "SS-05",
+      "status": "Lulus",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:16:32.972Z",
+      "completed_at": "2026-10-29T07:16:37.886Z"
+    },
+    {
+      "id": "SS-06",
+      "status": "Lulus",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:16:37.886Z",
+      "completed_at": "2026-10-29T07:16:38.950Z"
+    },
+    {
+      "id": "SS-04",
+      "status": "Lulus",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:16:38.951Z",
+      "completed_at": "2026-10-29T07:16:40.350Z"
+    },
+    {
+      "id": "SS-02",
+      "status": "Lulus",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:16:40.350Z",
+      "completed_at": "2026-10-29T07:16:54.999Z"
+    }
+  ],
+  "images": [
+    {
+      "id": "SS-01",
+      "file": "screenshots/SS-01-transfer-multi-item.png",
+      "role": "Petugas Simulasi",
+      "description": "Form transfer dua obat dengan alokasi batch otomatis FEFO, sebelum disimpan.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:16:31.383Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/transfer",
+      "sha256": "50d6435ae08836255abcc1a5dbfb2708f54859257d8a8c66cf8eb321bfb6d96f"
+    },
+    {
+      "id": "SS-01-result",
+      "file": "supporting/SS-01-hasil-transfer.png",
+      "role": "Petugas Simulasi",
+      "description": "Dua item transfer tersimpan dengan satu referensi dan tercatat pada riwayat.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:16:32.964Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/transfer",
+      "sha256": "1252e96263f55970dd4974ab585375c9093dc8d9516e5625f9b06b65ccdea890"
+    },
+    {
+      "id": "SS-05-return",
+      "file": "supporting/SS-05-retur-pbf.png",
+      "role": "Petugas Simulasi",
+      "description": "Form retur tiga tablet dari Gudang ke PBF Simulasi, sebelum disimpan.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:16:34.378Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/retur-pbf",
+      "sha256": "650597bd56daef8dfa0b20b76ae808fcba6462f93cb8498f1eb3fd3fdd873931"
+    },
+    {
+      "id": "SS-05",
+      "file": "screenshots/SS-05-retur-kondisi-obat.png",
+      "role": "Petugas Simulasi",
+      "description": "Form kondisi khusus obat rusak di Apotek, sebelum posting pengurangan dua tablet.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:16:36.878Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/kondisi-khusus",
+      "sha256": "04524fd3e3315b23705e9a76ee6eedf18460f2fce717ef5b0250daa713e0b244"
+    },
+    {
+      "id": "SS-05-result",
+      "file": "supporting/SS-05-hasil-kondisi-khusus.png",
+      "role": "Petugas Simulasi",
+      "description": "Riwayat posting obat rusak yang mengurangi dua tablet di Apotek.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:16:37.877Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/kondisi-khusus",
+      "sha256": "16d4b858dd1193e1446b727f742fc28add14da69212459a20c8cc5cb9850a742"
+    },
+    {
+      "id": "SS-06",
+      "file": "screenshots/SS-06-dropdown-batch.png",
+      "role": "Petugas Simulasi",
+      "description": "Batch bernomor sama mengikuti lokasi Apotek dengan sisa 40 tablet pada batch tersebut; diuji setelah berpindah dari Gudang.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:16:38.942Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/kondisi-khusus",
+      "sha256": "0c68f84a4cdf9fb8a90449e64e465da9adc0b174fec37ce7eeeefb1a824a33d8"
+    },
+    {
+      "id": "SS-04",
+      "file": "screenshots/SS-04-stok-per-batch.png",
+      "role": "Petugas Simulasi",
+      "description": "Dua batch Paracetamol pada dua lokasi, beserta tanggal kedaluwarsa dan stok setelah transaksi.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:16:40.342Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/kedaluwarsa?search=SIM-001&status=all",
+      "sha256": "d0313957a7b5663c9b7410a2f5832f83ef933a4cfe2cfbab239ef34ba4cdcfa6"
+    },
+    {
+      "id": "SS-02-process",
+      "file": "supporting/SS-02-proses-petugas.png",
+      "role": "Petugas Simulasi",
+      "description": "Petugas menyimpan dua dari tiga hasil hitung pada draf pemeriksaan.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:16:44.849Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/pengecekan-malam/1",
+      "sha256": "fb4c04dc9612ac02f01185065bf58dcba36a7b94b5f2861c9bd70207612d2a66"
+    },
+    {
+      "id": "SS-02",
+      "file": "screenshots/SS-02-pemeriksaan-harian.png",
+      "role": "Apoteker Simulasi",
+      "description": "Apoteker melanjutkan draf buatan petugas; tiga hasil hitung tersimpan dan pembuat serta pelaksana terakhir tercatat.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:16:54.879Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/pengecekan-malam/1",
+      "sha256": "c40733c70f09a284cd9300f3fcdccea6b02353a39a82ecb28c6382a639a334bd"
+    },
+    {
+      "id": "SS-02-activity",
+      "file": "supporting/SS-02-aktivitas-bersama.png",
+      "role": "Apoteker Simulasi",
+      "description": "Jejak aktivitas menunjukkan petugas membuat/mengisi draf dan apoteker meneruskan pekerjaan.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:16:54.991Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/pengecekan-malam/1",
+      "sha256": "358ef0e3197948b6aceaeb0451fee672a437cf114e7c9185962cc0a39d86f5d1"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+    "status": "Lulus",
+    "mismatched_pairs": 0,
+    "batch_identity_issues": 0,
+    "simulation": true,
+    "paracetamol": {
+        "gudang": 185,
+        "apotek": 80
+    },
+    "cetirizine": {
+        "gudang": 72,
+        "apotek": 28
+    }
+}

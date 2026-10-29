@@ -1,0 +1,28 @@
+{
+  "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+  "simulation": true,
+  "groups": [
+    {
+      "id": "SS-01",
+      "status": "Gagal",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:11:13.469Z",
+      "message": "The input did not match the regular expression /Transfer diposting/. Input:\n\n'Monitoring Obat\\n' +\n  '\\n' +\n  'Klinik Shifa Medika\\n' +\n  '\\n' +\n  'MENU UTAMA\\n' +\n  '\\n' +\n  '▦\\n' +\n  'Dashboard\\n' +\n  '\\n' +\n  'DATA & PERGERAKAN\\n' +\n  '\\n' +\n  '▤\\n' +\n  'Data Obat\\n' +\n  '↓\\n' +\n  'Penerimaan Obat\\n' +\n  '⇄\\n' +\n  'Transfer Gudang–Apotek\\n' +\n  '↑\\n' +\n  'Pengeluaran Obat\\n' +\n  '↩\\n' +\n  'Retur PBF\\n' +\n  '\\n' +\n  'PEMERIKSAAN STOK\\n' +\n  '\\n' +\n  '✓\\n' +\n  'Pemeriksaan Stok\\n' +\n  '\\n' +\n  'TINDAK LANJUT\\n' +\n  '\\n' +\n  '!\\n' +\n  'Monitoring\\n' +\n  '◇\\n' +\n  'Kondisi Khusus\\n' +\n  '▥\\n' +\n  'Laporan\\n' +\n  'Monitoring Obat\\n' +\n  '/\\n' +\n  'Data dan Pergerakan\\n' +\n  'Transfer Gudang–Apotek\\n' +\n  '29 Okt 2026\\n' +\n  'Petugas Simulasi\\n' +\n  'Pindahkan beberapa obat sekaligus dari satu lokasi ke lokasi lain, misalnya Gudang ke Apotek. Isi obat dan jumlah per baris. Batch kosong memakai kedaluwarsa terdekat secara otomatis. Seluruh item disimpan bersama; jika ada yang gagal, stok tidak dipindahkan.\\n' +\n  'Referensi\\n' +\n  'Lokasi sumber\\n' +\n  'Apotek\\n' +\n  'Gudang\\n' +\n  'Lokasi tujuan\\n' +\n  'Apotek\\n' +\n  'Gudang\\n' +\n  'Waktu transfer\\n' +\n  'Catatan\\n' +\n  'Item Transfer\\n' +\n  'Baris\\n' +\n  'OBAT\\tBATCH (OPSIONAL)\\tJUMLAH DIPINDAHKAN\\tAKSI\\n' +\n  '\\n' +\n  'Baris 1\\n' +\n  'Obat\\n' +\n  'Pilih obat\\n' +\n  'SIM-002 - Cetirizine 10 mg (Simulasi) (Tablet)\\n' +\n  'SIM-001 - Paracetamol 500 mg (Simulasi) (Tablet)\\n' +\n  'SIM-003 - Salbutamol 2 mg (Simulasi) (Tablet)\\n' +\n  'x\\n' +\n  '\\n' +\n  'Stok batch layak pakai tersedia: 200 Tablet di Gudang.\\n' +\n  '\\n' +\n  'Perkiraan batch otomatis: SIM-BATCH-SAMA: 12 Tablet. Stok diperiksa kembali saat disimpan.\\n' +\n  '\\n' +\n  '\\t\\n' +\n  'Batch\\n' +\n  'Otomatis: kedaluwarsa terdekat\\n' +\n  'SIM-BATCH-SAMA - Gudang - ED 29/12/2026 - 120 Tablet\\n' +\n  'SIM-BATCH-SAMA - Apotek - ED 29/12/2026 - 30 Tablet\\n' +\n  'SIM-BATCH-LANJUT - Gudang - ED 29/10/2027 - 80 Tablet\\n' +\n  'SIM-BATCH-LANJUT - Apotek - ED 29/10/2027 - 40 Tablet\\n' +\n  'SIM-BATCH-2 - Gudang - ED 29/12/2026 - 80 Tablet\\n' +\n  'SIM-BATCH-2 - Apotek - ED 29/12/2026 - 20 Tablet\\n' +\n  'SIM-BATCH-3 - Gudang - ED 29/12/2026 - 60 Tablet\\n' +\n  'SIM-BATCH-3 - Apotek - ED 29/12/2026 - 15 Tablet\\n' +\n  'x\\n' +\n  '\\t\\n' +\n  'Jumlah (Tablet)\\n' +\n  'Tablet\\n' +\n  '\\t\\n' +\n  '\\n' +\n  '\\n' +\n  'Baris 2\\n' +\n  'Obat\\n' +\n  'Pilih obat\\n' +\n  'SIM-002 - Cetirizine 10 mg (Simulasi) (Tablet)\\n' +\n  'SIM-001 - Paracetamol 500 mg (Simulasi) (Tablet)\\n' +\n  'SIM-003 - Salbutamol 2 mg (Simulasi) (Tablet)\\n' +\n  'x\\n' +\n  '\\n' +\n  'Stok batch layak pakai tersedia: 80 Tablet di Gudang.\\n' +\n  '\\n' +\n  'Perkiraan batch otomatis: SIM-BATCH-2: 8 Tablet. Stok diperiksa kembali saat disimpan.\\n' +\n  '\\n' +\n  '\\t\\n' +\n  'Batch\\n' +\n  'Otomatis: kedaluwarsa terdekat\\n' +\n  'SIM-BATCH-SAMA - Gudang - ED 29/12/2026 - 120 Tablet\\n' +\n  'SIM-BATCH-SAMA - Apotek - ED 29/12/2026 - 30 Tablet\\n' +\n  'SIM-BATCH-LANJUT - Gudang - ED 29/10/2027 - 80 Tablet\\n' +\n  'SIM-BATCH-LANJUT - Apotek - ED 29/10/2027 - 40 Tablet\\n' +\n  'SIM-BATCH-2 - Gudang - ED 29/12/2026 - 80 Tablet\\n' +\n  'SIM-BATCH-2 - Apotek - ED 29/12/2026 - 20 Tablet\\n' +\n  'SIM-BATCH-3 - Gudang - ED 29/12/2026 - 60 Tablet\\n' +\n  'SIM-BATCH-3 - Apotek - ED 29/12/2026 - 15 Tablet\\n' +\n  'x\\n' +\n  '\\t\\n' +\n  'Jumlah (Tablet)\\n' +\n  'Tablet\\n' +\n  '\\t\\n' +\n  '\\n' +\n  'Pilih batch untuk menentukan pengambilan, atau biarkan otomatis sesuai kedaluwarsa terdekat.\\n' +\n  '\\n' +\n  'Simpan Transfer\\n' +\n  'WAKTU\\tREFERENSI\\tOBAT\\tPERPINDAHAN\\tJUMLAH\\tPETUGAS\\tKARTU STOK\\n' +\n  'Belum ada transfer yang diposting.\\n' +\n  '?\\n' +\n  'Simpan transfer 2 baris obat?\\n' +\n  'Stok lokasi sumber akan berkurang dan stok tujuan bertambah. Semua item disimpan bersama; jika ada yang gagal, stok tidak dipindahkan.\\n' +\n  'Ya, simpan transfer\\n' +\n  'Periksa kembali'\n"
+    }
+  ],
+  "images": [
+    {
+      "id": "SS-01",
+      "file": "screenshots/SS-01-transfer-multi-item.png",
+      "role": "Petugas Simulasi",
+      "description": "Form transfer dua obat dengan alokasi batch otomatis FEFO, sebelum disimpan.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:11:15.129Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/transfer",
+      "sha256": "875156f160dc0fbda4bb4383ca48594a1db9c103b2f541c2ab1076ed3c8eb27a"
+    }
+  ]
+}

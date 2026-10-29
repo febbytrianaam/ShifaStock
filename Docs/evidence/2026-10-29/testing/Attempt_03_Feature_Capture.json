@@ -1,0 +1,114 @@
+{
+  "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+  "simulation": true,
+  "groups": [
+    {
+      "id": "SS-01",
+      "status": "Lulus",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:12:40.424Z",
+      "completed_at": "2026-10-29T07:12:43.713Z"
+    },
+    {
+      "id": "SS-05",
+      "status": "Lulus",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:12:43.713Z",
+      "completed_at": "2026-10-29T07:12:48.629Z"
+    },
+    {
+      "id": "SS-06",
+      "status": "Lulus",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:12:48.629Z",
+      "completed_at": "2026-10-29T07:12:49.712Z"
+    },
+    {
+      "id": "SS-04",
+      "status": "Gagal",
+      "method": "Playwright browser",
+      "started_at": "2026-10-29T07:12:49.712Z",
+      "message": "Expected values to be strictly equal:\n\n2 !== 4\n"
+    }
+  ],
+  "images": [
+    {
+      "id": "SS-01",
+      "file": "screenshots/SS-01-transfer-multi-item.png",
+      "role": "Petugas Simulasi",
+      "description": "Form transfer dua obat dengan alokasi batch otomatis FEFO, sebelum disimpan.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:12:42.122Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/transfer",
+      "sha256": "0281579cc2289ce0f4c0a62f79af6601f06e02e0598c58d3ba54d765339cdb55"
+    },
+    {
+      "id": "SS-01-result",
+      "file": "supporting/SS-01-hasil-transfer.png",
+      "role": "Petugas Simulasi",
+      "description": "Dua item transfer tersimpan dengan satu referensi dan tercatat pada riwayat.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:12:43.705Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/transfer",
+      "sha256": "df3b37a56bfeb0fbf5a186c3d438cab237070ff99ea79f737b6abd8fff094934"
+    },
+    {
+      "id": "SS-05-return",
+      "file": "supporting/SS-05-retur-pbf.png",
+      "role": "Petugas Simulasi",
+      "description": "Form retur tiga tablet dari Gudang ke PBF Simulasi, sebelum disimpan.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:12:45.153Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/retur-pbf",
+      "sha256": "29546e4bbc00ced80250eed0a1a0992ff814d75a8656e2041af736edd1f943cf"
+    },
+    {
+      "id": "SS-05",
+      "file": "screenshots/SS-05-retur-kondisi-obat.png",
+      "role": "Petugas Simulasi",
+      "description": "Form kondisi khusus obat rusak di Apotek, sebelum posting pengurangan dua tablet.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:12:47.556Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/kondisi-khusus",
+      "sha256": "f7a33eded208d940da19a5e5e8d198669438f1d9636c089e3ecf886f2fb4d863"
+    },
+    {
+      "id": "SS-05-result",
+      "file": "supporting/SS-05-hasil-kondisi-khusus.png",
+      "role": "Petugas Simulasi",
+      "description": "Riwayat posting obat rusak yang mengurangi dua tablet di Apotek.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:12:48.621Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/kondisi-khusus",
+      "sha256": "a182fbf99430a65f94ad268ecc75b7f94d323f14ef7269505e206a5106de5fd6"
+    },
+    {
+      "id": "SS-06",
+      "file": "screenshots/SS-06-dropdown-batch.png",
+      "role": "Petugas Simulasi",
+      "description": "Batch bernomor sama mengikuti lokasi Apotek dengan sisa 40 tablet pada batch tersebut; diuji setelah berpindah dari Gudang.",
+      "status": "berhasil",
+      "source": "aplikasi berjalan",
+      "captured_at": "2026-10-29T07:12:49.705Z",
+      "commit": "05ba910ce8804ffc9e049a17e96295bb59714cb9",
+      "simulation": true,
+      "page": "/kondisi-khusus",
+      "sha256": "4f84a45d9fd8b3d6d11894533eaff44e75dd71ba07bcc50a9b7fa89859b30fc0"
+    }
+  ]
+}

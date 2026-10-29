@@ -4,6 +4,9 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 
 ## Start Here
 
+- [2026-10-29 Capstone screenshots in one dated folder](Capstone_Screenshots/2026-10-29/README.md)
+- [2026-10-29 actual test evidence and limitations](evidence/2026-10-29/README.md)
+
 - [Guided Excel issue import](30_implemented/2026-10-27-issue-import-guided-ui/implementation_report.md)
 
 - [Excel-based Neoklinik medicine issues](30_implemented/2026-10-24-neoklinik-issue-import/implementation_report.md)
@@ -59,6 +62,8 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 - Preserve legacy reference files in this `docs/` tree unless the user asks for a cleanup; older screenshots, prior handoff material, import notes, and prototype assets came from the previous `Docs/` folder.
 
 ## Implementation History Index
+
+- [2026-10-29 Capstone evidence refresh](30_implemented/2026-10-29-capstone-evidence/)
 
 - [2026-10-21 Multi-item stock transfers](30_implemented/2026-10-21-multi-item-transfer/)
 
