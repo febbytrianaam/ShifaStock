@@ -1,0 +1,744 @@
+{
+  "collected_at": "2026-11-03T08:10:47.8773029+07:00",
+  "timezone": "Asia/Jakarta",
+  "base_commit": "dd720d5d75001e804309a6374bc3dbbd727f87c2",
+  "working_tree_changes_included": true,
+  "simulation_only": true,
+  "environment": {
+    "php": "8.5.9",
+    "framework": "Laravel 13.35.0",
+    "phpunit": "12.5.38",
+    "backend_database": "SQLite :memory:",
+    "browser_database": "Isolated temporary MySQL",
+    "browser": "Playwright with installed Google Chrome",
+    "persistent_database_modified": false,
+    "active_env_modified": false,
+    "deployed": false
+  },
+  "phpunit": {
+    "source": "storage/app/qa/inventory/phpunit-results.xml",
+    "sha256": "dcb5faea4b34b987448a5efb62bf8c89d3d5e9d0c20ef57d25c3773bddcd8d55",
+    "tests": 260,
+    "assertions": 2843,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "duration_seconds": 38.377897,
+    "suites": [
+      {
+        "name": "Tests\\Unit\\ExampleTest",
+        "tests": 1,
+        "assertions": 1,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Unit\\QuantityTest",
+        "tests": 1,
+        "assertions": 8,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Unit\\StockSnapshotTest",
+        "tests": 1,
+        "assertions": 3,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\AddNightlyMedicinesTest",
+        "tests": 9,
+        "assertions": 90,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\AdminUserManagementTest",
+        "tests": 2,
+        "assertions": 13,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\AuditRegressionTest",
+        "tests": 12,
+        "assertions": 32,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\AuthorizationAuditTest",
+        "tests": 9,
+        "assertions": 47,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\CapstoneFunctionalTest",
+        "tests": 13,
+        "assertions": 170,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\DailyBatchCountTest",
+        "tests": 10,
+        "assertions": 143,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\DailyRevisionAuditTest",
+        "tests": 7,
+        "assertions": 98,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\DashboardOnboardingTest",
+        "tests": 7,
+        "assertions": 53,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\DashboardStockMonitoringTest",
+        "tests": 6,
+        "assertions": 45,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\DemoInventoryCleanupTest",
+        "tests": 5,
+        "assertions": 22,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\ErrorPageTest",
+        "tests": 7,
+        "assertions": 43,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\ExampleTest",
+        "tests": 1,
+        "assertions": 2,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\FoundationTest",
+        "tests": 7,
+        "assertions": 48,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\GuestRoleTest",
+        "tests": 8,
+        "assertions": 127,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\InventoryFlowTest",
+        "tests": 5,
+        "assertions": 63,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\InventoryIntegrationTest",
+        "tests": 6,
+        "assertions": 128,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\InventoryReconciliationTest",
+        "tests": 3,
+        "assertions": 13,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\InventoryUsabilityTest",
+        "tests": 2,
+        "assertions": 9,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\IssueGuidanceTest",
+        "tests": 2,
+        "assertions": 24,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\IssueImportTest",
+        "tests": 44,
+        "assertions": 545,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\MultiTransferTest",
+        "tests": 12,
+        "assertions": 188,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\NightlyCheckTest",
+        "tests": 2,
+        "assertions": 42,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\NightlyDraftCancelTest",
+        "tests": 1,
+        "assertions": 6,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\NightlyPrintTest",
+        "tests": 7,
+        "assertions": 58,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\OpnameAuditRegressionTest",
+        "tests": 6,
+        "assertions": 134,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\OpnameAuditTest",
+        "tests": 4,
+        "assertions": 74,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\PartialNightlySubmissionTest",
+        "tests": 10,
+        "assertions": 95,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\PrototypeUiTest",
+        "tests": 4,
+        "assertions": 34,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\ReceiptWorkflowTest",
+        "tests": 4,
+        "assertions": 52,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\SelectedNightlyCheckTest",
+        "tests": 17,
+        "assertions": 205,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\SharedNightlyCheckTest",
+        "tests": 15,
+        "assertions": 162,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\StockUnitProtectionTest",
+        "tests": 4,
+        "assertions": 31,
+        "errors": 0,
+        "failures": 0
+      },
+      {
+        "name": "Tests\\Feature\\UatEnvironmentTest",
+        "tests": 6,
+        "assertions": 35,
+        "errors": 0,
+        "failures": 0
+      }
+    ]
+  },
+  "browser_total": 90,
+  "browser": [
+    {
+      "name": "operational",
+      "source": "storage/app/qa/inventory-browser/Browser_final.json",
+      "sha256": "0ca314bc88b502d959d07afd6a45fc56168be2019c32c1581ae17dc8e853322e",
+      "total": 17,
+      "passed": 17,
+      "cases": [
+        {
+          "name": "Login tidak valid ditolak",
+          "status": "Lulus"
+        },
+        {
+          "name": "Login valid petugas",
+          "status": "Lulus"
+        },
+        {
+          "name": "Panduan pengeluaran menjelaskan pencatatan manual, jumlah keluar, FEFO, dan stok pada desktop/tablet/HP",
+          "status": "Lulus"
+        },
+        {
+          "name": "Dashboard minimum stok memakai stok transaksi tanpa menunggu pemeriksaan harian",
+          "status": "Lulus"
+        },
+        {
+          "name": "Dashboard mobile dan tautan monitoring mempertahankan obat serta lokasi",
+          "status": "Lulus"
+        },
+        {
+          "name": "Batch Apotek dipilih dengan label dan native option sesuai lokasi",
+          "status": "Lulus"
+        },
+        {
+          "name": "Pergantian lokasi memilih opsi batch yang sesuai",
+          "status": "Lulus"
+        },
+        {
+          "name": "Prefill batch Gudang dan Apotek dari tautan monitoring",
+          "status": "Lulus"
+        },
+        {
+          "name": "Validasi SweetAlert tidak mengembalikan label ke Gudang",
+          "status": "Lulus"
+        },
+        {
+          "name": "Mengubah obat membersihkan batch yang tidak cocok",
+          "status": "Lulus"
+        },
+        {
+          "name": "Posting kondisi khusus mengurangi stok Apotek saja",
+          "status": "Lulus"
+        },
+        {
+          "name": "Widget dashboard membaca ulang stok Apotek setelah posting kondisi khusus",
+          "status": "Lulus"
+        },
+        {
+          "name": "Regresi dropdown lintas lokasi pada /transfer",
+          "status": "Lulus"
+        },
+        {
+          "name": "Regresi dropdown lintas lokasi pada /obat-keluar",
+          "status": "Lulus"
+        },
+        {
+          "name": "Regresi dropdown lintas lokasi pada /retur-pbf",
+          "status": "Lulus"
+        },
+        {
+          "name": "Monitoring menampilkan lokasi dan indikator minimum serta kedaluwarsa",
+          "status": "Lulus"
+        },
+        {
+          "name": "Guest dapat melihat tetapi tidak dapat mengirim transaksi atau membuka pengguna",
+          "status": "Lulus"
+        }
+      ]
+    },
+    {
+      "name": "issue_import",
+      "source": "storage/app/qa/issue-imports/58756c5cd4c0aacd/Playwright.json",
+      "sha256": "793a16eb0f713ba2c22601d1fb19e3fbfc411dedb8cb30ceab6f85412c53eec1",
+      "total": 17,
+      "passed": 17,
+      "cases": [
+        {
+          "name": "Unggah dan riwayat responsif desktop, tablet, dan HP",
+          "status": "Lulus"
+        },
+        {
+          "name": "Unggah tidak langsung posting; obat cocok tetap perlu persetujuan",
+          "status": "Lulus"
+        },
+        {
+          "name": "Beralih ke Input Manual dapat kembali ke impor yang sama tanpa unggah ulang",
+          "status": "Lulus"
+        },
+        {
+          "name": "Nomor, tanggal WIB, dan rincian Excel terbaca tanpa identitas pasien",
+          "status": "Lulus"
+        },
+        {
+          "name": "Dropdown searchable, pemetaan tersimpan, dan validasi SweetAlert",
+          "status": "Lulus"
+        },
+        {
+          "name": "Pratinjau dan pencocokan tidak membuat halaman melebar di empat viewport",
+          "status": "Lulus"
+        },
+        {
+          "name": "Posting FEFO menampilkan dua batch dan tautan kartu stok",
+          "status": "Lulus"
+        },
+        {
+          "name": "Unggah ulang memakai pemetaan tersimpan dan tidak membuat mutasi kedua",
+          "status": "Lulus"
+        },
+        {
+          "name": "Transaksi sumber yang berubah diblokir dan tidak diam-diam dikurangi",
+          "status": "Lulus"
+        },
+        {
+          "name": "Hapus dari detail memakai SweetAlert; Batal mempertahankan draf",
+          "status": "Lulus"
+        },
+        {
+          "name": "Hapus dari riwayat tersedia di HP; dokumen terposting tetap terlindungi",
+          "status": "Lulus"
+        },
+        {
+          "name": "Pilihan tersimpan disembunyikan dan persetujuan tidak otomatis mengikuti perubahan",
+          "status": "Lulus"
+        },
+        {
+          "name": "Cari obat mempertahankan centang dan hanya menandai pilihan yang tampil",
+          "status": "Lulus"
+        },
+        {
+          "name": "Peringatan tanggal dan obat dipisahkan; filter tidak mengubah stok",
+          "status": "Lulus"
+        },
+        {
+          "name": "Daftar panjang di kiri, panel informasi di kanan, dan susunan HP tidak melebar",
+          "status": "Lulus"
+        },
+        {
+          "name": "502 pilihan obat terkirim lengkap tanpa batas max_input_vars dan tanpa posting stok",
+          "status": "Lulus"
+        },
+        {
+          "name": "Guest dapat melihat riwayat namun tidak bisa mengunggah atau posting",
+          "status": "Lulus"
+        }
+      ]
+    },
+    {
+      "name": "onboarding",
+      "source": "storage/app/qa/onboarding/results.json",
+      "sha256": "cbe0c1435ce04c05df7f200c5230371f90f532f523a4b012f951e808eb2a02d1",
+      "total": 14,
+      "passed": 14,
+      "cases": [
+        {
+          "name": "Login pertama menampilkan spotlight dan navigasi kembali/selanjutnya",
+          "status": "Lulus"
+        },
+        {
+          "name": "Lewati tersimpan di akun lintas sesi browser",
+          "status": "Lulus"
+        },
+        {
+          "name": "Dashboard tidak memiliki mode dummy dan memakai stok fixture database",
+          "status": "Lulus"
+        },
+        {
+          "name": "Buka ulang dan selesaikan panduan",
+          "status": "Lulus"
+        },
+        {
+          "name": "Gagal simpan 419 memberi petunjuk dan dapat dicoba lagi",
+          "status": "Lulus"
+        },
+        {
+          "name": "Gagal simpan 401 memberi petunjuk dan dapat dicoba lagi",
+          "status": "Lulus"
+        },
+        {
+          "name": "Gagal simpan 403 memberi petunjuk dan dapat dicoba lagi",
+          "status": "Lulus"
+        },
+        {
+          "name": "Gagal simpan 500 memberi petunjuk dan dapat dicoba lagi",
+          "status": "Lulus"
+        },
+        {
+          "name": "Gangguan koneksi dan respons non-JSON tidak menutup panduan sebagai sukses",
+          "status": "Lulus"
+        },
+        {
+          "name": "Panduan sesuai hak akses admin_simulasi",
+          "status": "Lulus"
+        },
+        {
+          "name": "Panduan sesuai hak akses apoteker_simulasi",
+          "status": "Lulus"
+        },
+        {
+          "name": "Panduan sesuai hak akses guest_simulasi",
+          "status": "Lulus"
+        },
+        {
+          "name": "Mobile: spotlight sidebar dan seluruh tombol muat dalam viewport",
+          "status": "Lulus"
+        },
+        {
+          "name": "Pembuka tetap di tengah saat resize, kembali dari menu, dan layar pendek",
+          "status": "Lulus"
+        }
+      ]
+    },
+    {
+      "name": "nightly_workspace",
+      "source": "storage/app/qa/nightly-workspace-browser/results.json",
+      "sha256": "9deb9dcc07c439ceaae6c1a0a628a424593382c001f7803d7806bf90285317bf",
+      "total": 20,
+      "passed": 20,
+      "cases": [
+        {
+          "name": "Penjelasan stok awal, sistem, fisik, dan persetujuan terlihat sebelum form pada desktop, tablet, dan HP",
+          "status": "Lulus"
+        },
+        {
+          "name": "167 obat: default 10 per halaman, footer terlihat, tanpa scroll horizontal desktop",
+          "status": "Lulus"
+        },
+        {
+          "name": "Penjelasan di laporan dapat dibuka dengan keyboard tanpa mengubah jumlah fisik",
+          "status": "Lulus"
+        },
+        {
+          "name": "Desktop: kolom proporsional memenuhi area kerja, sejajar header, tanpa ruang kosong di kanan",
+          "status": "Lulus"
+        },
+        {
+          "name": "Hover header menampilkan deskripsi yang tidak terpotong tabel dan tidak mengubah layout",
+          "status": "Lulus"
+        },
+        {
+          "name": "Tooltip keyboard dan klik dapat ditutup dengan Escape atau klik luar tanpa mengirim form",
+          "status": "Lulus"
+        },
+        {
+          "name": "HP: keterangan kolom dapat diketuk dan tetap di dalam layar tanpa mengubah input",
+          "status": "Lulus"
+        },
+        {
+          "name": "Input di filter Belum dicek tidak menghilang saat diketik; 0 dihitung sebagai diperiksa",
+          "status": "Lulus"
+        },
+        {
+          "name": "Pagination dan pencarian tidak membuang hasil hitung, permintaan, atau catatan",
+          "status": "Lulus"
+        },
+        {
+          "name": "Tab Ringkasan dan keyboard tidak menghapus isian; Enter tidak mengirim form",
+          "status": "Lulus"
+        },
+        {
+          "name": "Simpan nyata mempertahankan nilai pada halaman 1, 2, dan 17 beserta rincian",
+          "status": "Lulus"
+        },
+        {
+          "name": "Responsif desktop, tablet, HP: tanpa overflow/tumpang tindih, termasuk rincian terbuka",
+          "status": "Lulus"
+        },
+        {
+          "name": "Dialog Tambah Obat dapat dipakai di tablet dan HP tanpa terpotong",
+          "status": "Lulus"
+        },
+        {
+          "name": "Tidak ada hasil pencarian ditampilkan dengan jelas tanpa menghapus isian",
+          "status": "Lulus"
+        },
+        {
+          "name": "Batch di Rincian menjumlah otomatis dan memberi penjelasan input terkunci",
+          "status": "Lulus"
+        },
+        {
+          "name": "Validasi membuka halaman dan Rincian batch yang tersembunyi oleh filter",
+          "status": "Lulus"
+        },
+        {
+          "name": "Guest tetap lihat saja tanpa hak edit",
+          "status": "Lulus"
+        },
+        {
+          "name": "Apoteker melanjutkan draf petugas, pembuat tetap sama, pelaksana dan aktivitas tercatat",
+          "status": "Lulus"
+        },
+        {
+          "name": "Dua akun: halaman lama ditolak tanpa menimpa catatan apoteker atau menghilangkan isian petugas",
+          "status": "Lulus"
+        },
+        {
+          "name": "Arah sebaliknya: draf buatan apoteker dapat diisi dan ditambah obat oleh petugas",
+          "status": "Lulus"
+        }
+      ]
+    },
+    {
+      "name": "partial_nightly",
+      "source": "storage/app/qa/partial-nightly-browser/results.json",
+      "sha256": "adecd7f24702ad4e21a59f2592d57b33e6cb26c555b437195610e715d607a942",
+      "total": 7,
+      "passed": 7,
+      "cases": [
+        {
+          "name": "Daftar semua obat tetap dapat disimpan sebagai draf sebagian",
+          "status": "Lulus"
+        },
+        {
+          "name": "Konfirmasi sebagian dapat dibatalkan tanpa mengirim atau kehilangan isian",
+          "status": "Lulus"
+        },
+        {
+          "name": "Simpan Draf tersedia langsung dari konfirmasi sebagian",
+          "status": "Lulus"
+        },
+        {
+          "name": "Mobile: konfirmasi ringkas terlihat penuh dan hanya hasil terisi yang dikirim",
+          "status": "Lulus"
+        },
+        {
+          "name": "Apoteker menyetujui hanya obat terhitung dan melihat peringatan obat belum diperiksa",
+          "status": "Lulus"
+        },
+        {
+          "name": "Laporan tanpa satu pun hasil hitung tidak dapat dikirim",
+          "status": "Lulus"
+        },
+        {
+          "name": "Warning 30 baris dikelompokkan, dibatasi contoh, aman dari HTML, dan membuka halaman baris bermasalah",
+          "status": "Lulus"
+        }
+      ]
+    },
+    {
+      "name": "selected_nightly",
+      "source": "storage/app/qa/selected-nightly-browser/results.json",
+      "sha256": "30192bf6c13445093bcdac46ff121d4e388cb5ff69a9688acff43dfa440c64f7",
+      "total": 15,
+      "passed": 15,
+      "cases": [
+        {
+          "name": "Desktop: complete default and selected mode with searchable medicine checkboxes",
+          "status": "Lulus"
+        },
+        {
+          "name": "No selection: SweetAlert warning prevents empty selected-report POST",
+          "status": "Lulus"
+        },
+        {
+          "name": "Selection survives search, no-results query, and scope toggle",
+          "status": "Lulus"
+        },
+        {
+          "name": "Selected report creates one medicine row; blank draft can save but cannot submit",
+          "status": "Lulus"
+        },
+        {
+          "name": "Print warns about unsaved draft input instead of silently printing older counts",
+          "status": "Lulus"
+        },
+        {
+          "name": "Add picker excludes existing medicines; close and Escape preserve unsaved desktop/mobile counts",
+          "status": "Lulus"
+        },
+        {
+          "name": "Add without selection uses visible SweetAlert and restores picker without losing counts",
+          "status": "Lulus"
+        },
+        {
+          "name": "Real add saves unsaved quantity, batch, unit, flag, requested quantity and note; new row stays blank",
+          "status": "Lulus"
+        },
+        {
+          "name": "Newly added unchecked medicine requires partial confirmation; cancel preserves the draft",
+          "status": "Lulus"
+        },
+        {
+          "name": "Explicit zero and requested quantity submit with per-batch zero counts",
+          "status": "Lulus"
+        },
+        {
+          "name": "Pharmacist approves selected report using stock-review confirmation",
+          "status": "Lulus"
+        },
+        {
+          "name": "Saved approved report opens an A4 portrait clinic report with logo, recorded batches and print-only layout",
+          "status": "Lulus"
+        },
+        {
+          "name": "Long draft print retains all 70 saved rows, inactive masters and draft warnings across PDF pages",
+          "status": "Lulus"
+        },
+        {
+          "name": "Mobile: medicine selection and report stay within 390px viewport",
+          "status": "Lulus"
+        },
+        {
+          "name": "Guest: read-only report without creation form; selected-report POST denied",
+          "status": "Lulus"
+        }
+      ]
+    }
+  ],
+  "mysql_concurrency": {
+    "source": "storage/app/qa/inventory/mysql-audit-2026-11-03.log",
+    "sha256": "4a236ded529e31f66d5481b66837785f77092b395eb39f5a222ff02433487e49",
+    "passed": 11,
+    "checks": [
+      "concurrent FEFO issues: one accepted, no overselling.",
+      "concurrent reversal: applied once.",
+      "concurrent opname finalization: applied once.",
+      "concurrent same-period opname creation: one draft, one friendly rejection.",
+      "concurrent shared daily drafts: one save accepted, stale write rejected, creator and actor preserved.",
+      "concurrent daily approval and MySQL JSON snapshot round-trip.",
+      "concurrent duplicate reference: posted once.",
+      "unit edit versus first receipt: serialized, no historical relabeling.",
+      "concurrent first receipts: one balance row, both additions retained.",
+      "concurrent multi-item transfers: second-item failure rolls back the entire losing transfer.",
+      "concurrent multi-item duplicate reference: one complete transfer posted once."
+    ]
+  },
+  "mysql_issue_import": {
+    "status": "Lulus",
+    "checked_at": "2026-11-03T08:06:46+07:00",
+    "stock_total": 80,
+    "batch_total": 80,
+    "unique_source_lines": 3,
+    "checks": [
+      "browser posting FEFO",
+      "overlap and changed data",
+      "concurrent imports",
+      "retry stale preview without duplicate"
+    ]
+  },
+  "dependencies": {
+    "composer_advisories": 0,
+    "npm_vulnerabilities": 0,
+    "composer_source": "storage/app/qa/dependency-audit/composer-final.json",
+    "npm_source": "storage/app/qa/dependency-audit/npm-final.json",
+    "symfony_mime": "8.1.10",
+    "follow_redirects": "1.16.2"
+  },
+  "limitations": [
+    "Working tree verification, not a clean published commit",
+    "Synthetic automated checks, not manual clinic UAT",
+    "VDI/public domain not deployed or tested for writes",
+    "No production data, passwords, keys, or session cookies included"
+  ]
+}

@@ -7,6 +7,10 @@ This folder records shipped work as historical truth. Each feature folder contai
 
 ## Index
 
+- [2026-11-03 Comprehensive audit, stock safeguards, and regression verification](2026-11-03-comprehensive-audit/)
+
+- [2026-10-31 Same-origin onboarding save and actionable errors](2026-10-31-onboarding-domain-save/)
+
 - [2026-10-29 Capstone evidence refresh and dated screenshot package](2026-10-29-capstone-evidence/)
 
 - [2026-10-27 Guided Excel issue import](2026-10-27-issue-import-guided-ui/)

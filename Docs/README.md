@@ -4,6 +4,10 @@ This folder is the AI-friendly documentation system for ShifaStock. It separates
 
 ## Start Here
 
+- [2026-11-03 Audit menyeluruh, perbaikan bug, dan hasil pengujian aktual](30_implemented/2026-11-03-comprehensive-audit/implementation_report.md)
+
+- [2026-10-31 Onboarding save behind a VDI domain](30_implemented/2026-10-31-onboarding-domain-save/implementation_report.md)
+
 - [2026-10-29 Capstone screenshots in one dated folder](Capstone_Screenshots/2026-10-29/README.md)
 - [2026-10-29 actual test evidence and limitations](evidence/2026-10-29/README.md)
 
