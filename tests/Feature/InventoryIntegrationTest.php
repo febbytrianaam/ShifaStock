@@ -99,15 +99,15 @@ class InventoryIntegrationTest extends TestCase
             'cutoff_at' => '2026-10-16T09:00'])->assertSessionHasNoErrors();
         $session = StockOpnameSession::firstOrFail();
         $item = $session->items()->firstOrFail();
-        $this->post(route('opname.save', $session), ['items' => [$item->id => ['physical_quantity' => 8]]])
+        $this->post(route('opname.save', $session), ['version' => $this->opnameVersion($session), 'items' => [$item->id => ['physical_quantity' => 8]]])
             ->assertSessionHasNoErrors();
-        $this->actingAs($this->pharmacist)->post(route('opname.finalize', $session))->assertSessionHasNoErrors();
+        $this->actingAs($this->pharmacist)->post(route('opname.finalize', $session), ['version' => $this->opnameVersion($session)])->assertSessionHasNoErrors();
         $this->post(route('opname.finalize', $session))->assertStatus(422);
         $this->assertSame(8.0, (float) StockBalance::first()->quantity);
         $this->assertReconciled();
 
         $session->refresh()->update(['status' => 'draft']);
-        $this->post(route('opname.finalize', $session))->assertSessionHasErrors('items');
+        $this->post(route('opname.finalize', $session), ['version' => $this->opnameVersion($session)])->assertSessionHasErrors('items');
         $this->assertSame(8.0, (float) StockBalance::first()->quantity);
         $this->assertReconciled();
     }
@@ -117,7 +117,7 @@ class InventoryIntegrationTest extends TestCase
         $this->actingAs($this->staff)->post(route('nightly.store'), ['date' => '2026-10-16', 'location_id' => $location->id])->assertSessionHasNoErrors();
         $check = DB::table('nightly_checks')->where('location_id', $location->id)->first();
         $item = DB::table('nightly_check_items')->where('nightly_check_id', $check->id)->first();
-        $this->post(route('nightly.save', $check->id), ['draft_revision' => $check->draft_revision, 'action' => 'submit', 'items' => [$item->id => ['quantity' => $quantity, 'unit' => 'Tablet']]])->assertSessionHasNoErrors();
+        $this->post(route('nightly.save', $check->id), ['draft_revision' => $check->draft_revision, 'action' => 'submit', 'observed_revision' => $this->nightlyObservedRevision($check->id), 'items' => [$item->id => ['quantity' => $quantity, 'unit' => 'Tablet']]])->assertSessionHasNoErrors();
         $this->actingAs($this->pharmacist)->post(route('nightly.review', $check->id), ['action' => 'approve'])->assertSessionHasNoErrors();
     }
 
@@ -159,8 +159,11 @@ class InventoryIntegrationTest extends TestCase
         $this->assertReconciled();
         $this->actingAs($this->staff)->post(route('opname.store'), ['period' => '2026-10', 'location_id' => $this->warehouse->id, 'cutoff_at' => '2026-10-16T10:00'])->assertSessionHasNoErrors();
         $session = StockOpnameSession::with('items')->sole();
-        $this->post(route('opname.save', $session), ['items' => [$session->items->sole()->id => ['physical_quantity' => 26, 'reason' => 'Hitung ulang batch']]])->assertSessionHasNoErrors();
-        $this->actingAs($this->pharmacist)->post(route('opname.finalize', $session))->assertSessionHasNoErrors();
+        $counts = $session->items->mapWithKeys(fn ($item) => [$item->id => [
+            'physical_quantity' => $item->batch_id === $late->id ? 26 : 0, 'reason' => 'Hitung ulang batch',
+        ]])->all();
+        $this->post(route('opname.save', $session), ['version' => $this->opnameVersion($session), 'items' => $counts])->assertSessionHasNoErrors();
+        $this->actingAs($this->pharmacist)->post(route('opname.finalize', $session), ['version' => $this->opnameVersion($session)])->assertSessionHasNoErrors();
         $this->assertDatabaseHas('stock_balances', ['location_id' => $this->warehouse->id, 'quantity' => 26]);
         $this->assertReconciled();
 
@@ -177,7 +180,7 @@ class InventoryIntegrationTest extends TestCase
         $this->post(route('nightly.store'), ['date' => '2026-10-16', 'location_id' => $this->warehouse->id])->assertSessionHasNoErrors();
         $check = DB::table('nightly_checks')->first();
         $item = DB::table('nightly_check_items')->first();
-        $this->postJson(route('nightly.save', $check->id), ['draft_revision' => $check->draft_revision, 'action' => 'submit', 'items' => [$item->id => ['quantity' => 7, 'unit' => 'Tablet']]])
+        $this->postJson(route('nightly.save', $check->id), ['draft_revision' => $check->draft_revision, 'action' => 'submit', 'observed_revision' => $this->nightlyObservedRevision($check->id), 'items' => [$item->id => ['quantity' => 7, 'unit' => 'Tablet']]])
             ->assertUnprocessable()->assertJsonValidationErrors('items.'.$item->id.'.batch_counts');
         $this->assertDatabaseHas('nightly_checks', ['id' => $check->id, 'status' => 'draft']);
         $this->assertSame(10.0, (float) StockBalance::first()->quantity);

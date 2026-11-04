@@ -53,6 +53,7 @@ class DailyBatchCountTest extends TestCase
     {
         return $this->actingAs($this->staff)->postJson(route('nightly.save', $this->checkId), [
             'draft_revision' => DB::table('nightly_checks')->where('id', $this->checkId)->value('draft_revision'),
+            'observed_revision' => $this->nightlyObservedRevision($this->checkId),
             'action' => 'submit', 'items' => [$this->itemId => ['quantity' => $quantity, 'unit' => $unit, 'batch_counts' => $counts]],
         ]);
     }
@@ -134,7 +135,7 @@ class DailyBatchCountTest extends TestCase
 
     public function test_json_batch_payload_is_persisted_and_rendered_for_review(): void
     {
-        $this->postJson(route('nightly.save', $this->checkId), ['draft_revision' => 0, 'action' => 'submit',
+        $this->postJson(route('nightly.save', $this->checkId), ['draft_revision' => 0, 'action' => 'submit', 'observed_revision' => $this->nightlyObservedRevision($this->checkId),
             'items' => [$this->itemId => ['quantity' => 13, 'unit' => 'Tablet']],
             'batch_counts_payload' => json_encode([$this->itemId => [$this->early => 9, $this->late => 4]]),
         ])->assertRedirect();
@@ -163,7 +164,7 @@ class DailyBatchCountTest extends TestCase
         $this->post(route('receipts.store'), $receipt)->assertSessionHasNoErrors();
         $batchId = Batch::where('number', 'SECOND-BATCH')->value('id');
         $otherItem = DB::table('nightly_check_items')->insertGetId(['nightly_check_id' => $this->checkId, 'medicine_id' => $other->id, 'code' => $other->code, 'name' => $other->name, 'unit' => 'Tablet']);
-        $this->postJson(route('nightly.save', $this->checkId), ['draft_revision' => 0, 'action' => 'submit', 'items' => [
+        $this->postJson(route('nightly.save', $this->checkId), ['draft_revision' => 0, 'action' => 'submit', 'observed_revision' => $this->nightlyObservedRevision($this->checkId), 'items' => [
             $this->itemId => ['quantity' => 7, 'unit' => 'Tablet', 'batch_counts' => [$this->early => 3, $this->late => 4]],
             $otherItem => ['quantity' => 3, 'unit' => 'Tablet', 'batch_counts' => [$batchId => 3]],
         ]])->assertRedirect();

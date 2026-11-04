@@ -126,7 +126,7 @@ class SharedNightlyCheckTest extends TestCase
         $this->saveAs($this->staff, $current);
         $medicine = Medicine::create(['code' => 'SHARED-STALE', 'name' => 'Tidak boleh ditambahkan', 'unit_id' => Unit::value('id'), 'is_active' => true]);
         foreach (['save', 'add', 'submit'] as $action) {
-            $stale = array_replace($old, ['action' => $action, 'medicine_ids' => [$medicine->id], 'confirm_partial' => true]);
+            $stale = array_replace($old, ['action' => $action, 'observed_revision' => $this->nightlyObservedRevision($this->check), 'medicine_ids' => [$medicine->id], 'confirm_partial' => true]);
             $stale['items'][$this->itemIds[0]]['quantity'] = 999;
             $this->actingAs($this->pharmacist)->postJson(route('nightly.save', $this->check), $stale)
                 ->assertUnprocessable()->assertJsonValidationErrors('draft_revision');
@@ -150,7 +150,7 @@ class SharedNightlyCheckTest extends TestCase
 
     public function test_returned_report_can_be_continued_by_another_operator_with_a_fresh_revision(): void
     {
-        $data = $this->payload(['action' => 'submit']);
+        $data = $this->payload(['action' => 'submit', 'observed_revision' => $this->nightlyObservedRevision($this->check)]);
         foreach ($this->itemIds as $id) $data['items'][$id]['quantity'] = 0;
         $this->saveAs($this->staff, $data);
         $this->actingAs($this->pharmacist)->postJson(route('nightly.review', $this->check), ['action' => 'return', 'review_note' => 'Periksa kemasan kembali'])->assertRedirect();
@@ -239,7 +239,7 @@ class SharedNightlyCheckTest extends TestCase
         $payload = $this->payload();
         foreach ($this->itemIds as $id) $payload['items'][$id]['quantity'] = 0;
         $this->saveAs($this->staff, $payload);
-        $this->saveAs($this->pharmacist, $this->payload(['action' => 'submit']));
+        $this->saveAs($this->pharmacist, $this->payload(['action' => 'submit', 'observed_revision' => $this->nightlyObservedRevision($this->check)]));
         $this->actingAs($this->staff)->postJson(route('nightly.review', $this->check), ['action' => 'approve'])->assertForbidden();
         $this->actingAs($this->pharmacist)->postJson(route('nightly.review', $this->check), ['action' => 'approve'])->assertRedirect();
         $this->assertDatabaseHas('nightly_check_items', ['id' => $this->itemIds[0], 'last_edited_by' => $this->staff->id]);

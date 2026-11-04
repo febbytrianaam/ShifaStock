@@ -68,7 +68,7 @@ class AddNightlyMedicinesTest extends TestCase
     {
         $this->postJson(route('nightly.save', $this->checkId), $this->payload())->assertRedirect();
         $items = DB::table('nightly_check_items')->get()->mapWithKeys(fn ($item) => [$item->id => ['unit' => $item->unit, 'quantity' => $item->id === $this->itemId ? 0 : null]])->all();
-        $this->postJson(route('nightly.save', $this->checkId), ['draft_revision' => 1, 'action' => 'submit', 'items' => $items])->assertUnprocessable()->assertJsonValidationErrors('confirm_partial');
+        $this->postJson(route('nightly.save', $this->checkId), ['draft_revision' => 1, 'action' => 'submit', 'observed_revision' => $this->nightlyObservedRevision($this->checkId), 'items' => $items])->assertUnprocessable()->assertJsonValidationErrors('confirm_partial');
         $this->assertDatabaseHas('nightly_checks', ['id' => $this->checkId, 'status' => 'draft']);
     }
 

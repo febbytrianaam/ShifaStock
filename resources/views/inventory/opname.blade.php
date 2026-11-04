@@ -76,6 +76,8 @@
     @endif
 
     @if($selectedSession)
+        @php($sessionVersion = app(\App\Services\OpnameSnapshotService::class)->version($selectedSession))
+        @php($useOldCountInput = ! $errors->has('version'))
         <section class="card mb-8 overflow-hidden">
             <div class="flex flex-col gap-3 border-b border-slate-100 p-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
@@ -90,6 +92,7 @@
             @can('operate-inventory')
             <form method="POST" action="{{ route('opname.save', $selectedSession) }}" data-required-alert="Periksa isian stock opname" novalidate>
                 @csrf
+                <input type="hidden" name="version" value="{{ $sessionVersion }}">
             @else
             <div>
             @endcan
@@ -115,7 +118,7 @@
                                     <td class="p-4 font-bold tabular-nums text-slate-900">{{ \App\Support\Quantity::format((float)$item->system_quantity) }}</td>
                                     <td class="p-4">
                                         @can('operate-inventory')
-                                        <input class="field w-32 text-xs" name="items[{{ $item->id }}][physical_quantity]" type="number" min="0" step="0.0001" value="{{ old('items.'.$item->id.'.physical_quantity', $item->physical_quantity !== null ? rtrim(rtrim((string)$item->physical_quantity, '0'), '.') : '') }}" @disabled($selectedSession->status === 'finalized')>
+                                        <input class="field w-32 text-xs" name="items[{{ $item->id }}][physical_quantity]" type="number" min="0" step="0.0001" value="{{ $useOldCountInput ? old('items.'.$item->id.'.physical_quantity', $item->physical_quantity) : $item->physical_quantity }}" @disabled($selectedSession->status === 'finalized')>
                                         @else
                                         <span class="tabular-nums">{{ $item->physical_quantity !== null ? \App\Support\Quantity::format($item->physical_quantity) : 'Belum diisi' }}</span>
                                         @endcan
@@ -125,7 +128,7 @@
                                     </td>
                                     <td class="p-4">
                                         @can('operate-inventory')
-                                        <input class="field w-72 text-xs" name="items[{{ $item->id }}][reason]" value="{{ old('items.'.$item->id.'.reason', $item->reason) }}" placeholder="Penyebab selisih jika ada" maxlength="1000" @disabled($selectedSession->status === 'finalized')>
+                                        <input class="field w-72 text-xs" name="items[{{ $item->id }}][reason]" value="{{ $useOldCountInput ? old('items.'.$item->id.'.reason', $item->reason) : $item->reason }}" placeholder="Penyebab selisih jika ada" maxlength="1000" @disabled($selectedSession->status === 'finalized')>
                                         @else
                                         <span>{{ $item->reason ?: '-' }}</span>
                                         @endcan
@@ -153,12 +156,14 @@
                 @can('operate-inventory')
                     <form method="POST" action="{{ route('opname.recount', $selectedSession) }}" class="flex justify-end border-t border-slate-100 p-4" data-confirm-action data-confirm-title="Mulai hitung ulang?" data-confirm-text="Snapshot akan mengikuti stok saat ini dan semua isian fisik dikosongkan. Isian sebelumnya tetap tercatat di audit log. Hitung ulang seluruh batch sebelum finalisasi." data-confirm-button="Ya, mulai hitung ulang">
                         @csrf
+                        <input type="hidden" name="version" value="{{ $sessionVersion }}">
                         <button class="btn-secondary text-xs">Mulai Hitung Ulang</button>
                     </form>
                 @endcan
                 @can('finalize-opname')
                     <form method="POST" action="{{ route('opname.finalize', $selectedSession) }}" class="flex justify-end border-t border-slate-100 p-4" data-confirm-action data-confirm-title="Finalisasi stock opname?" data-confirm-text="Selisih akan diposting menjadi mutasi penyesuaian dan sesi tidak bisa diedit lagi." data-confirm-button="Ya, finalisasi">
                         @csrf
+                        <input type="hidden" name="version" value="{{ $sessionVersion }}">
                         <button class="btn text-xs">Finalisasi Kepala Apoteker</button>
                     </form>
                 @endcan

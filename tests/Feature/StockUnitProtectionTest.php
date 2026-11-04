@@ -18,6 +18,52 @@ class StockUnitProtectionTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_initial_unit_can_be_completed_with_only_uncounted_draft_nightly_items(): void
+    {
+        $staff = User::factory()->create(['role' => Role::Pharmacy]);
+        $unit = Unit::create(['name' => 'Tablet']);
+        $location = \App\Models\Location::create(['code' => 'GDG', 'name' => 'Gudang']);
+        $medicine = Medicine::create(['code' => 'UNIT-INITIAL', 'name' => 'Obat', 'dosage_form' => 'Tablet']);
+        $check = \Illuminate\Support\Facades\DB::table('nightly_checks')->insertGetId([
+            'date' => '2026-11-01', 'location_id' => $location->id, 'created_by' => $staff->id, 'status' => 'draft',
+        ]);
+        $item = \Illuminate\Support\Facades\DB::table('nightly_check_items')->insertGetId([
+            'nightly_check_id' => $check, 'medicine_id' => $medicine->id, 'code' => $medicine->code, 'name' => $medicine->name, 'batch_counts' => '[]',
+        ]);
+        $medicine->update(['unit_id' => $unit->id]);
+        $this->assertSame($unit->id, $medicine->fresh()->unit_id);
+        $this->assertDatabaseHas('nightly_check_items', ['id' => $item, 'quantity' => null]);
+        $this->assertDatabaseHas('nightly_checks', ['id' => $check, 'status' => 'draft']);
+    }
+
+    public function test_initial_unit_remains_locked_for_recorded_counts_and_real_history(): void
+    {
+        $staff = User::factory()->create(['role' => Role::Pharmacy]);
+        $unit = Unit::create(['name' => 'Tablet']);
+        $location = \App\Models\Location::create(['code' => 'GDG', 'name' => 'Gudang']);
+        foreach (['quantity', 'submitted', 'snapshot', 'batch_counts', 'unit', 'balance'] as $index => $history) {
+            $medicine = Medicine::create(['code' => 'UNIT-HISTORY-'.$index, 'name' => 'Obat', 'dosage_form' => 'Tablet']);
+            $check = \Illuminate\Support\Facades\DB::table('nightly_checks')->insertGetId([
+                'date' => '2026-11-'.str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT),
+                'location_id' => $location->id, 'created_by' => $staff->id, 'status' => $history === 'submitted' ? 'submitted' : 'draft',
+            ]);
+            $payload = ['nightly_check_id' => $check, 'medicine_id' => $medicine->id, 'code' => $medicine->code, 'name' => $medicine->name];
+            if ($history === 'quantity') $payload['quantity'] = 0;
+            if ($history === 'snapshot') $payload['stock_snapshot'] = '{}';
+            if ($history === 'batch_counts') $payload['batch_counts'] = '{"1":0}';
+            if ($history === 'unit') $payload['unit'] = 'Botol';
+            \Illuminate\Support\Facades\DB::table('nightly_check_items')->insert($payload);
+            if ($history === 'balance') StockBalance::create(['medicine_id' => $medicine->id, 'location_id' => $location->id, 'quantity' => 0]);
+            try {
+                $medicine->update(['unit_id' => $unit->id]);
+                $this->fail('Initial unit must remain locked for '.$history);
+            } catch (\Illuminate\Validation\ValidationException $exception) {
+                $this->assertArrayHasKey('unit_id', $exception->errors());
+            }
+            $this->assertNull($medicine->fresh()->unit_id);
+        }
+    }
+
     public function test_used_medicine_unit_is_locked_even_after_stock_reaches_zero(): void
     {
         $user = User::factory()->create(['role' => Role::Pharmacist]);

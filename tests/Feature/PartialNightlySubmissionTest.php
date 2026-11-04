@@ -57,6 +57,7 @@ class PartialNightlySubmissionTest extends TestCase
     {
         return array_replace([
             'draft_revision' => DB::table('nightly_checks')->where('id', $this->check)->value('draft_revision'),
+            'observed_revision' => $this->nightlyObservedRevision($this->check),
             'action' => 'submit', 'confirm_partial' => 1,
             'items' => [
                 $this->items[0] => ['quantity' => 5, 'unit' => 'Tablet', 'batch_counts' => [$this->batches[0]->id => 5]],

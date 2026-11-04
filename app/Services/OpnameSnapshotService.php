@@ -31,16 +31,33 @@ class OpnameSnapshotService
     public function resetItems(StockOpnameSession $session): void
     {
         $snapshot = $this->capture($session->location_id);
-        $session->items()->delete();
         foreach ($snapshot['medicines'] as $medicineId => $medicine) {
             foreach ($medicine['batches'] as $batchId => $quantity) {
-                if ((float) $quantity <= 0) continue;
-                $session->items()->create(['medicine_id' => $medicineId, 'batch_id' => $batchId,
-                    'system_quantity' => $quantity, 'unit_name' => $medicine['unit']]);
+                // Preserve existing rows, including exhausted batches; earlier counts are retained in the recount audit log.
+                $session->items()->updateOrCreate(['medicine_id' => $medicineId, 'batch_id' => $batchId],
+                    ['system_quantity' => $quantity, 'unit_name' => $medicine['unit'],
+                        'physical_quantity' => null, 'difference' => null, 'reason' => null]);
             }
         }
         $session->stock_snapshot = $snapshot;
         $session->save();
+    }
+
+    public function version(StockOpnameSession $session): string
+    {
+        // Sign the same loaded rows shown in the form, including counts, reasons, status and snapshot.
+        $session->loadMissing('items');
+        $state = ['session' => $session->getAttributes(), 'items' => $session->items->sortBy('id')
+            ->map(fn ($item) => $item->getAttributes())->values()->all()];
+
+        return hash_hmac('sha256', json_encode($state, JSON_THROW_ON_ERROR), (string) config('app.key'));
+    }
+
+    public function assertVersion(StockOpnameSession $session, mixed $version): void
+    {
+        if (! is_string($version) || ! hash_equals($this->version($session), $version)) {
+            throw ValidationException::withMessages(['version' => 'Sesi sudah diperbarui atau versi formulir tidak valid. Isian Anda belum disimpan. Muat ulang halaman dan periksa hasil hitung terbaru sebelum melanjutkan.']);
+        }
     }
 
     public function assertUnchanged(StockOpnameSession $session): void

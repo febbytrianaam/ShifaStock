@@ -85,12 +85,13 @@
                     @forelse($batches as $batch)
                         @php
                             $days=now('Asia/Jakarta')->startOfDay()->diffInDays($batch->expiry_date,false);
+                            $isNear = $batch->expiry_date->lte($warningCutoff);
                             $locations = $batch->balances
                                 ->filter(fn($balance) => (float) $balance->quantity > 0)
                                 ->sortBy(fn($balance) => $balance->location?->name)
                                 ->values();
                         @endphp
-                        <tr class="{{ $days<0 ? 'attention-critical' : ($days<=($warningMonths * 31) ? 'attention-warning' : '') }} hover:bg-slate-50/70 transition-colors">
+                        <tr class="{{ $days<0 ? 'attention-critical' : ($isNear ? 'attention-warning' : '') }} hover:bg-slate-50/70 transition-colors">
                             <td class="p-4">
                                 <b class="font-bold text-slate-900 tracking-tight">{{ $batch->medicine->name }}</b><br>
                                 <span class="inline-flex rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500 mt-0.5">{{ $batch->medicine->code }}</span>
@@ -126,8 +127,8 @@
                                 {{ \App\Support\Quantity::format((float)$batch->balances->sum('quantity')) }} {{ $batch->medicine->unit?->name }} <span class="text-xs font-normal text-slate-400">(batch ini)</span>
                             </td>
                             <td class="p-4 text-right">
-                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $days<0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : ($days<=($warningMonths * 31) ? 'attention-badge-warning bg-amber-100 text-amber-800 border border-amber-300' : 'bg-[#edf5fb] text-[#266194] border border-[#b2d4ee]') }}">
-                                    {{ $days<0 ? 'Kedaluwarsa' : ($days<=($warningMonths * 31) ? $days.' hari lagi' : 'Aman') }}
+                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {{ $days<0 ? 'attention-badge-critical bg-rose-100 text-rose-800 border border-rose-300' : ($isNear ? 'attention-badge-warning bg-amber-100 text-amber-800 border border-amber-300' : 'bg-[#edf5fb] text-[#266194] border border-[#b2d4ee]') }}">
+                                    {{ $days<0 ? 'Kedaluwarsa' : ($isNear ? $days.' hari lagi' : 'Aman') }}
                                 </span>
                             </td>
                         </tr>

@@ -86,8 +86,10 @@ if (($argv[1] ?? '') === '--worker') {
                         'quantity' => $operation === 'duplicate' ? 1 : 7, 'occurred_at' => '2026-10-18T10:00']),
                     'reverse' => invokeInventory('reverseMovement', ['reason' => 'Concurrent regression'],
                         ['movement' => InventoryMovement::findOrFail($fixture['movement'])]),
-                    'finalize' => invokeInventory('finalizeOpnameSession', [],
+                    'finalize' => invokeInventory('finalizeOpnameSession', ['version' => $fixture['opname_version']],
                         ['session' => StockOpnameSession::findOrFail($fixture['session'])]),
+                    'opname-create' => invokeInventory('storeOpnameSession', ['period' => '2026-11',
+                        'location_id' => $fixture['location'], 'cutoff_at' => '2026-10-18T10:00']),
                     'daily' => invokeInventory('review', ['action' => 'approve'], ['id' => $fixture['daily']], NightlyCheckController::class),
                     'daily-save' => invokeInventory('save', ['draft_revision' => 0, 'action' => 'save',
                         'items' => [$fixture['daily_item'] => ['quantity' => null, 'unit' => 'Tablet', 'note' => 'Worker '.$id]]],
@@ -194,11 +196,15 @@ try {
     echo "PASS concurrent reversal: applied once.\n";
     invokeInventory('storeOpnameSession', ['period' => '2026-10', 'location_id' => $location->id, 'cutoff_at' => '2026-10-18T10:00']);
     $session = StockOpnameSession::sole();
-    invokeInventory('saveOpnameSession', ['items' => [$session->items()->sole()->id => ['physical_quantity' => 8]]], ['session' => $session]);
+    invokeInventory('saveOpnameSession', ['version' => app(\App\Services\OpnameSnapshotService::class)->version($session), 'items' => [$session->items()->sole()->id => ['physical_quantity' => 8]]], ['session' => $session]);
     $fixture['session'] = $session->id;
+    $fixture['opname_version'] = app(\App\Services\OpnameSnapshotService::class)->version($session->fresh('items'));
     $oneWinner($race(['finalize', 'finalize']));
     verify((float) StockBalance::where('medicine_id', $medicine->id)->sole()->quantity === 8.0, 'Duplicate finalization.');
     echo "PASS concurrent opname finalization: applied once.\n";
+    $oneWinner($race(['opname-create', 'opname-create']));
+    verify(StockOpnameSession::where('period', '2026-11')->where('location_id', $location->id)->count() === 1, 'Duplicate monthly session.');
+    echo "PASS concurrent same-period opname creation: one draft, one friendly rejection.\n";
     invokeInventory('store', ['date' => now('Asia/Jakarta')->toDateString(), 'location_id' => $location->id], [], NightlyCheckController::class);
     $fixture['daily'] = DB::table('nightly_checks')->sole()->id;
     $item = DB::table('nightly_check_items')->sole();
@@ -214,7 +220,7 @@ try {
     verify(DB::table('nightly_check_activities')->where('action', 'saved')->count() === 1, 'Rejected shared save recorded an activity.');
     verify(InventoryMovement::count() === $movementsBefore, 'Draft shared save moved stock.');
     echo "PASS concurrent shared daily drafts: one save accepted, stale write rejected, creator and actor preserved.\n";
-    invokeInventory('save', ['draft_revision' => 1, 'action' => 'submit', 'items' => [$item->id => ['quantity' => 7, 'unit' => 'Tablet',
+    invokeInventory('save', ['draft_revision' => 1, 'action' => 'submit', 'observed_revision' => (int) InventoryMovement::max('id'), 'items' => [$item->id => ['quantity' => 7, 'unit' => 'Tablet',
         'batch_counts' => [Batch::where('number', 'QA-BATCH')->sole()->id => 7]]]], ['id' => $fixture['daily']], NightlyCheckController::class);
     $oneWinner($race(['daily', 'daily']));
     verify((float) StockBalance::where('medicine_id', $medicine->id)->sole()->quantity === 7.0, 'Daily approval applied twice.');

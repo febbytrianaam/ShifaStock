@@ -54,7 +54,7 @@ class OpnameAuditTest extends TestCase
         $this->post(route('opname.store'), ['period' => '2026-10', 'location_id' => $this->location->id,
             'cutoff_at' => '2026-10-18T09:00'])->assertSessionHasNoErrors();
         $session = StockOpnameSession::sole();
-        $this->post(route('opname.save', $session), ['items' => [$session->items()->sole()->id => ['physical_quantity' => 8]]])
+        $this->post(route('opname.save', $session), ['version' => $this->opnameVersion($session), 'items' => [$session->items()->sole()->id => ['physical_quantity' => 8]]])
             ->assertSessionHasNoErrors();
 
         return $session;
@@ -64,21 +64,22 @@ class OpnameAuditTest extends TestCase
     {
         $session = $this->createCountSession();
         $oldItem = $session->items()->sole();
+        $oldVersion = $this->opnameVersion($session);
         $payload = ['medicine_id' => $this->medicine->id, 'batch_id' => $this->batch->id,
             'location_id' => $this->location->id, 'condition' => 'lainnya', 'quantity' => 1, 'occurred_at' => '2026-10-18T10:00'];
         $this->post(route('special-adjustments.store'), $payload + ['reference' => 'AUDIT-OUT', 'direction' => 'decrease'])->assertSessionHasNoErrors();
         $this->post(route('special-adjustments.store'), $payload + ['reference' => 'AUDIT-IN', 'direction' => 'increase'])->assertSessionHasNoErrors();
-        $this->actingAs($this->reviewer)->post(route('opname.finalize', $session))->assertSessionHasErrors('items');
+        $this->actingAs($this->reviewer)->post(route('opname.finalize', $session), ['version' => $this->opnameVersion($session)])->assertSessionHasErrors('items');
         $this->assertSame(10.0, (float) StockBalance::sole()->quantity);
-        $this->actingAs($this->staff)->post(route('opname.recount', $session))->assertSessionHasNoErrors();
+        $this->actingAs($this->staff)->post(route('opname.recount', $session), ['version' => $this->opnameVersion($session)])->assertSessionHasNoErrors();
         $fresh = $session->items()->sole();
-        $this->assertNotSame($oldItem->id, $fresh->id);
+        $this->assertSame($oldItem->id, $fresh->id);
         $this->assertNull($fresh->physical_quantity);
         $log = AuditLog::where('event', 'inventory.opname_session.recounted')->sole();
         $this->assertSame(8.0, (float) $log->metadata['before']['items'][0]['physical_quantity']);
-        $this->post(route('opname.save', $session), ['items' => [$oldItem->id => ['physical_quantity' => 99]]])->assertSessionHasErrors('items');
-        $this->post(route('opname.save', $session), ['items' => [$fresh->id => ['physical_quantity' => 9]]])->assertSessionHasNoErrors();
-        $this->actingAs($this->reviewer)->post(route('opname.finalize', $session))->assertSessionHasNoErrors();
+        $this->post(route('opname.save', $session), ['version' => $oldVersion, 'items' => [$oldItem->id => ['physical_quantity' => 99]]])->assertSessionHasErrors('version');
+        $this->post(route('opname.save', $session), ['version' => $this->opnameVersion($session), 'items' => [$fresh->id => ['physical_quantity' => 9]]])->assertSessionHasNoErrors();
+        $this->actingAs($this->reviewer)->post(route('opname.finalize', $session), ['version' => $this->opnameVersion($session)])->assertSessionHasNoErrors();
         $this->assertSame(9.0, (float) StockBalance::sole()->quantity);
         $this->assertSame(0, app(InventoryReconciliationService::class)->report()['mismatched_pairs']);
         $this->actingAs($this->staff)->post(route('opname.recount', $session))->assertStatus(422);
@@ -88,19 +89,19 @@ class OpnameAuditTest extends TestCase
     {
         $session = $this->createCountSession();
         $this->receipt('AUDIT-NEW', 'post', 'NEW-BATCH');
-        $this->actingAs($this->reviewer)->post(route('opname.finalize', $session))->assertSessionHasErrors('items');
-        $this->actingAs($this->staff)->post(route('opname.recount', $session))->assertSessionHasNoErrors();
+        $this->actingAs($this->reviewer)->post(route('opname.finalize', $session), ['version' => $this->opnameVersion($session)])->assertSessionHasErrors('items');
+        $this->actingAs($this->staff)->post(route('opname.recount', $session), ['version' => $this->opnameVersion($session)])->assertSessionHasNoErrors();
         $this->assertSame(2, $session->items()->count());
         $items = $session->items()->get()->mapWithKeys(fn ($item) => [$item->id => ['physical_quantity' => 10]])->all();
-        $this->post(route('opname.save', $session), ['items' => $items])->assertSessionHasNoErrors();
+        $this->post(route('opname.save', $session), ['version' => $this->opnameVersion($session), 'items' => $items])->assertSessionHasNoErrors();
         // Simulate legacy/direct-SQL corruption; application model updates now reject this change.
         \Illuminate\Support\Facades\DB::table('medicines')->where('id', $this->medicine->id)
             ->update(['unit_id' => Unit::create(['name' => 'Botol'])->id]);
-        $this->actingAs($this->reviewer)->post(route('opname.finalize', $session))->assertSessionHasErrors('items');
+        $this->actingAs($this->reviewer)->post(route('opname.finalize', $session), ['version' => $this->opnameVersion($session)])->assertSessionHasErrors('items');
         $session->refresh();
         $session->stock_snapshot = null;
         $session->save();
-        $this->post(route('opname.finalize', $session))->assertSessionHasErrors('items');
+        $this->post(route('opname.finalize', $session), ['version' => $this->opnameVersion($session)])->assertSessionHasErrors('items');
         $this->assertDatabaseMissing('inventory_movements', ['type' => 'stock_opname_adjustment']);
         $this->actingAs(User::factory()->create(['role' => Role::Guest]))->post(route('opname.recount', $session))->assertForbidden();
     }

@@ -32,15 +32,15 @@ class NightlyCheckTest extends TestCase
             ->assertSee('Cari obat')
             ->assertSee('25 obat')
             ->assertSee('data-nightly-row', false);
-        $this->post($url, ['draft_revision' => 0, 'action' => 'submit', 'items' => [$i->id => ['quantity' => null, 'unit' => 'Tablet']]])->assertSessionHasErrors('items');
+        $this->post($url, ['draft_revision' => 0, 'action' => 'submit', 'observed_revision' => $this->nightlyObservedRevision($c->id), 'items' => [$i->id => ['quantity' => null, 'unit' => 'Tablet']]])->assertSessionHasErrors('items');
         $this->assertDatabaseHas('nightly_checks', ['id' => $c->id, 'status' => 'draft']);
         $this->post($url, ['draft_revision' => 0, 'action' => 'save', 'items' => [$i->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 20]]])->assertRedirect();
         $this->assertDatabaseHas('nightly_check_items', ['id' => $i->id, 'quantity' => 0]);
-        $this->post($url, ['draft_revision' => 1, 'action' => 'submit', 'items' => [$i->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 20]]])->assertRedirect();
+        $this->post($url, ['draft_revision' => 1, 'action' => 'submit', 'observed_revision' => $this->nightlyObservedRevision($c->id), 'items' => [$i->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 20]]])->assertRedirect();
         $this->post($url.'/review', ['action' => 'approve'])->assertForbidden();
         $this->actingAs($k)->post($url.'/review', ['action' => 'return', 'review_note' => 'Cek satuan'])->assertRedirect();
         $this->assertDatabaseHas('nightly_checks', ['id' => $c->id, 'status' => 'draft']);
-        $this->actingAs($p)->post($url, ['draft_revision' => 3, 'action' => 'submit', 'items' => [$i->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 20]]])->assertRedirect();
+        $this->actingAs($p)->post($url, ['draft_revision' => 3, 'action' => 'submit', 'observed_revision' => $this->nightlyObservedRevision($c->id), 'items' => [$i->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 20]]])->assertRedirect();
         $this->actingAs($k)->post($url.'/review', ['action' => 'approve'])->assertRedirect();
         $this->assertDatabaseHas('nightly_checks', ['id' => $c->id, 'status' => 'approved']);
         $this->get('/kekurangan-permintaan')->assertOk()

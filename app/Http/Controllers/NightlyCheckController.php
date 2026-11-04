@@ -21,7 +21,7 @@ class NightlyCheckController extends Controller
     {
         $data = $r->validate([
             'search' => ['nullable', 'string', 'max:255'],
-            'location_id' => ['nullable', 'exists:locations,id'],
+            'location_id' => ['nullable', 'integer', 'exists:locations,id'],
             'status' => ['nullable', 'in:all,empty,low'],
         ]);
 
@@ -78,7 +78,7 @@ class NightlyCheckController extends Controller
 
     public function history(Request $r)
     {
-        $d = $r->validate(['from' => ['nullable', 'date_format:Y-m-d'], 'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'], 'search' => ['nullable', 'string', 'max:255'], 'location_id' => ['nullable', 'exists:locations,id']]);
+        $d = $r->validate(['from' => ['nullable', 'date_format:Y-m-d'], 'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'], 'search' => ['nullable', 'string', 'max:255'], 'location_id' => ['nullable', 'integer', 'exists:locations,id']]);
         $rows = DB::table('nightly_check_items as i')->join('nightly_checks as c', 'c.id', '=', 'i.nightly_check_id')->join('locations as l', 'l.id', '=', 'c.location_id')
             ->where('c.status', 'approved')->whereNotNull('i.quantity')->select('i.*', 'c.date', 'l.name as location');
         if (! empty($d['from'])) {
@@ -113,7 +113,7 @@ class NightlyCheckController extends Controller
     {
         $d = $r->validate([
             'date' => ['required', 'date_format:Y-m-d', 'before_or_equal:'.now('Asia/Jakarta')->toDateString()],
-            'location_id' => ['required', 'exists:locations,id'],
+            'location_id' => ['required', 'integer', 'exists:locations,id'],
             'scope' => ['sometimes', 'required', 'in:complete,selected'],
             'medicine_ids' => ['required_if:scope,selected', 'nullable', 'array', 'min:1'],
             'medicine_ids.*' => ['required', 'integer', 'distinct', 'exists:medicines,id'],
@@ -212,7 +212,7 @@ class NightlyCheckController extends Controller
     public function save(Request $r, int $id, DailyPhysicalCountService $counts)
     {
         Gate::authorize('operate-inventory');
-        $r->validate(['batch_counts_payload' => ['nullable', 'json', 'max:200000'], 'observed_revision' => ['nullable', 'integer', 'min:0']]);
+        $r->validate(['batch_counts_payload' => ['nullable', 'json', 'max:200000'], 'observed_revision' => ['required_if:action,submit', 'nullable', 'integer', 'min:0']]);
         if ($r->has('batch_counts_payload') && ! $r->filled('batch_counts_payload')) {
             throw ValidationException::withMessages(['items' => 'Rincian hitungan belum siap dikirim. Aktifkan JavaScript lalu muat ulang halaman.']);
         }
@@ -241,7 +241,7 @@ class NightlyCheckController extends Controller
             abort_unless($c, 404);
             abort_unless($c->status === 'draft', 403);
             $this->assertDraftRevision($c, (int) $d['draft_revision']);
-            if ($d['action'] === 'submit' && $r->filled('observed_revision')) {
+            if ($d['action'] === 'submit') {
                 $latest = (int) (InventoryMovement::where(fn ($query) => $query->where('source_location_id', $c->location_id)->orWhere('destination_location_id', $c->location_id))->max('id') ?? 0);
                 if ((int) $r->input('observed_revision') !== $latest) {
                     throw ValidationException::withMessages(['items' => 'Ada transaksi stok sejak halaman dibuka. Simpan draf, muat ulang halaman, dan periksa ulang hitungan sebelum mengirim.']);

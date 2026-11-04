@@ -75,10 +75,10 @@ class InventoryController extends Controller
             'duplicate_invoice_confirmed' => ['nullable', 'boolean'],
             'occurred_at' => ['required', 'date_format:Y-m-d\\TH:i'],
             'counterparty' => ['nullable', 'string', 'max:255'],
-            'destination_location_id' => ['required', Rule::exists('locations', 'id')->where('is_active', true)],
+            'destination_location_id' => ['required', 'integer', Rule::exists('locations', 'id')->where('is_active', true)],
             'notes' => ['nullable', 'string', 'max:1000'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.medicine_id' => ['required', 'exists:medicines,id'],
+            'items.*.medicine_id' => ['required', 'integer', 'exists:medicines,id'],
             'items.*.batch_number' => ['required', 'string', 'max:100'],
             'items.*.expiry_date' => ['required', 'date_format:Y-m-d'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
@@ -432,9 +432,9 @@ class InventoryController extends Controller
     {
         $data = $request->validate([
             'reference' => ['required', 'string', 'max:100', Rule::unique('inventory_movements', 'reference')],
-            'medicine_id' => ['required', 'exists:medicines,id'],
-            'source_location_id' => ['required', 'exists:locations,id'],
-            'batch_id' => ['nullable', 'exists:batches,id'],
+            'medicine_id' => ['required', 'integer', 'exists:medicines,id'],
+            'source_location_id' => ['required', 'integer', 'exists:locations,id'],
+            'batch_id' => ['nullable', 'integer', 'exists:batches,id'],
             'quantity' => ['required', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
             'occurred_at' => ['required', 'date_format:Y-m-d\\TH:i'],
             'source_reference' => ['nullable', 'string', 'max:255'],
@@ -506,8 +506,8 @@ class InventoryController extends Controller
     {
         $data = $request->validate([
             'reference' => ['required', 'string', 'max:100', Rule::unique('inventory_movements', 'reference')],
-            'medicine_id' => ['required', 'exists:medicines,id'],
-            'location_id' => ['required', 'exists:locations,id'],
+            'medicine_id' => ['required', 'integer', 'exists:medicines,id'],
+            'location_id' => ['required', 'integer', 'exists:locations,id'],
             'batch_number' => ['required', 'string', 'max:100'],
             'expiry_date' => ['required', 'date_format:Y-m-d'],
             'quantity' => ['required', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
@@ -574,9 +574,9 @@ class InventoryController extends Controller
     {
         $data = $request->validate([
             'reference' => ['required', 'string', 'max:100', Rule::unique('inventory_movements', 'reference')],
-            'medicine_id' => ['required', 'exists:medicines,id'],
-            'batch_id' => ['required', 'exists:batches,id'],
-            'source_location_id' => ['required', 'exists:locations,id'],
+            'medicine_id' => ['required', 'integer', 'exists:medicines,id'],
+            'batch_id' => ['required', 'integer', 'exists:batches,id'],
+            'source_location_id' => ['required', 'integer', 'exists:locations,id'],
             'quantity' => ['required', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
             'occurred_at' => ['required', 'date_format:Y-m-d\\TH:i'],
             'counterparty' => ['nullable', 'string', 'max:255'],
@@ -637,9 +637,9 @@ class InventoryController extends Controller
     {
         $data = $request->validate([
             'reference' => ['required', 'string', 'max:100', Rule::unique('inventory_movements', 'reference')],
-            'medicine_id' => ['required', 'exists:medicines,id'],
-            'batch_id' => ['required', 'exists:batches,id'],
-            'location_id' => ['required', 'exists:locations,id'],
+            'medicine_id' => ['required', 'integer', 'exists:medicines,id'],
+            'batch_id' => ['required', 'integer', 'exists:batches,id'],
+            'location_id' => ['required', 'integer', 'exists:locations,id'],
             'direction' => ['required', Rule::in(['decrease', 'increase'])],
             'condition' => ['required', Rule::in(['rusak', 'hilang', 'terjatuh', 'tidak_diambil', 'expired', 'lainnya'])],
             'quantity' => ['required', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
@@ -703,8 +703,23 @@ class InventoryController extends Controller
         $data = $request->validate([
             'expiry_warning_months' => ['required', 'integer', 'min:1', 'max:24'],
             'minimums' => ['nullable', 'array'],
-            'minimums.*.*' => ['nullable', 'numeric', 'gte:0'],
+            'minimums.*' => ['array'],
+            'minimums.*.*' => ['nullable', 'numeric', 'gte:0', 'decimal:0,4', 'max:999999999999.9999'],
         ]);
+
+        $medicineIds = array_keys($data['minimums'] ?? []);
+        $locationIds = collect($data['minimums'] ?? [])->flatMap(fn ($locations) => array_keys($locations))->unique()->all();
+        foreach ([$medicineIds, $locationIds] as $ids) {
+            foreach ($ids as $id) {
+                if (filter_var($id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                    throw ValidationException::withMessages(['minimums' => 'Pilihan obat atau lokasi tidak valid. Muat ulang halaman parameter.']);
+                }
+            }
+        }
+        if (Medicine::whereIn('id', $medicineIds)->count() !== count($medicineIds)
+            || Location::whereIn('id', $locationIds)->count() !== count($locationIds)) {
+            throw ValidationException::withMessages(['minimums' => 'Obat atau lokasi tidak ditemukan. Muat ulang halaman parameter.']);
+        }
 
         \App\Services\InventoryTransaction::run(function () use ($data, $request) {
             SystemSetting::put('expiry_warning_months', $data['expiry_warning_months']);
@@ -841,39 +856,40 @@ class InventoryController extends Controller
     {
         $today = now('Asia/Jakarta')->startOfDay();
         $warningMonths = (int) SystemSetting::value('expiry_warning_months', 3);
+        $warningCutoff = $today->copy()->addMonths($warningMonths)->endOfDay();
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
-            'location_id' => ['nullable', 'exists:locations,id'],
+            'location_id' => ['nullable', 'integer', 'exists:locations,id'],
             'status' => ['nullable', Rule::in(['all', 'expired', 'near', 'safe'])],
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
         ]);
         $filters['status'] = $filters['status'] ?? 'all';
 
+        $balanceScope = fn ($query) => $query->where('quantity', '>', 0)
+            ->when($filters['location_id'] ?? null, fn ($query, $locationId) => $query->where('location_id', $locationId));
         $baseQuery = Batch::query()
-            ->with(['medicine.unit', 'balances.location'])
+            ->with(['medicine.unit', 'balances' => fn ($query) => $balanceScope($query)->with('location')])
+            ->whereHas('balances', $balanceScope)
             ->whereNotNull('expiry_date')
             ->when($filters['search'] ?? null, fn ($query, $search) => $query->where(fn ($inner) => $inner
                 ->where('number', 'like', '%'.$search.'%')
                 ->orWhereHas('medicine', fn ($medicine) => $medicine
                     ->where('name', 'like', '%'.$search.'%')
                     ->orWhere('code', 'like', '%'.$search.'%'))))
-            ->when($filters['location_id'] ?? null, fn ($query, $locationId) => $query->whereHas('balances', fn ($balance) => $balance
-                ->where('location_id', $locationId)
-                ->where('quantity', '>', 0)))
             ->when($filters['from'] ?? null, fn ($query, $date) => $query->whereDate('expiry_date', '>=', $date))
             ->when($filters['to'] ?? null, fn ($query, $date) => $query->whereDate('expiry_date', '<=', $date));
 
         $counts = [
             'expired' => (clone $baseQuery)->whereDate('expiry_date', '<', $today)->count(),
-            'near' => (clone $baseQuery)->whereBetween('expiry_date', [$today, $today->copy()->addMonths($warningMonths)])->count(),
-            'safe' => (clone $baseQuery)->whereDate('expiry_date', '>', $today->copy()->addMonths($warningMonths))->count(),
+            'near' => (clone $baseQuery)->whereBetween('expiry_date', [$today, $warningCutoff])->count(),
+            'safe' => (clone $baseQuery)->whereDate('expiry_date', '>', $warningCutoff)->count(),
         ];
 
         $batches = (clone $baseQuery)
             ->when($filters['status'] === 'expired', fn ($query) => $query->whereDate('expiry_date', '<', $today))
-            ->when($filters['status'] === 'near', fn ($query) => $query->whereBetween('expiry_date', [$today, $today->copy()->addMonths($warningMonths)]))
-            ->when($filters['status'] === 'safe', fn ($query) => $query->whereDate('expiry_date', '>', $today->copy()->addMonths($warningMonths)))
+            ->when($filters['status'] === 'near', fn ($query) => $query->whereBetween('expiry_date', [$today, $warningCutoff]))
+            ->when($filters['status'] === 'safe', fn ($query) => $query->whereDate('expiry_date', '>', $warningCutoff))
             ->orderBy('expiry_date')
             ->paginate(30)
             ->withQueryString();
@@ -883,6 +899,7 @@ class InventoryController extends Controller
             'counts' => $counts,
             'filters' => $filters,
             'warningMonths' => $warningMonths,
+            'warningCutoff' => $warningCutoff,
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
         ]);
     }
@@ -909,14 +926,14 @@ class InventoryController extends Controller
                 fputcsv($handle, ['Obat', 'Kode', 'Lokasi', 'Stok Awal', 'Masuk', 'Keluar', 'Stok Akhir', 'Satuan']);
                 foreach ($reportRows as $row) {
                     fputcsv($handle, [
-                        $row['medicine_name'],
-                        $row['medicine_code'],
-                        $row['location_name'],
+                        $this->spreadsheetText($row['medicine_name']),
+                        $this->spreadsheetText($row['medicine_code']),
+                        $this->spreadsheetText($row['location_name']),
                         $row['opening'],
                         $row['incoming'],
                         $row['outgoing'],
                         $row['ending'],
-                        $row['unit_name'],
+                        $this->spreadsheetText($row['unit_name']),
                     ]);
                 }
                 fclose($handle);
@@ -944,7 +961,7 @@ class InventoryController extends Controller
     {
         $data = $request->validate([
             'period' => ['nullable', 'date_format:Y-m'],
-            'session' => ['nullable', 'exists:stock_opname_sessions,id'],
+            'session' => ['nullable', 'integer', 'exists:stock_opname_sessions,id'],
         ]);
         $period = $data['period'] ?? now('Asia/Jakarta')->format('Y-m');
         $start = Carbon::createFromFormat('!Y-m', $period, 'Asia/Jakarta')->startOfMonth();
@@ -978,7 +995,7 @@ class InventoryController extends Controller
     {
         $data = $request->validate([
             'period' => ['required', 'date_format:Y-m'],
-            'location_id' => ['required', 'exists:locations,id', Rule::unique('stock_opname_sessions', 'location_id')->where('period', $request->input('period'))],
+            'location_id' => ['required', 'integer', 'exists:locations,id', Rule::unique('stock_opname_sessions', 'location_id')->where('period', $request->input('period'))],
             'cutoff_at' => ['required', 'date_format:Y-m-d\\TH:i'],
             'notes' => ['nullable', 'string', 'max:1000'],
         ], [
@@ -986,6 +1003,9 @@ class InventoryController extends Controller
         ]);
 
         $session = \App\Services\InventoryTransaction::run(function () use ($data, $request) {
+            if (StockOpnameSession::where('period', $data['period'])->where('location_id', $data['location_id'])->exists()) {
+                throw ValidationException::withMessages(['location_id' => 'Sesi stock opname untuk periode dan lokasi ini sudah ada.']);
+            }
             $session = StockOpnameSession::create([
                 'reference' => $this->nextReference('stock_opname_adjustment', 'OPN'),
                 'period' => $data['period'],
@@ -1015,6 +1035,7 @@ class InventoryController extends Controller
         abort_unless($session->status === 'draft', 422, 'Sesi yang sudah final tidak bisa diedit.');
         $data = $request->validate([
             'items' => ['required', 'array'],
+            'items.*' => ['array'],
             'items.*.physical_quantity' => ['nullable', 'numeric', 'gte:0', 'decimal:0,4', 'max:999999999999.9999'],
             'items.*.reason' => ['nullable', 'string', 'max:1000'],
         ]);
@@ -1022,6 +1043,7 @@ class InventoryController extends Controller
         \App\Services\InventoryTransaction::run(function () use ($data, $session, $request) {
             $session = StockOpnameSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
             abort_unless($session->status === 'draft', 422, 'Sesi yang sudah final tidak bisa diedit.');
+            app(\App\Services\OpnameSnapshotService::class)->assertVersion($session, $request->input('version'));
             $items = $session->items()->get()->keyBy('id');
             foreach ($data['items'] as $itemId => $payload) {
                 $item = $items->get((int) $itemId);
@@ -1056,6 +1078,7 @@ class InventoryController extends Controller
         \App\Services\InventoryTransaction::run(function () use ($session, $request, $stock) {
             $session = StockOpnameSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
             abort_unless($session->status === 'draft', 422, 'Sesi ini sudah difinalisasi.');
+            app(\App\Services\OpnameSnapshotService::class)->assertVersion($session, $request->input('version'));
             app(\App\Services\OpnameSnapshotService::class)->assertUnchanged($session);
             $session->load('items');
             if ($session->items->isEmpty()) {
@@ -1074,12 +1097,9 @@ class InventoryController extends Controller
             }
             foreach ($session->items as $item) {
                 $difference = (float) $item->physical_quantity - (float) $item->system_quantity;
-                if ($difference == 0.0) {
-                    continue;
-                }
-
-                $stock->add($item->medicine_id, $session->location_id, $difference);
-                if ($item->batch_id) {
+                $balance = $stock->add($item->medicine_id, $session->location_id, $difference);
+                $balance->update(['last_counted_at' => now('Asia/Jakarta')]);
+                if ($difference != 0.0 && $item->batch_id) {
                     $stock->addBatch($item->medicine_id, $item->batch_id, $session->location_id, $difference);
                 }
 
@@ -1089,7 +1109,8 @@ class InventoryController extends Controller
                     'medicine_id' => $item->medicine_id,
                     'batch_id' => $item->batch_id,
                     'source_location_id' => $difference < 0 ? $session->location_id : null,
-                    'destination_location_id' => $difference > 0 ? $session->location_id : null,
+                    // A zero-value, location-linked trace invalidates older submitted counts too.
+                    'destination_location_id' => $difference >= 0 ? $session->location_id : null,
                     'quantity' => abs($difference),
                     'occurred_at' => now('Asia/Jakarta'),
                     'notes' => 'Finalisasi stock opname '.$session->period.'. Alasan: '.($item->reason ?: '-'),
@@ -1118,6 +1139,7 @@ class InventoryController extends Controller
         \App\Services\InventoryTransaction::run(function () use ($session, $request) {
             $session = StockOpnameSession::whereKey($session->id)->lockForUpdate()->firstOrFail();
             abort_unless($session->status === 'draft', 422, 'Sesi yang sudah final tidak bisa dihitung ulang.');
+            app(\App\Services\OpnameSnapshotService::class)->assertVersion($session, $request->input('version'));
             $before = ['snapshot' => $session->stock_snapshot, 'items' => $session->items()->get()->toArray(), 'cutoff_at' => $session->cutoff_at];
             app(\App\Services\OpnameSnapshotService::class)->resetItems($session);
             $session->update(['cutoff_at' => now('Asia/Jakarta')]);
@@ -1200,6 +1222,14 @@ class InventoryController extends Controller
             ]];
         }
 
+        $request->merge(['items' => $items]);
+        $request->validate([
+            'items' => ['nullable', 'array'],
+            'items.*' => ['array'],
+            'items.*.medicine_id' => ['nullable', 'integer'],
+            'items.*.input_unit_name' => ['nullable', 'string'],
+        ]);
+
         $items = collect($items ?? [])
             ->map(function (array $item) {
                 if (filled($item['medicine_id'] ?? null) && filled($item['input_unit_name'] ?? null)) {
@@ -1257,9 +1287,9 @@ class InventoryController extends Controller
         $isFiltering = $required || $request->hasAny(['medicine_id', 'location_id', 'batch_id', 'start', 'end']);
 
         return $request->validate([
-            'medicine_id' => [$isFiltering ? 'required' : 'nullable', 'exists:medicines,id'],
-            'location_id' => [$isFiltering ? 'required' : 'nullable', 'exists:locations,id'],
-            'batch_id' => ['nullable', 'exists:batches,id'],
+            'medicine_id' => [$isFiltering ? 'required' : 'nullable', 'integer', 'exists:medicines,id'],
+            'location_id' => [$isFiltering ? 'required' : 'nullable', 'integer', 'exists:locations,id'],
+            'batch_id' => ['nullable', 'integer', 'exists:batches,id'],
             'start' => [$isFiltering ? 'required' : 'nullable', 'date_format:Y-m-d'],
             'end' => [$isFiltering ? 'required' : 'nullable', 'date_format:Y-m-d', 'after_or_equal:start'],
         ], [
@@ -1339,6 +1369,11 @@ class InventoryController extends Controller
             'expired' => 'Obat expired',
             'lainnya' => 'Kondisi lainnya',
         ];
+    }
+
+    private function spreadsheetText(string $value): string
+    {
+        return preg_match('/^[\x00-\x20]*[=+\-@]|^[\t\r\n]/', $value) ? "'".$value : $value;
     }
 
     private function periodInventoryReport(Carbon $start, Carbon $end)
@@ -1432,6 +1467,13 @@ class InventoryController extends Controller
         if ($type === 'receipt' && Schema::hasTable('inventory_receipts')) {
             $references = $references->merge(
                 InventoryReceipt::where('reference', 'like', $base.'%')->pluck('reference')
+            );
+        }
+
+        if ($type === 'stock_opname_adjustment') {
+            // Session creation runs under InventoryTransaction's shared inventory write lock.
+            $references = $references->merge(
+                StockOpnameSession::where('reference', 'like', $base.'%')->lockForUpdate()->pluck('reference')
             );
         }
 
