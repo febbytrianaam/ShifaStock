@@ -120,12 +120,16 @@
         </dialog>
     @endcan
 
-    @can('manage-medicines')
-        <div class="mb-5 flex flex-wrap justify-end gap-2">
+    <div class="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <p class="max-w-2xl text-xs leading-relaxed text-slate-500">Butuh daftar untuk dilengkapi di Excel? Unduh template ini, isi kolom kuning, lalu serahkan kembali untuk ditinjau kepala apoteker. Unduhan tidak mengubah data ShifaStock.</p>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('medicines.export-template') }}" class="btn border border-[#b2d4ee] bg-white text-xs font-bold text-[#3277B2] hover:bg-[#edf5fb]" title="Unduh daftar master obat ke Excel">Unduh Template Excel</a>
+            @can('manage-medicines')
             <button type="button" class="btn border border-[#b2d4ee] bg-white text-xs font-bold text-[#3277B2] hover:bg-[#edf5fb]" wire:click="previewImport" wire:loading.attr="disabled" wire:target="previewImport">Preview Import 160</button>
             <button type="button" class="btn bg-[#3277B2] text-xs font-bold text-white hover:bg-[#266194]" wire:click="create">Tambah Obat</button>
+            @endcan
         </div>
-    @endcan
+    </div>
 
     @can('manage-medicines')
         @if($showImportPreview)
