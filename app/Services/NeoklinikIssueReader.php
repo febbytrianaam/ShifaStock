@@ -85,13 +85,16 @@ class NeoklinikIssueReader
                 }
                 if (! is_numeric($values['A']) || ! is_numeric($values['M']) || ! is_finite((float) $values['M']) ||
                     (float) $values['M'] <= 0 || (float) $values['M'] > 999999999999.9999 ||
-                    abs(round((float) $values['M'], 4) - (float) $values['M']) > 0.0000001) {
+                    ! $this->hasQuantityPrecision((float) $values['M'])) {
                     $this->fail("Baris {$number}: tanggal harus berupa tanggal Excel dan kuantitas harus positif dengan maksimal empat desimal.");
                 }
                 if ($values['J'] !== null && (! is_scalar($values['J']) || mb_strlen((string) $values['J']) > 150)) {
                     $this->fail("Baris {$number}: identitas racikan tidak valid.");
                 }
-                $date = CarbonImmutable::instance(Date::excelToDateTimeObject((float) $values['A'], 'Asia/Jakarta'));
+                // Excel serials can land a few microseconds either side of an exact second.
+                // Use the same whole-second value for cutoffs, fingerprints, and storage.
+                $sourceDate = CarbonImmutable::instance(Date::excelToDateTimeObject((float) $values['A'], 'Asia/Jakarta'));
+                $date = $sourceDate->roundSecond();
                 if ($date->year < 2000 || $date->greaterThan(now('Asia/Jakarta')->addMinutes(5))) {
                     $this->fail("Baris {$number}: tanggal transaksi tidak wajar atau berada di masa depan. Periksa periode ekspor.");
                 }
@@ -105,9 +108,11 @@ class NeoklinikIssueReader
                 }
                 $seen[$key] = $number;
                 $quantity = number_format((float) $values['M'], 4, '.', '');
-                $occurred = $date->format('Y-m-d H:i:s.u');
+                $occurred = $date->format('Y-m-d H:i:s');
                 $rows[] = ['source_key' => $key, 'sale_key' => hash('sha256', self::normalize((string) $values['C'])),
                     'fingerprint' => hash('sha256', json_encode([$occurred, $quantity, $unit,
+                        self::normalize((string) ($values['D'] ?? '')), self::normalize((string) ($values['I'] ?? ''))], JSON_THROW_ON_ERROR)),
+                    'legacy_fingerprint' => hash('sha256', json_encode([$sourceDate->format('Y-m-d H:i:s.u'), $quantity, $unit,
                         self::normalize((string) ($values['D'] ?? '')), self::normalize((string) ($values['I'] ?? ''))], JSON_THROW_ON_ERROR)),
                     'source_row' => $number, 'source_code' => $code, 'source_name' => trim((string) $values['L']),
                     'source_unit' => $unit, 'source_quantity' => $quantity, 'occurred_at' => $occurred,
@@ -127,6 +132,15 @@ class NeoklinikIssueReader
         } finally {
             $book?->disconnectWorksheets();
         }
+    }
+
+    private function hasQuantityPrecision(float $quantity): bool
+    {
+        $rounded = round($quantity, 4);
+
+        // Allow only floating-point representation noise, relative to this quantity.
+        // A fixed decimal tolerance silently changes tiny quantities before conversion.
+        return abs($quantity - $rounded) <= max(abs($quantity), abs($rounded)) * PHP_FLOAT_EPSILON * 2;
     }
 
     private function checkArchive(string $path): void

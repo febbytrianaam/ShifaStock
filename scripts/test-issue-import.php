@@ -73,6 +73,12 @@ if (in_array($mode, ['fixture', 'worker', 'verify'], true)) {
                 'Obat Simulasi Tata Letak '.($index + 1).' Tablet 500 mg', 1, 'BUTIR', null, null], null, 'A'.($index + 2));
         }
         (new Xlsx($book))->save($output.'/Simulasi_Banyak.xlsx');
+        for ($index = 0; $index < 502; $index++) {
+            $sheet->fromArray([Date::PHPToExcel($date), null, 'SIM-LARGE-SALE-'.($index + 1), 'Internal', 'Klinik Simulasi', 'Poli Simulasi',
+                'DOKTER_SINTETIS_PRIVASI', 'PASIEN_SINTETIS_PRIVASI', 'Resep', null, 'SIM-LARGE-'.($index + 1),
+                'Obat Simulasi Banyak Pilihan '.($index + 1), 0.0001, 'BUTIR', null, null], null, 'A'.($index + 2));
+        }
+        (new Xlsx($book))->save($output.'/Simulasi_502_Pilihan.xlsx');
         $book->disconnectWorksheets();
         $service = app(IssueImportService::class);
         $rows = app(NeoklinikIssueReader::class)->read($output.'/Simulasi.xlsx');
@@ -119,6 +125,9 @@ if (in_array($mode, ['fixture', 'worker', 'verify'], true)) {
         }
         $quantity = (float) StockBalance::where('medicine_id', $meta['medicine_id'])->value('quantity');
         $batchTotal = (float) BatchStockBalance::sum('quantity');
+        if (DB::table('issue_import_mappings')->where('source_code', 'like', 'SIM-LARGE-%')->count() !== 502) {
+            throw new RuntimeException('Large browser mapping was truncated.');
+        }
         if ($quantity !== 80.0 || $batchTotal !== 80.0 || DB::table('issue_import_lines')->count() !== 3) {
             throw new RuntimeException('MySQL ledger/concurrent import mismatch.');
         }

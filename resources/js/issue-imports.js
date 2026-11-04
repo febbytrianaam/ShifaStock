@@ -64,6 +64,44 @@ export function initIssueImports() {
         location.addEventListener('change', () => sync(true));
     }
     const matchRows = [...document.querySelectorAll('[data-import-match-row]')];
+    const mappingForm = document.querySelector('[data-import-mapping-form]');
+    if (mappingForm && !mappingForm.dataset.importReady) {
+        mappingForm.dataset.importReady = '1';
+        // Native form validation includes unchecked rows. Validate only approved choices.
+        mappingForm.noValidate = true;
+        mappingForm.addEventListener('submit', (event) => {
+            if (event.defaultPrevented) return;
+            const selected = matchRows.filter((row) => row.querySelector('[data-import-map-confirm]').checked);
+            const invalid = selected.find((row) => !row.querySelector('[data-import-medicine]').value
+                || !row.querySelector('input[type="number"]').checkValidity());
+            if (!selected.length || invalid) {
+                event.preventDefault();
+                void Swal.fire({ title: 'Periksa pilihan obat',
+                    text: invalid ? 'Pilih obat dan isi jumlah per satuan yang valid untuk setiap pilihan yang ditandai Benar.'
+                        : 'Pilih obat yang sesuai, lalu tandai Benar sebelum melanjutkan.',
+                    icon: 'warning', confirmButtonText: 'Mengerti', confirmButtonColor: '#3277B2' });
+            }
+        });
+        mappingForm.addEventListener('formdata', (event) => {
+            const payload = {};
+            matchRows.forEach((row) => {
+                if (!row.querySelector('[data-import-map-confirm]').checked) return;
+                payload[row.dataset.importMappingKey] = {
+                    medicine_id: row.querySelector('[data-import-medicine]').value,
+                    factor: row.querySelector('input[type="number"]').value,
+                    confirmed: 1,
+                };
+            });
+            const serialized = JSON.stringify(payload);
+            mappingForm.querySelector('[data-import-mappings-payload]').value = serialized;
+            // Remove fields from the request, leaving names/values in the DOM for
+            // unsaved-input protection and canceled submissions. PHP receives two vars.
+            for (const name of [...event.formData.keys()]) {
+                if (name.startsWith('mappings[')) event.formData.delete(name);
+            }
+            event.formData.set('mappings_payload', serialized);
+        });
+    }
     const showSaved = document.querySelector('[data-import-show-saved]');
     if (showSaved && !showSaved.dataset.importReady) {
         showSaved.dataset.importReady = '1';

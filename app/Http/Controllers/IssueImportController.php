@@ -10,6 +10,9 @@ use App\Services\IssueImportService;
 use App\Services\NeoklinikIssueReader;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use JsonException;
 
 class IssueImportController extends Controller
 {
@@ -66,21 +69,39 @@ class IssueImportController extends Controller
 
     public function mappings(Request $request, IssueImport $issueImport, IssueImportService $service)
     {
+        if ($request->has('mappings_payload')) {
+            $request->validate(['mappings_payload' => ['bail', 'required', 'string', 'max:512000']],
+                ['mappings_payload.required' => 'Pilihan belum siap dikirim. Aktifkan JavaScript lalu muat ulang halaman.']);
+            try {
+                $mappings = json_decode($request->input('mappings_payload'), true, 8, JSON_THROW_ON_ERROR);
+            } catch (JsonException) {
+                throw ValidationException::withMessages(['mappings_payload' => 'Format pilihan tidak valid. Muat ulang halaman.']);
+            }
+            if (! is_array($mappings)) {
+                throw ValidationException::withMessages(['mappings_payload' => 'Format pilihan tidak valid. Muat ulang halaman.']);
+            }
+            // Keep decoded fields available to old() when a selected row has errors.
+            // A present payload is authoritative; never fall back to truncated fields.
+            $request->merge(['mappings' => $mappings]);
+        }
+        $input = $request->validate(['mappings' => ['required', 'array', 'max:2000']]);
+        $selected = array_filter($input['mappings'], fn ($mapping) => is_array($mapping)
+            && in_array($mapping['confirmed'] ?? null, [true, 1, '1'], true));
+        if (! $selected) {
+            return back()->withErrors(['import' => 'Pilih obat yang sesuai, lalu tandai Benar sebelum melanjutkan.'])->withInput();
+        }
         $attributes = [];
         foreach ($service->groups($issueImport) as $key => $group) {
             $attributes['mappings.'.$key.'.medicine_id'] = 'obat ShifaStock untuk '.$group['code'];
             $attributes['mappings.'.$key.'.factor'] = 'isi per satuan untuk '.$group['code'];
             $attributes['mappings.'.$key.'.confirmed'] = 'persetujuan pilihan untuk '.$group['code'];
         }
-        $data = $request->validate([
+        $data = Validator::make(['mappings' => $selected], [
             'mappings' => ['required', 'array', 'max:2000'],
-            'mappings.*.medicine_id' => ['nullable', 'integer', 'exists:medicines,id'],
+            'mappings.*.medicine_id' => ['required', 'integer', 'exists:medicines,id'],
             'mappings.*.factor' => ['required', 'numeric', 'min:0.0001', 'max:1000000', 'decimal:0,4'],
-            'mappings.*.confirmed' => ['nullable', 'boolean'],
-        ], ['mappings.*.medicine_id.exists' => 'Obat yang dipilih tidak tersedia. Pilih kembali dari daftar.'], $attributes);
-        if (! collect($data['mappings'])->contains(fn ($mapping) => ! empty($mapping['confirmed']))) {
-            return back()->withErrors(['import' => 'Pilih obat yang sesuai, lalu tandai Benar sebelum melanjutkan.']);
-        }
+            'mappings.*.confirmed' => ['required', 'boolean'],
+        ], ['mappings.*.medicine_id.exists' => 'Obat yang dipilih tidak tersedia. Pilih kembali dari daftar.'], $attributes)->validate();
         $service->saveMappings($issueImport, $data['mappings'], $request->user());
 
         return redirect()->route('issue-imports.show', $issueImport)->with('status', 'Pilihan obat disimpan. Lanjutkan pemeriksaan; stok belum berkurang.');

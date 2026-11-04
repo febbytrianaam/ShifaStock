@@ -2,6 +2,8 @@
     <div class="issue-import-workspace">
         <form id="import-mapping-form" method="POST" action="{{ route('issue-imports.mappings', $document) }}" class="min-w-0" data-import-mapping-form data-import-list>
             @csrf
+            <input type="hidden" name="mappings_payload" value="" data-import-mappings-payload>
+            <noscript><p class="mb-3 text-sm text-amber-800">Aktifkan JavaScript lalu muat ulang halaman untuk menyimpan pilihan obat dengan aman.</p></noscript>
             <h3 id="import-match-title" class="mb-2 text-sm font-semibold">Cocokkan obat dari Excel</h3>
             <div class="mb-3 flex flex-wrap items-center justify-between gap-3 text-xs">
                 <span class="text-slate-600">{{ $needsMapping }} obat/satuan perlu dicocokkan · {{ count($preview['groups']) - $needsMapping }} tidak perlu dicocokkan ulang</span>
@@ -16,7 +18,7 @@
                 <tbody class="divide-y divide-slate-100">@foreach($preview['groups'] as $key => $group)
                     @php($selectedId = old('mappings.'.$key.'.medicine_id', $group['mapping']?->medicine_id ?? $group['suggestion']?->id))
                     @php($selectedMedicine = $medicines->firstWhere('id', $selectedId))
-                    <tr data-import-match-row data-import-search-text="{{ $group['code'].' '.$group['name'] }}" data-needs-mapping="{{ $group['needs_mapping'] ? '1' : '0' }}" @if($needsMapping > 0 && !$group['needs_mapping']) hidden @endif>
+                    <tr data-import-match-row data-import-mapping-key="{{ $key }}" data-import-search-text="{{ $group['code'].' '.$group['name'] }}" data-needs-mapping="{{ $group['needs_mapping'] ? '1' : '0' }}" @if($needsMapping > 0 && !$group['needs_mapping']) hidden @endif>
                         <td class="p-2 align-top text-slate-500" data-label="No.">{{ $loop->iteration }}</td>
                         <td class="p-3 align-top" data-label="Tanggal Jual (WIB)"><x-issue-import-source-period :rows="$group['details']" /></td>
                         <td class="p-3 align-top" data-label="Obat pada Excel"><b class="break-words">{{ $group['name'] }}</b><p class="mt-1 text-slate-500">{{ $group['code'] }} · {{ \App\Support\Quantity::format($group['quantity']) }} {{ $group['unit'] }}</p>@if($group['mapping_valid'])<p class="mt-1 text-emerald-700">Pilihan tersimpan</p>@elseif($group['mapping'])<p class="mt-1 text-amber-700">Pilihan lama perlu diperiksa ulang</p>@elseif($group['suggestion'])<p class="mt-1 text-amber-700">Saran otomatis; belum dikonfirmasi</p>@endif</td>

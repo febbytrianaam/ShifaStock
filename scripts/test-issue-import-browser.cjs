@@ -389,6 +389,33 @@ const assert = require('node:assert/strict');
             assert.equal(await page.locator('[data-import-review-row]').count(), 48);
             for (const viewport of viewports) await layout(viewport, 'Panel_Pemeriksaan');
         });
+        await record('502 pilihan obat terkirim lengkap tanpa batas max_input_vars dan tanpa posting stok', async () => {
+            await page.setViewportSize({ width: 1440, height: 900 });
+            await upload('Simulasi_502_Pilihan.xlsx');
+            const rows = page.locator('[data-import-match-row]');
+            assert.equal(await rows.count(), 502);
+            // Operate the real rendered controls; no request payload or application data is replaced.
+            for (const row of await rows.all()) {
+                await row.locator('select').selectOption(String(meta.medicine_id), { force: true });
+            }
+            await page.locator('[data-import-select-visible]').check();
+            const responsePromise = page.waitForResponse((response) => response.request().method() === 'POST'
+                && response.url().includes('/pemetaan'));
+            await page.getByRole('button', { name: 'Simpan Pilihan & Lanjutkan' }).click();
+            const response = await responsePromise;
+            assert.equal(response.status(), 302);
+            const body = new URLSearchParams(response.request().postData());
+            const payload = JSON.parse(body.get('mappings_payload'));
+            assert.equal(Object.keys(payload).length, 502);
+            assert(![...body.keys()].some((key) => key.startsWith('mappings[')));
+            await ready();
+            assert.equal(await page.locator('[data-import-review-row]').count(), 502);
+            assert((await page.locator('[data-import-summary]').innerText()).includes('502 siap'));
+            await page.getByRole('navigation', { name: 'Langkah impor' }).getByRole('link', { name: '2. Cocokkan obat' }).click();
+            await ready();
+            await page.locator('[data-import-show-saved]').check();
+            assert.equal(await page.locator('[data-import-match-row][data-needs-mapping="0"]').count(), 502);
+        });
         await record('Guest dapat melihat riwayat namun tidak bisa mengunggah atau posting', async () => {
             await login('guest_simulasi');
             await goto('/obat-keluar/impor');

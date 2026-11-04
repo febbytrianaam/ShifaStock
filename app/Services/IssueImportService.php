@@ -114,7 +114,7 @@ class IssueImportService
             $status = 'ready';
             $message = 'Siap diposting';
             if ($previous) {
-                $status = $previous->fingerprint === $row['fingerprint'] ? 'duplicate' : 'blocked';
+                $status = in_array($previous->fingerprint, [$row['fingerprint'], $row['legacy_fingerprint'] ?? null], true) ? 'duplicate' : 'blocked';
                 $message = $status === 'duplicate' ? 'Sudah diimpor; tidak dikurangi lagi' : 'Data sumber berubah; tinjau koreksi transaksi lama';
             } elseif (CarbonImmutable::parse($row['occurred_at'], 'Asia/Jakarta')->lessThan($document->starts_at)) {
                 $status = 'blocked';

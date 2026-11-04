@@ -113,6 +113,158 @@ class IssueImportTest extends TestCase
         return (float) StockBalance::where('medicine_id', $this->medicine->id)->where('location_id', $this->location->id)->value('quantity');
     }
 
+    public function test_excel_fractional_seconds_cannot_bypass_equal_physical_count_boundary(): void
+    {
+        $file = $this->file([[]], fn ($book) => $book->getActiveSheet()->setCellValue('A2', 46318.4166666667));
+        $this->post(route('issue-imports.store'), ['file' => $file, 'location_id' => $this->location->id,
+            'starts_at' => '2026-10-23T00:00', 'cutoff_confirmed' => 1])->assertSessionHasNoErrors();
+        $document = IssueImport::latest('id')->firstOrFail();
+        $this->map($document);
+        DB::table('stock_balances')->update(['last_counted_at' => '2026-10-23 10:00:00']);
+        $preview = app(IssueImportService::class)->preview($document->fresh());
+        $this->assertSame(0, $preview['new']);
+        $this->assertSame(1, $preview['blocked']);
+        $this->assertSame('2026-10-23 10:00:00', $document->payload[0]['occurred_at']);
+        $this->postImport($document)->assertSessionHasErrors('import');
+        $this->assertSame(100.0, $this->stock());
+        $this->assertDatabaseCount('issue_import_lines', 0);
+    }
+
+    public function test_equivalent_excel_date_exports_have_the_same_fingerprint_and_remain_duplicates(): void
+    {
+        $documents = [];
+        foreach ([46318.4166666667, 46318.416666666664] as $serial) {
+            $this->post(route('issue-imports.store'), ['file' => $this->file([[]], fn ($book) => $book->getActiveSheet()->setCellValue('A2', $serial)),
+                'location_id' => $this->location->id, 'starts_at' => '2026-10-23T00:00', 'cutoff_confirmed' => 1])->assertSessionHasNoErrors();
+            $documents[] = IssueImport::latest('id')->firstOrFail();
+        }
+        $this->assertSame($documents[0]->payload[0]['fingerprint'], $documents[1]->payload[0]['fingerprint']);
+        $this->map($documents[0]);
+        $this->postImport($documents[0])->assertSessionHasNoErrors();
+        $this->postImport($documents[1])->assertSessionHasNoErrors();
+        $this->assertSame(1, $documents[1]->fresh()->duplicate_count);
+        $this->assertSame(85.0, $this->stock());
+    }
+
+    public function test_unchanged_exports_still_match_pre_fix_fingerprints_without_rewriting_the_ledger(): void
+    {
+        $file = $this->file([[]], fn ($book) => $book->getActiveSheet()->setCellValue('A2', 46318.4166666667));
+        $next = app(NeoklinikIssueReader::class)->read($file->getRealPath());
+        $this->post(route('issue-imports.store'), ['file' => $file, 'location_id' => $this->location->id,
+            'starts_at' => '2026-10-23T00:00', 'cutoff_confirmed' => 1])->assertSessionHasNoErrors();
+        $document = IssueImport::latest('id')->firstOrFail();
+        $this->map($document);
+        $this->postImport($document)->assertSessionHasNoErrors();
+        $legacy = $document->payload[0]['legacy_fingerprint'];
+        DB::table('issue_import_lines')->update(['fingerprint' => $legacy]);
+        $preview = app(IssueImportService::class)->create($next, hash('sha256', 'legacy-retry'), $this->location->id,
+            '2026-10-23T00:00', $this->staff);
+        $this->postImport($preview)->assertSessionHasNoErrors();
+        $this->assertSame(1, $preview->fresh()->duplicate_count);
+        $this->assertSame($legacy, DB::table('issue_import_lines')->sole()->fingerprint);
+        $this->assertSame(85.0, $this->stock());
+        $changedFile = $this->file([['quantity' => 16]],
+            fn ($book) => $book->getActiveSheet()->setCellValue('A2', 46318.4166666667));
+        $changed = app(NeoklinikIssueReader::class)->read($changedFile->getRealPath());
+        $corrected = app(IssueImportService::class)->create($changed, hash('sha256', 'legacy-changed'), $this->location->id,
+            '2026-10-23T00:00', $this->staff);
+        $this->assertSame(1, app(IssueImportService::class)->preview($corrected)['blocked']);
+    }
+
+    public function test_extra_quantity_precision_is_rejected_before_a_large_factor_can_change_it(): void
+    {
+        foreach ([0.00010009, 1.00000001, 0.12345001] as $quantity) {
+            $this->post(route('issue-imports.store'), ['file' => $this->file([['quantity' => $quantity]]),
+                'location_id' => $this->location->id, 'starts_at' => '2026-10-23T00:00', 'cutoff_confirmed' => 1])->assertSessionHasErrors('file');
+        }
+        $this->assertDatabaseCount('issue_imports', 0);
+        $this->assertDatabaseCount('issue_import_mappings', 0);
+        $this->assertSame(100.0, $this->stock());
+    }
+
+    public function test_valid_four_decimal_excel_floats_are_accepted_and_convert_correctly(): void
+    {
+        foreach ([0.0001, 0.1001, 1.2345, 999.9999, 0.1 + 0.2] as $quantity) {
+            $file = $this->file([['quantity' => $quantity]]);
+            $rows = app(NeoklinikIssueReader::class)->read($file->getRealPath());
+            $this->assertSame(number_format($quantity, 4, '.', ''), $rows[0]['source_quantity']);
+        }
+        $document = $this->upload([['quantity' => 0.0001]]);
+        $this->map($document, 1000000);
+        $this->postImport($document)->assertSessionHasNoErrors();
+        $this->assertSame(0.0, $this->stock());
+        $this->assertDatabaseHas('issue_import_lines', ['quantity' => 100]);
+    }
+
+    public function test_only_explicitly_confirmed_mappings_are_validated_and_saved(): void
+    {
+        $document = $this->upload([[], ['code' => 'B', 'sale' => 'SIM-B']]);
+        [$first, $second] = array_keys(app(IssueImportService::class)->groups($document));
+        $this->post(route('issue-imports.mappings', $document), ['mappings' => [
+            $first => ['medicine_id' => $this->medicine->id, 'factor' => 1, 'confirmed' => 1],
+            $second => ['medicine_id' => 'invalid', 'factor' => 'invalid', 'confirmed' => 0],
+        ]])->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('issue_import_mappings', 1);
+        $this->assertDatabaseMissing('issue_import_mappings', ['source_code' => 'B']);
+        $this->assertSame(100.0, $this->stock());
+    }
+
+    public function test_invalid_confirmed_mapping_still_reports_field_errors_without_partial_saves(): void
+    {
+        $document = $this->upload([[], ['code' => 'B', 'sale' => 'SIM-B']]);
+        [$first, $second] = array_keys(app(IssueImportService::class)->groups($document));
+        $input = [$first => ['medicine_id' => $this->medicine->id, 'factor' => 1, 'confirmed' => true],
+            $second => ['medicine_id' => 'invalid', 'factor' => '0.00010009', 'confirmed' => '1']];
+        $this->post(route('issue-imports.mappings', $document), ['mappings' => $input])
+            ->assertSessionHasErrors(['mappings.'.$second.'.medicine_id', 'mappings.'.$second.'.factor']);
+        $this->assertDatabaseCount('issue_import_mappings', 0);
+    }
+
+    public function test_json_mapping_payload_saves_all_502_groups_without_legacy_form_fields(): void
+    {
+        $rows = [];
+        for ($i = 0; $i < 502; $i++) {
+            $rows[] = ['code' => 'SIM-'.$i, 'sale' => 'SIM-'.$i, 'quantity' => 0.0001];
+        }
+        $document = $this->upload($rows);
+        $input = [];
+        foreach (app(IssueImportService::class)->groups($document) as $key => $group) {
+            $input[$key] = ['medicine_id' => $this->medicine->id, 'factor' => '1', 'confirmed' => 1];
+        }
+        $this->post(route('issue-imports.mappings', $document), ['mappings_payload' => json_encode($input, JSON_THROW_ON_ERROR)])
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseCount('issue_import_mappings', 502);
+        $this->assertSame(502, app(IssueImportService::class)->preview($document->fresh())['new']);
+        $this->assertSame(100.0, $this->stock());
+        $this->assertDatabaseCount('inventory_movements', 0);
+    }
+
+    public function test_json_mapping_validation_restores_selected_fields_and_ignores_unchecked_errors(): void
+    {
+        $document = $this->upload([[], ['code' => 'B', 'sale' => 'SIM-B']]);
+        [$first, $second] = array_keys(app(IssueImportService::class)->groups($document));
+        $input = [$first => ['medicine_id' => $this->medicine->id, 'factor' => 'bad', 'confirmed' => 1],
+            $second => ['medicine_id' => 'bad', 'factor' => 'bad']];
+        $this->post(route('issue-imports.mappings', $document), ['mappings_payload' => json_encode($input, JSON_THROW_ON_ERROR)])
+            ->assertSessionHasErrors('mappings.'.$first.'.factor')->assertSessionDoesntHaveErrors('mappings.'.$second.'.factor')
+            ->assertSessionHasInput('mappings.'.$first.'.factor', 'bad');
+        $this->assertDatabaseCount('issue_import_mappings', 0);
+    }
+
+    public function test_malformed_empty_oversized_or_excessive_json_mapping_payloads_fail_safely(): void
+    {
+        $document = $this->upload();
+        foreach (['', '{', 'null', '1', '"text"', str_repeat(' ', 512001), json_encode(array_fill(0, 2001, ['confirmed' => 1]))] as $payload) {
+            $this->post(route('issue-imports.mappings', $document), ['mappings_payload' => $payload])->assertSessionHasErrors();
+        }
+        // A failed/no-JS serializer must not fall back to potentially truncated form fields.
+        $key = array_key_first(app(IssueImportService::class)->groups($document));
+        $this->post(route('issue-imports.mappings', $document), ['mappings_payload' => '',
+            'mappings' => [$key => ['medicine_id' => $this->medicine->id, 'factor' => 1, 'confirmed' => 1]]])->assertSessionHasErrors();
+        $this->assertDatabaseCount('issue_import_mappings', 0);
+        $this->assertSame(100.0, $this->stock());
+    }
+
     public function test_upload_is_private_and_preview_never_changes_stock_or_auto_approves_mapping(): void
     {
         $document = $this->upload();
