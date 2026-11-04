@@ -18,8 +18,8 @@
         ['label' => 'MENU UTAMA', 'inventory' => false, 'items' => [
             ['dashboard', '▦', 'Dashboard', null, 'view-dashboard'],
         ]],
-        ['label' => 'ADMINISTRASI', 'inventory' => false, 'anyCan' => ['manage-users', 'view-audit-logs', 'manage-system-references', 'manage-system-settings'], 'items' => [
-            ['admin.users.index', '◉', 'Pengguna', null, 'manage-users'],
+        ['label' => 'ADMINISTRASI', 'inventory' => false, 'anyCan' => ['manage-users', 'manage-permissions', 'view-audit-logs', 'manage-system-references', 'manage-system-settings'], 'items' => [
+            ['admin.users.index', '◉', auth()->user()->can('manage-users') ? 'Pengguna' : 'Hak Akses', null, ['manage-users', 'manage-permissions']],
             ['admin.audit-logs.index', '◌', 'Audit Log', null, 'view-audit-logs'],
             ['admin.references.index', '◇', 'Referensi Sistem', null, 'manage-system-references'],
             ['admin.settings.index', '⚙', 'Pengaturan Sistem', null, 'manage-system-settings'],
@@ -101,7 +101,7 @@
 @php
     $restoredInputFields = array_keys(session()->getOldInput());
     $onboardingConfig = ['autoStart' => auth()->user()->onboarding_seen_at === null,
-        'endpoint' => route('onboarding.finish'), 'token' => csrf_token(),
+        'endpoint' => route('onboarding.finish', [], false), 'token' => csrf_token(),
         'steps' => \App\Support\Onboarding::steps(auth()->user())];
 @endphp
 <script type="application/json" data-restored-input-fields>@json($restoredInputFields)</script>
@@ -122,7 +122,7 @@
                             @php([$route, $icon, $label, $badge, $can, $activeRoutes] = array_pad($item, 6, []))
                             @php($activeRoutes = $activeRoutes ?: [$route])
                             @php($isActive = collect($activeRoutes)->contains(fn ($activeRoute) => request()->routeIs($activeRoute)))
-                            @continue($can && !auth()->user()->can($can))
+                            @continue($can && !collect((array) $can)->contains(fn ($ability) => auth()->user()->can($ability)))
                             <a data-tour-menu="{{ $route }}" class="nav-link {{ $isActive ? 'nav-active' : '' }}" href="{{ route($route) }}" @if($isActive) aria-current="page" @endif><span class="w-5 shrink-0 text-center text-base" aria-hidden="true">{{ $icon }}</span><span class="min-w-0 flex-1">{{ $label }}</span>@if($badge)<span class="text-[9px] font-semibold uppercase text-slate-400">{{ $badge }}</span>@endif</a>
                         @endforeach
                     </div>

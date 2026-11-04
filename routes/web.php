@@ -1,13 +1,16 @@
 <?php
 
-use App\Http\Controllers\PrototypeController;
-use App\Http\Controllers\SessionController;
 use App\Http\Controllers\Admin\AuditLogController;
-use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\SystemReferenceController;
 use App\Http\Controllers\Admin\SystemSettingController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\IssueImportController;
+use App\Http\Controllers\MedicineExportController;
 use App\Http\Controllers\NightlyCheckController;
+use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\PrototypeController;
+use App\Http\Controllers\SessionController;
 use App\Livewire\MedicineIndex;
 use Illuminate\Support\Facades\Route;
 
@@ -17,10 +20,13 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [SessionController::class, 'store']);
 });
 Route::middleware(['auth', 'active'])->group(function () {
-    Route::post('/panduan/selesai', [\App\Http\Controllers\OnboardingController::class, 'finish'])->name('onboarding.finish');
+    Route::post('/panduan/selesai', [OnboardingController::class, 'finish'])->name('onboarding.finish');
     Route::post('/logout', [SessionController::class, 'destroy'])->name('logout');
     Route::get('/dashboard', [PrototypeController::class, 'dashboard'])->middleware('can:view-dashboard')->name('dashboard');
     Route::get('/obat', MedicineIndex::class)->middleware('can:view-medicines')->name('medicines.index');
+    Route::get('/obat/export-template', [MedicineExportController::class, 'download'])
+        ->middleware('can:view-medicines')
+        ->name('medicines.export-template');
     Route::post('admin/pengguna/hak-akses', [UserController::class, 'updatePermissions'])
         ->middleware('can:manage-permissions')
         ->name('admin.users.permissions.update');
@@ -51,8 +57,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('admin/pengaturan-sistem', [SystemSettingController::class, 'update'])
         ->middleware('can:manage-system-settings')
         ->name('admin.settings.update');
+    // The index authorizes its selected tab; all user mutations still require manage-users.
+    Route::get('admin/pengguna', [UserController::class, 'index'])->name('admin.users.index');
     Route::resource('admin/pengguna', UserController::class)
-        ->except('show')
+        ->except(['show', 'index'])
         ->middleware('can:manage-users')
         ->names('admin.users');
 
@@ -69,12 +77,12 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/obat-keluar', [InventoryController::class, 'issues'])->middleware('can:view-issues')->name('preview.issues');
         Route::post('/obat-keluar', [InventoryController::class, 'storeIssue'])->middleware(['can:view-issues', 'can:operate-inventory'])->name('issues.store');
         Route::middleware('can:view-issues')->prefix('obat-keluar/impor')->name('issue-imports.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\IssueImportController::class, 'index'])->name('index');
-            Route::post('/', [\App\Http\Controllers\IssueImportController::class, 'store'])->middleware(['can:operate-inventory', 'throttle:10,1'])->name('store');
-            Route::get('/{issueImport}', [\App\Http\Controllers\IssueImportController::class, 'show'])->whereNumber('issueImport')->name('show');
-            Route::delete('/{issueImport}', [\App\Http\Controllers\IssueImportController::class, 'destroy'])->middleware('can:operate-inventory')->whereNumber('issueImport')->name('destroy');
-            Route::post('/{issueImport}/pemetaan', [\App\Http\Controllers\IssueImportController::class, 'mappings'])->middleware('can:operate-inventory')->whereNumber('issueImport')->name('mappings');
-            Route::post('/{issueImport}/posting', [\App\Http\Controllers\IssueImportController::class, 'post'])->middleware('can:operate-inventory')->whereNumber('issueImport')->name('post');
+            Route::get('/', [IssueImportController::class, 'index'])->name('index');
+            Route::post('/', [IssueImportController::class, 'store'])->middleware(['can:operate-inventory', 'throttle:10,1'])->name('store');
+            Route::get('/{issueImport}', [IssueImportController::class, 'show'])->whereNumber('issueImport')->name('show');
+            Route::delete('/{issueImport}', [IssueImportController::class, 'destroy'])->middleware('can:operate-inventory')->whereNumber('issueImport')->name('destroy');
+            Route::post('/{issueImport}/pemetaan', [IssueImportController::class, 'mappings'])->middleware('can:operate-inventory')->whereNumber('issueImport')->name('mappings');
+            Route::post('/{issueImport}/posting', [IssueImportController::class, 'post'])->middleware('can:operate-inventory')->whereNumber('issueImport')->name('post');
         });
         Route::get('/saldo-awal', fn () => redirect('/stok-awal'))->middleware('can:view-opening-balances');
         Route::post('/saldo-awal', [InventoryController::class, 'storeOpeningBalance'])->middleware(['can:view-opening-balances', 'can:operate-inventory']);

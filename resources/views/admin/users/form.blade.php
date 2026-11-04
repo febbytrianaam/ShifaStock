@@ -37,6 +37,7 @@
                     <input type="hidden" name="role" value="{{ $user->role->value }}">
                 @endif
             </div>
+            @if(!$user->exists || auth()->user()->role === \App\Enums\Role::Administrator)
             <div>
                 <label for="password" class="label">{{ $user->exists ? 'Password baru' : 'Password' }}</label>
                 <input id="password" name="password" type="password" autocomplete="new-password" @required(!$user->exists) class="field">
@@ -48,6 +49,7 @@
                 <label for="password_confirmation" class="label">Konfirmasi password</label>
                 <input id="password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" @required(!$user->exists) class="field">
             </div>
+            @endif
         </div>
 
         <label class="mt-5 flex items-center gap-2 text-sm font-medium text-slate-700">

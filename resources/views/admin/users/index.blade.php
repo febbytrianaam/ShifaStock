@@ -1,12 +1,16 @@
-<x-layouts.app title="Pengguna">
+<x-layouts.app :title="$canManageUsers ? 'Pengguna' : 'Hak Akses'">
     <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="inline-flex w-fit rounded-lg border border-slate-200 bg-white p-1 text-sm font-semibold shadow-xs">
+            @if($canManageUsers)
             <a href="{{ route('admin.users.index', ['tab' => 'users']) }}" class="rounded-md px-3 py-1.5 {{ $activeTab === 'users' ? 'bg-[#3277B2] text-white' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' }}">
                 Daftar Pengguna
             </a>
+            @endif
+            @if($canManagePermissions)
             <a href="{{ route('admin.users.index', ['tab' => 'permissions']) }}" class="rounded-md px-3 py-1.5 {{ $activeTab === 'permissions' ? 'bg-[#3277B2] text-white' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800' }}">
                 Hak Akses
             </a>
+            @endif
         </div>
 
         @if($activeTab === 'users')
@@ -201,6 +205,7 @@
                             </td>
                             <td class="table-cell">
                                 <div class="flex justify-end gap-2">
+                                    @if($user->role !== \App\Enums\Role::Administrator || auth()->user()->role === \App\Enums\Role::Administrator)
                                     <a href="{{ route('admin.users.edit', $user) }}" class="btn-secondary">Edit</a>
                                     @if(!$user->is(auth()->user()) && $user->is_active)
                                         <form method="POST" action="{{ route('admin.users.destroy', $user) }}" data-confirm-action data-confirm-title="Nonaktifkan pengguna?" data-confirm-text="Akun {{ $user->name }} tidak bisa login lagi sampai diaktifkan kembali." data-confirm-button="Ya, nonaktifkan">
@@ -208,6 +213,7 @@
                                             @method('DELETE')
                                             <button class="btn-secondary text-rose-600">Nonaktifkan</button>
                                         </form>
+                                    @endif
                                     @endif
                                 </div>
                             </td>

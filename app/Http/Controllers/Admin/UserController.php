@@ -8,12 +8,18 @@ use App\Models\User;
 use App\Support\AuditLogger;
 use App\Support\Permissions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
     public function index(Request $request)
     {
+        $canManageUsers = $request->user()->can(Permissions::MANAGE_USERS);
+        $canManagePermissions = $request->user()->can(Permissions::MANAGE_PERMISSIONS);
+        abort_unless($canManageUsers || $canManagePermissions, 403);
+
         $data = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
             'role' => ['nullable', Rule::enum(Role::class)],
@@ -21,7 +27,10 @@ class UserController extends Controller
             'tab' => ['nullable', 'in:users,permissions'],
         ]);
 
-        $users = User::query()
+        $activeTab = $data['tab'] ?? ($canManageUsers ? 'users' : 'permissions');
+        abort_unless($activeTab === 'users' ? $canManageUsers : $canManagePermissions, 403);
+
+        $users = $activeTab === 'users' ? User::query()
             ->when($data['search'] ?? null, fn ($query, $search) => $query->where(fn ($q) => $q
                 ->where('name', 'like', '%'.$search.'%')
                 ->orWhere('username', 'like', '%'.$search.'%')
@@ -30,18 +39,22 @@ class UserController extends Controller
             ->when(($data['status'] ?? 'all') !== 'all', fn ($query) => $query->where('is_active', ($data['status'] ?? 'all') === 'active'))
             ->orderBy('name')
             ->paginate(15)
-            ->withQueryString();
+            ->withQueryString() : null;
 
         return view('admin.users.index', [
             'users' => $users,
             'roles' => Role::cases(),
             'filters' => $data + ['status' => 'all'],
-            'activeTab' => $data['tab'] ?? 'users',
-            'permissionGroups' => Permissions::definitions(),
-            'permissionMatrix' => Permissions::matrix(),
-            'lockedPermissions' => Permissions::locked(),
-            'forbiddenPermissions' => Permissions::forbidden(),
-            'menuPreview' => $this->menuPreview(),
+            'activeTab' => $activeTab,
+            'canManageUsers' => $canManageUsers,
+            'canManagePermissions' => $canManagePermissions,
+            ...($activeTab === 'permissions' ? [
+                'permissionGroups' => Permissions::definitions(),
+                'permissionMatrix' => Permissions::matrix(),
+                'lockedPermissions' => Permissions::locked(),
+                'forbiddenPermissions' => Permissions::forbidden(),
+                'menuPreview' => $this->menuPreview(),
+            ] : []),
         ]);
     }
 
@@ -49,6 +62,8 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'permissions' => ['nullable', 'array'],
+            'permissions.*' => ['array'],
+            'permissions.*.*' => ['boolean'],
         ]);
 
         $before = Permissions::matrix();
@@ -81,7 +96,7 @@ class UserController extends Controller
     {
         return view('admin.users.form', [
             'user' => new User(['role' => Role::Pharmacy, 'is_active' => true]),
-            'roles' => Role::cases(),
+            'roles' => $this->assignableRoles(),
         ]);
     }
 
@@ -99,25 +114,34 @@ class UserController extends Controller
 
     public function edit(User $pengguna)
     {
+        $this->authorizeTarget($pengguna);
+
         return view('admin.users.form', [
             'user' => $pengguna,
-            'roles' => Role::cases(),
+            'roles' => $this->assignableRoles(),
         ]);
     }
 
     public function update(Request $request, User $pengguna)
     {
+        $this->authorizeTarget($pengguna);
+
         $before = $this->auditSnapshot($pengguna);
         $data = $this->validated($request, $pengguna);
-        if (! array_key_exists('password', $data)) {
-            unset($data['password']);
-        }
         if ($pengguna->is(auth()->user())) {
             $data['is_active'] = true;
             $data['role'] = $pengguna->role;
         }
-        $pengguna->update($data);
+        $pengguna->fill($data);
+        if ($pengguna->isDirty('password')) {
+            $pengguna->setRememberToken(Str::random(60));
+        }
+        $pengguna->save();
         $pengguna->refresh();
+        if ($pengguna->is($request->user())) {
+            // AuthenticateSession stores this fresh hash after the response, keeping this device signed in.
+            $request->user()->refresh();
+        }
 
         AuditLogger::record('user.updated', 'Data pengguna '.$pengguna->username.' diperbarui.', $pengguna, [
             'before' => $before,
@@ -130,6 +154,7 @@ class UserController extends Controller
 
     public function destroy(User $pengguna)
     {
+        $this->authorizeTarget($pengguna);
         abort_if($pengguna->is(auth()->user()), 403);
         $before = $this->auditSnapshot($pengguna);
         $pengguna->update(['is_active' => false]);
@@ -145,6 +170,11 @@ class UserController extends Controller
 
     private function validated(Request $request, ?User $user = null): array
     {
+        if ($request->user()->role !== Role::Administrator) {
+            abort_if($request->input('role') === Role::Administrator->value, 403);
+            abort_if($user && $request->filled('password'), 403);
+        }
+
         $requiredPassword = $user ? 'nullable' : 'required';
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -156,11 +186,22 @@ class UserController extends Controller
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
-        if (blank($data['password'] ?? null)) {
+        if (blank($data['password'] ?? null) || ($user && Hash::check($data['password'], $user->password))) {
             unset($data['password']);
         }
 
         return $data;
+    }
+
+    private function authorizeTarget(User $user): void
+    {
+        abort_if($user->role === Role::Administrator && auth()->user()->role !== Role::Administrator, 403);
+    }
+
+    private function assignableRoles(): array
+    {
+        return array_values(array_filter(Role::cases(), fn (Role $role) =>
+            $role !== Role::Administrator || auth()->user()->role === Role::Administrator));
     }
 
     private function auditSnapshot(User $user): array

@@ -263,7 +263,7 @@ class Permissions
 
         try {
             if (! Schema::hasTable('role_permissions')) {
-                return self::defaultFor($roleValue, $permission);
+                return false;
             }
 
             $allowed = DB::table('role_permissions')
@@ -273,7 +273,7 @@ class Permissions
 
             return $allowed === null ? self::defaultFor($roleValue, $permission) : (bool) $allowed;
         } catch (Throwable) {
-            return self::defaultFor($roleValue, $permission);
+            return false;
         }
     }
 
