@@ -2,6 +2,42 @@
 
 UAT memakai database MySQL **`shifastock_uat`**, bukan database operasional klinik. Pada workspace ini, sesuai permintaan pengguna, domain **https://shifastock.nexspace.my.id** diteruskan ke server UAT pada **127.0.0.1:4002**. Ini lingkungan simulasi, bukan deployment operasional klinik.
 
+## Versi UAT Terkunci
+
+Sejak 4 November 2026 pukul 22:48 WIB, domain UAT workspace ini **tidak lagi** dilayani dari working tree `C:\laragon\www\ShifaStock`. Domain itu kini dilayani dari checkout terpisah **`C:\laragon\uat\ShifaStock`** yang dikunci ke tag Git **`uat-2026-11-04`**.
+
+Dengan begitu, perubahan yang belum di-commit di checkout utama tidak langsung terlihat oleh tester, dan versi yang diuji selalu bisa ditunjuk lewat tag.
+
+Checkout ini punya salinan `.env.uat` sendiri, yang diabaikan Git, dengan `VIEW_COMPILED_PATH` mengarah ke checkout tersebut. Database tetap `shifastock_uat`, dan `.env` utama tidak dipakai.
+
+Jalankan server dari Windows Terminal, bukan dari terminal sesi agen atau editor yang bisa ikut tertutup:
+
+```powershell
+C:\laragon\uat\start-shifastock-uat.ps1
+```
+
+Skrip menunggu sampai port 4002 kosong, lalu menjalankan `php artisan serve --env=uat --port=4002` dari checkout terkunci, sehingga pergantian server hanya menimbulkan jeda beberapa detik. Hentikan dengan Ctrl+C. Skrip berada di luar Git; bila hilang, buat ulang dengan isi berikut:
+
+```powershell
+Set-Location 'C:\laragon\uat\ShifaStock'
+while (Get-NetTCPConnection -LocalAddress 127.0.0.1 -LocalPort 4002 -State Listen -ErrorAction SilentlyContinue) { Start-Sleep -Seconds 1 }
+php artisan serve --env=uat --port=4002
+```
+
+Merilis versi baru ke UAT (lakukan saat tester tidak sedang bekerja):
+
+1. Commit perubahan di checkout utama, lalu beri tag, misalnya `git tag -a uat-2026-11-10 -m "UAT build 10 Nov 2026"`.
+2. Pindahkan checkout UAT ke tag tersebut: `git -C C:/laragon/uat/ShifaStock checkout --detach uat-2026-11-10`.
+3. Di `C:\laragon\uat\ShifaStock`:
+   - Jalankan `composer install` bila `composer.lock` berubah.
+   - Jalankan `npm ci` bila `package-lock.json` berubah.
+   - Selalu jalankan `npm run build`.
+   - Tag `uat-2026-11-04` masih memerlukan `php artisan view:cache` sebelum build agar gaya pagination Livewire ikut terbawa. Tag sesudahnya sudah memindai view pagination Livewire langsung dari `vendor`.
+4. Bila tag membawa migrasi, jalankan `php scripts/uat.php migrate` dari checkout utama yang berada di commit yang sama. Runner membaca profil privat di `storage/app/private/uat` milik checkout utama.
+5. Hentikan server dengan Ctrl+C, lalu jalankan skrip di atas lagi.
+
+Rollback ke versi sebelumnya: pindahkan checkout UAT kembali ke tag lama, lalu ulangi langkah 3 dan 5. Dalam keadaan darurat, hentikan server dan jalankan `php artisan serve --env=uat --port=4002` langsung dari `C:\laragon\www\ShifaStock`.
+
 ## Membuka Aplikasi
 
 ```bash
