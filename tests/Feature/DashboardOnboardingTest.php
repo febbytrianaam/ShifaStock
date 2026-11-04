@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Support\Onboarding;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class DashboardOnboardingTest extends TestCase
@@ -78,6 +79,25 @@ class DashboardOnboardingTest extends TestCase
         $response = $this->actingAs($user->fresh())->get('/dashboard')->assertOk();
         preg_match('/data-onboarding-config>(.*?)<\/script>/s', $response->getContent(), $matches);
         $this->assertFalse(json_decode($matches[1], true, flags: JSON_THROW_ON_ERROR)['autoStart']);
+    }
+
+    public function test_tour_save_endpoint_stays_same_origin_when_server_url_is_internal_http(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => Role::Pharmacy]));
+        config(['trustedproxy.proxies' => []]);
+        URL::forceRootUrl('http://127.0.0.1:4002');
+        try {
+            $response = $this->withServerVariables(['HTTP_X_FORWARDED_PROTO' => 'https'])
+                ->get('http://vdi.example.test:4002/dashboard')->assertOk();
+            preg_match('/data-onboarding-config>(.*?)<\/script>/s', $response->getContent(), $matches);
+            $config = json_decode($matches[1], true, flags: JSON_THROW_ON_ERROR);
+            $this->assertSame('/panduan/selesai', $config['endpoint']);
+            $this->assertNotEmpty($config['token']);
+            $this->assertTrue($config['autoStart']);
+            $this->assertDatabaseCount('inventory_movements', 0);
+        } finally {
+            URL::forceRootUrl(null);
+        }
     }
 
     public function test_tour_matches_role_permissions_and_requires_active_authentication(): void

@@ -20,6 +20,20 @@ php scripts/uat.php setup
 
 Setup menolak menimpa database/manifest UAT yang sudah ada. Menjalankan server kembali tidak mereset transaksi atau hasil UAT. Jangan mengganti `.env` utama, mengimpor dump klinik, atau menjalankan `migrate:fresh` untuk mengulang demo.
 
+### Alternatif File `.env.uat` Tanpa Runner Server
+
+Pada 2 November 2026 dibuat file privat `.env.uat` di workspace lokal dari profil UAT yang sudah ada, dengan APP_KEY dan kredensial MySQL UAT lama tetap dipertahankan. File diabaikan Git, debug mati, URL publik HTTPS, secure cookie aktif, serta konfigurasi cache/view terpisah. `.env` utama tidak ditimpa. Pemeriksaan bootstrap dan query baca lokal memastikan lingkungan `uat`, database `shifastock_uat`, dan akun `petugas_uat` aktif; tidak ada migrasi, seed, reset, atau perubahan inventori.
+
+Gunakan Laravel langsung dengan pemilihan file yang eksplisit:
+
+```bash
+php artisan serve --env=uat --port=4002
+```
+
+Tanpa `--env=uat`, artisan biasa dapat kembali membaca `.env` utama. Hentikan proses pada port tersebut terlebih dahulu. Jika konfigurasi utama pernah di-cache, `php artisan config:clear` pada lingkungan yang hendak diganti perlu dilakukan sebelum start ulang; jangan menghapus sesi atau cache database seluruh pengguna. Guard isolasi UAT tetap berlaku meskipun server dijalankan tanpa `scripts/uat.php`.
+
+File lokal bukan bukti konfigurasi VDI sudah benar atau sudah dipasang di sana. Pengguna MySQL, password, APP_KEY untuk data terenkripsi, serta direktori compiled view harus sesuai instalasi VDI yang sebenarnya. Jangan mengganti APP_KEY lama dengan `key:generate`, menampilkan isi file dalam screenshot/chat, atau memasukkan `.env.uat` ke Git. Database UAT yang ada tidak perlu diimpor ulang hanya untuk memilih file environment ini.
+
 ## Pembaruan Skema Dan Pemeriksaan Harian
 
 Gunakan `php scripts/uat.php migrate` untuk migrasi tambahan ke database UAT yang sudah ada. Runner memeriksa konfigurasi/nama database terlebih dahulu, tanpa seed atau reset hasil petugas. Jangan gunakan artisan dengan `.env` utama untuk memperbarui UAT. Migrasi cakupan pemeriksaan 21 Oktober dan pencatatan draf bersama 22 Oktober 2026 sudah diterapkan ke UAT workspace ini; database klinik tidak dimigrasikan.
@@ -68,6 +82,23 @@ Referensi transaksi otomatis, sedangkan referensi sumber opsional dapat berisi n
 4. Untuk transaksi selain login, periksa riwayat sebelum mengulang agar tidak membuat transaksi ganda.
 
 Pada pemeriksaan 22 Oktober 2026, formulir baru di domain HTTPS berhasil melewati token CSRF dan menampilkan validasi kredensial untuk akun uji yang tidak ada. Ini bukan bukti login akun valid ataupun penyelesaian penyebab pada sesi pengguna. Tidak ada penghapusan sesi massal, penurunan keamanan cookie, atau pengecualian CSRF.
+
+### Jika Panduan Tidak Bisa Dilewati pada Domain VDI
+
+Pesan gagal menyimpan panduan tidak selalu berarti koneksi internet putus. Tombol **Lewati** dan **Selesai** menyimpan preferensi akun melalui `POST /panduan/selesai`; kegagalan tidak mengubah stok.
+
+- **Sesi berakhir (401/419):** buka ulang halaman/domain HTTPS yang sama dan masuk kembali. Jangan mematikan CSRF atau menghapus seluruh sesi pengguna.
+- **Akses ditolak (403):** minta pengelola memeriksa status/akses akun, bukan memperluas permission inventori untuk melewati panduan.
+- **Server gagal (500):** pengelola memeriksa exception pada log VDI dan status migrasi, termasuk `2026_10_20_000001_add_onboarding_seen_at_to_users`. Pesan ini saja tidak membuktikan migrasi adalah penyebabnya; jangan menjalankan reset database.
+- **Request diblokir/gagal:** periksa URL permintaan pada Network. URL harus menuju domain yang sedang dibuka, bukan localhost VDI, port internal, atau HTTP dari halaman HTTPS.
+
+Perbaikan lokal 31 Oktober 2026 membuat endpoint panduan relatif ke domain halaman serta membedakan pesan kegagalan tersebut. Build frontend dan restart proses server setelah memasang perbaikan; halaman lama perlu dimuat ulang. Perbaikan ini belum dianggap terpasang di VDI hanya karena sudah tersedia di workspace.
+
+`npm run build` hanya menghasilkan aset, tidak menjalankan migrasi atau memilih database. `php artisan serve --port 4002` membaca `.env` utama pada mesin tersebut. Gunakan `php scripts/uat.php serve` **hanya jika profil UAT privat memang sudah disiapkan pada VDI itu**; profil dari workspace lokal tidak otomatis ikut Git. Jangan menjalankan `setup`, `seed`, `migrate:fresh`, mengubah `APP_KEY`, atau menyalin database klinik hanya untuk mengatasi panduan. Periksa `APP_URL` publik HTTPS, `APP_DEBUG=false`, dan cookie secure pada konfigurasi lingkungan yang memang dipakai; jangan mengirim isi `.env`, cookie, atau token ke laporan.
+
+Untuk diagnosis, kirim **status HTTP** request `panduan/selesai` serta waktu kejadian. Jika 500, cukup bagikan pesan exception yang sudah dibersihkan dari identitas/kredensial. Pada pengecekan 31 Oktober, login publik merespons 200 dan URL form/aset HTTPS, tetapi penyimpanan panduan pada sesi bermasalah di VDI belum terverifikasi.
+
+**Hasil kasus 31 Oktober:** pengguna mengonfirmasi panduan kembali berfungsi setelah **hard refresh**, tanpa perubahan database/konfigurasi atau deployment oleh agent. Coba muat ulang penuh terlebih dahulu jika aman meninggalkan halaman; pada Chrome/Edge Windows dapat memakai Ctrl+Shift+R. Jangan memuat ulang formulir yang memiliki isian belum tersimpan. Hasil ini tidak membuktikan secara khusus apakah penyebabnya cache aset, halaman lama, atau token sesi; status request gagal sebelumnya tidak diperoleh. Perubahan defensif lokal di atas bukan bukti penyebab pemulihan VDI.
 
 ### Daftar Akun
 

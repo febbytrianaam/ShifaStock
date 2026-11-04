@@ -46,19 +46,31 @@ export function initOnboarding() {
             const buttons = [...popover.wrapper.querySelectorAll('button')];
             buttons.forEach((button) => { button.disabled = true; });
             popover.wrapper.querySelector('[data-tour-error]')?.remove();
+            let failureMessage = 'Koneksi ke server terputus. Periksa jaringan, lalu coba simpan panduan lagi.';
             try {
                 const response = await fetch(config.endpoint, {
                     method: 'POST', credentials: 'same-origin',
                     headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': config.token },
                     body: JSON.stringify({ outcome }),
                 });
-                if (!response.ok || !(await response.json()).saved) throw new Error('save');
+                if (response.redirected || response.status === 401 || response.status === 419) {
+                    failureMessage = 'Sesi masuk sudah berakhir. Muat ulang halaman dan masuk kembali, lalu lewati atau selesaikan panduan.';
+                    throw new Error('session');
+                }
+                if (response.status === 403) {
+                    failureMessage = 'Akun ini belum dapat menyimpan panduan. Hubungi administrator untuk memeriksa akses akun.';
+                    throw new Error('access');
+                }
+                failureMessage = response.status >= 500
+                    ? 'Server belum dapat menyimpan panduan. Coba lagi; jika tetap gagal, hubungi pengelola aplikasi.'
+                    : 'Status panduan belum tersimpan. Muat ulang halaman, lalu coba lagi.';
+                if (!response.ok || (await response.json()).saved !== true) throw new Error('save');
                 activeTour.destroy();
             } catch {
                 const error = document.createElement('p');
                 error.dataset.tourError = '';
                 error.setAttribute('role', 'alert');
-                error.textContent = 'Panduan belum tersimpan. Periksa koneksi, lalu coba lagi.';
+                error.textContent = failureMessage;
                 popover.description.after(error);
             } finally {
                 saving = false;

@@ -93,7 +93,13 @@ const assert = require('node:assert/strict');
             await capture('Panduan_Desktop.png');
         });
         await check('Lewati tersimpan di akun lintas sesi browser', async () => {
+            const config = JSON.parse(await page.locator('[data-onboarding-config]').textContent());
+            assert.equal(config.endpoint, '/panduan/selesai');
+            assert.equal(new URL(config.endpoint, page.url()).origin, new URL(page.url()).origin);
+            const posted = page.waitForResponse(response => response.url() === new URL(config.endpoint, page.url()).href
+                && response.request().method() === 'POST');
             await skip();
+            assert.equal((await posted).status(), 200);
             const previous = page;
             page = await makePage({ width: 1440, height: 900 });
             await login('petugas_simulasi');
@@ -114,6 +120,34 @@ const assert = require('node:assert/strict');
             }
             await tour().getByRole('button', { name: 'Selesai', exact: true }).click();
             await tour().waitFor({ state: 'detached' });
+        });
+        for (const [status, message] of [[419, 'Sesi masuk sudah berakhir'], [401, 'Sesi masuk sudah berakhir'],
+            [403, 'Hubungi administrator'], [500, 'hubungi pengelola aplikasi']]) {
+            await check('Gagal simpan '+status+' memberi petunjuk dan dapat dicoba lagi', async () => {
+                await page.getByRole('button', { name: 'Buka panduan', exact: true }).click();
+                await page.route('**/panduan/selesai', route => route.fulfill({ status, contentType: 'application/json', body: '{}' }));
+                await tour().getByRole('button', { name: 'Lewati', exact: true }).click();
+                await tour().locator('[data-tour-error]').waitFor();
+                assert((await tour().innerText()).includes(message));
+                assert(await tour().getByRole('button', { name: 'Lewati', exact: true }).isEnabled());
+                assert(await tour().getByRole('button', { name: 'Selanjutnya', exact: true }).isEnabled());
+                await page.unroute('**/panduan/selesai');
+                await skip();
+            });
+        }
+        await check('Gangguan koneksi dan respons non-JSON tidak menutup panduan sebagai sukses', async () => {
+            await page.getByRole('button', { name: 'Buka panduan', exact: true }).click();
+            await page.route('**/panduan/selesai', route => route.abort('failed'));
+            await tour().getByRole('button', { name: 'Lewati', exact: true }).click();
+            await tour().locator('[data-tour-error]').waitFor();
+            assert((await tour().innerText()).includes('Koneksi ke server terputus'));
+            await page.unroute('**/panduan/selesai');
+            await page.route('**/panduan/selesai', route => route.fulfill({ status: 200, contentType: 'text/html', body: '<p>Login</p>' }));
+            await tour().getByRole('button', { name: 'Lewati', exact: true }).click();
+            await tour().locator('[data-tour-error]').waitFor();
+            assert((await tour().innerText()).includes('Status panduan belum tersimpan'));
+            await page.unroute('**/panduan/selesai');
+            await skip();
         });
         for (const username of ['admin_simulasi', 'apoteker_simulasi', 'guest_simulasi']) {
             await check('Panduan sesuai hak akses '+username, async () => {
