@@ -1,4 +1,4 @@
-import { createElement, ArrowLeft, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Printer, Save, Send, ClipboardCopy, Trash2, CircleHelp } from 'lucide';
+import { createElement, ArrowLeft, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Printer, Save, Send, ClipboardCopy, Trash2, CircleHelp, X } from 'lucide';
 import { hasFormChanges } from './form-safety';
 import { initNightlyColumnHelp } from './nightly-column-help';
 
@@ -26,7 +26,7 @@ export function initNightlyWorkspace() {
     workspace.querySelectorAll('[data-nightly-help-icon]').forEach((node) => node.replaceChildren(createElement(CircleHelp, { width: 12, height: 12 })));
     initNightlyColumnHelp(workspace);
     fitWorkspace();
-    const icons = { back: ArrowLeft, next: ArrowRight, previous: ChevronLeft, down: ChevronDown, print: Printer, save: Save, send: Send, copy: ClipboardCopy, cancel: Trash2 };
+    const icons = { back: ArrowLeft, next: ArrowRight, previous: ChevronLeft, down: ChevronDown, print: Printer, save: Save, send: Send, copy: ClipboardCopy, cancel: Trash2, close: X };
     workspace.querySelectorAll('[data-nightly-icon]').forEach((node) => node.replaceChildren(createElement(node.dataset.nightlyIcon === 'next' && node.closest('#nightly-next') ? ChevronRight : icons[node.dataset.nightlyIcon], { width: 14, height: 14 })));
     const form = workspace.querySelector('[data-nightly-count-form]');
     const listContainer = form || workspace.querySelector('[data-nightly-list-container]');
@@ -52,6 +52,10 @@ export function initNightlyWorkspace() {
         });
     });
     selectView(workspace.dataset.nightlyInitialView || 'list');
+    workspace.querySelectorAll('[data-nightly-dismiss]').forEach((button) => button.addEventListener('click', () => {
+        button.closest('[data-nightly-notice]').remove();
+        workspace.querySelector('[role="tab"][aria-selected="true"]')?.focus();
+    }));
     rows.forEach((row) => {
         row.querySelector('[data-nightly-row-toggle]').addEventListener('click', () => {
             const details = row.querySelector('[data-nightly-row-details]');

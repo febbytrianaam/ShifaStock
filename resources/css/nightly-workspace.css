@@ -4,6 +4,7 @@
 .nightly-workspace .btn, .nightly-workspace .btn-secondary { font-size:12px; }
 .nightly-head, .nightly-toolbar, .nightly-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
 .nightly-head p { font-size:12px; color:#64748b; margin-top:4px; overflow-wrap:anywhere; }
+.nightly-head-text { min-width:0; }
 .nightly-head-actions { display:flex; align-items:center; gap:8px; }
 .nightly-count-guide { flex-shrink:0; border-bottom:1px solid #e2e8f0; padding-bottom:8px; font-size:12px; color:#475569; overflow-wrap:anywhere; }
 .nightly-count-guide summary { cursor:pointer; font-weight:600; color:#266194; padding:2px 0; }
@@ -22,6 +23,11 @@
 .nightly-icon:hover { background:#edf5fb; }
 .nightly-icon:disabled { opacity:.35; }
 .nightly-notice { padding:8px 10px; border-left:3px solid #94a3b8; background:#f1f5f9; font-size:12px; line-height:1.6; }
+.nightly-notice-dismissible { display:flex; align-items:flex-start; gap:6px; }
+.nightly-notice-dismissible > p { flex:1; min-width:0; }
+.nightly-notice-close { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; margin:-4px -6px -4px 0; border-radius:4px; color:inherit; flex-shrink:0; }
+.nightly-notice-close:hover { background:#0f172a0f; }
+.nightly-notice-close:focus-visible { outline:2px solid #3277b2; outline-offset:1px; }
 .nightly-notices { max-height:115px; overflow:auto; display:grid; gap:6px; flex-shrink:0; }
 .nightly-tabs { display:flex; gap:18px; overflow-x:auto; border-bottom:1px solid #e2e8f0; flex-shrink:0; }
 .nightly-tabs button { flex-shrink:0; border-bottom:2px solid transparent; padding:8px 0; color:#64748b; font-size:12px; font-weight:600; }
@@ -114,4 +120,12 @@
     .nightly-quantity { grid-column:1/-1; grid-row:3; grid-template-columns:minmax(0,.8fr) minmax(0,1fr); }
     .nightly-footer-actions { display:grid; grid-template-columns:minmax(90px,.7fr) minmax(0,1.3fr); }
     .nightly-footer-actions > button { min-width:0; }
+    .nightly-head-text p { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .nightly-search-label { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+    .nightly-note-extra { display:none; }
+    [data-nightly-count-form], [data-nightly-list-container], #nightly-panel-list { min-height:auto; }
+    .nightly-list { min-height:120px; contain:size; }
+}
+@container nightly (max-width:340px) {
+    .nightly-footer-actions [data-nightly-icon] { display:none; }
 }

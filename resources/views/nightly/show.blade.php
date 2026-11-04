@@ -16,7 +16,7 @@
     <header class="nightly-head">
         <div class="flex min-w-0 items-center gap-3">
             <a class="nightly-icon" href="{{ route('preview.nightly') }}" aria-label="Kembali ke daftar pemeriksaan" title="Kembali ke daftar pemeriksaan"><span data-nightly-icon="back" aria-hidden="true"></span></a>
-            <div><h2>{{ $check->location }} <span class="ml-1 text-xs font-medium text-slate-500">{{ $check->date }}</span></h2><p data-nightly-creator>Dibuat oleh: {{ $check->creator }} &middot; {{ $check->scope === 'selected' ? 'Obat tertentu' : 'Semua obat' }}</p><p data-nightly-last-worker>Dikerjakan terakhir: {{ $lastWork?->actor_name ?? 'Belum tercatat' }}@if($lastWork) &middot; {{ \Carbon\Carbon::parse($lastWork->created_at, config('app.timezone'))->timezone('Asia/Jakarta')->format('d/m H:i') }} WIB @endif</p></div>
+            <div class="nightly-head-text"><h2>{{ $check->location }} <span class="ml-1 text-xs font-medium text-slate-500">{{ $check->date }}</span></h2><p data-nightly-creator>Dibuat oleh: {{ $check->creator }} &middot; {{ $check->scope === 'selected' ? 'Obat tertentu' : 'Semua obat' }}</p><p data-nightly-last-worker>Dikerjakan terakhir: {{ $lastWork?->actor_name ?? 'Belum tercatat' }}@if($lastWork) &middot; {{ \Carbon\Carbon::parse($lastWork->created_at, config('app.timezone'))->timezone('Asia/Jakarta')->format('d/m H:i') }} WIB @endif</p></div>
         </div>
         <div class="nightly-head-actions">
             <span class="badge {{ $check->status === 'approved' ? 'badge-ok' : ($check->status === 'submitted' ? 'badge-warn' : 'bg-slate-100 text-slate-600') }}">{{ $statusLabels[$check->status] ?? 'Draf' }}</span>
@@ -52,7 +52,7 @@
                 @endif
             </p>
         @endif
-        @if(session('status'))<p role="status" class="nightly-notice !border-emerald-500 !bg-emerald-50 text-emerald-800">{{ session('status') }}</p>@endif
+        @if(session('status'))<div class="nightly-notice nightly-notice-dismissible !border-emerald-500 !bg-emerald-50 text-emerald-800" data-nightly-notice><p role="status">{{ session('status') }}</p><button type="button" class="nightly-notice-close" data-nightly-dismiss aria-label="Tutup pesan" title="Tutup pesan"><span data-nightly-icon="close" aria-hidden="true"></span></button></div>@endif
         @if($errors->any())<p role="alert" class="nightly-notice !border-rose-500 !bg-rose-50 text-rose-800">{{ $errors->first() }} @if($errors->has('draft_revision'))<a href="{{ route('nightly.show', $check->id) }}" target="_blank" rel="noopener" class="font-semibold underline" data-nightly-latest>Buka versi terbaru di tab baru</a>@endif</p>@endif
         @if($check->review_note)<p class="nightly-notice !border-amber-500 !bg-amber-50"><strong>Catatan apoteker:</strong> {{ $check->review_note }}</p>@endif
         @if($uncheckedCount > 0 && !$editable)<p data-nightly-incomplete class="text-xs text-amber-800">{{ $uncheckedCount }} obat belum diperiksa. {{ $check->status === 'draft' ? 'Belum ada perubahan stok dari draf ini.' : 'Pemeriksaan dikirim sebagian. Persetujuan hanya mencakup '.$checkedCount.' obat yang sudah diperiksa.' }} Obat yang belum diperiksa tidak dianggap kosong dan stoknya tidak disesuaikan.</p>@endif
@@ -75,7 +75,7 @@
     @endif
         <div id="nightly-panel-list" class="nightly-panel" role="tabpanel" aria-labelledby="nightly-tab-list" data-nightly-panel="list">
             <div class="nightly-toolbar">
-                <label><span class="label">Cari obat</span><input id="nightly-search" class="field" type="search" placeholder="Nama atau kode obat..." autocomplete="off"></label>
+                <label><span class="label nightly-search-label">Cari obat</span><input id="nightly-search" class="field" type="search" placeholder="Nama atau kode obat..." autocomplete="off"></label>
                 <label><span class="label">Tampilkan</span><select id="nightly-filter" class="field"><option value="all">Semua obat</option><option value="unchecked">Belum dicek</option><option value="empty">Stok kosong</option><option value="low">Stok menipis</option></select></label>
                 <label><span class="label">Per halaman</span><select id="nightly-page-size" class="field"><option value="10">10 obat</option><option value="25">25 obat</option><option value="50">50 obat</option><option value="100">100 obat</option></select></label>
                 @if($editable)<button type="button" class="btn-secondary self-end" data-nightly-add-open aria-label="Tambah Obat" aria-controls="nightly-add-dialog" @disabled($availableMedicines->isEmpty()) title="{{ $availableMedicines->isEmpty() ? 'Semua obat sudah masuk laporan' : 'Tambahkan obat ke draf' }}"><span data-nightly-add-icon aria-hidden="true"></span><span class="nightly-add-label">Tambah Obat</span></button>@endif
@@ -93,7 +93,7 @@
                 @foreach($items as $i) @include('nightly.partials.medicine-row') @endforeach
                 <p class="p-5 text-center text-xs text-slate-500" data-nightly-empty hidden>Tidak ada obat yang sesuai. Ubah pencarian atau filter.</p>
             </div>
-            <p class="text-[11px] text-slate-500">{{ $editable ? 'Kosong = belum diperiksa. Isi 0 jika stok habis. Buka Rincian untuk hitung per batch, permintaan, atau catatan.' : 'Stok sistem adalah stok saat halaman dibuka; hasil hitung adalah angka yang disimpan dalam laporan.' }}</p>
+            <p class="text-[11px] text-slate-500">@if($editable)Kosong = belum diperiksa. Isi 0 jika stok habis.<span class="nightly-note-extra"> Buka Rincian untuk hitung per batch, permintaan, atau catatan.</span>@else Stok sistem adalah stok saat halaman dibuka; hasil hitung adalah angka yang disimpan dalam laporan.@endif</p>
         </div>
         @if($editable)
             <footer class="nightly-footer" data-nightly-footer>

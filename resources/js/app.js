@@ -64,7 +64,7 @@ function initialize() {
                             usePointStyle: true,
                             pointStyle: 'circle',
                             padding: 16,
-                            font: { family: "'Plus Jakarta Sans', Inter, sans-serif", size: 12, weight: '600' },
+                            font: { family: "'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', Inter, sans-serif", size: 12, weight: '600' },
                             color: '#475569',
                         },
                     },
@@ -76,8 +76,8 @@ function initialize() {
                         borderWidth: 1,
                         padding: 12,
                         cornerRadius: 10,
-                        titleFont: { family: "'Plus Jakarta Sans', Inter, sans-serif", size: 13, weight: '700' },
-                        bodyFont: { family: "'Plus Jakarta Sans', Inter, sans-serif", size: 12 },
+                        titleFont: { family: "'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', Inter, sans-serif", size: 13, weight: '700' },
+                        bodyFont: { family: "'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', Inter, sans-serif", size: 12 },
                         boxPadding: 6,
                         usePointStyle: true,
                     },
@@ -86,7 +86,7 @@ function initialize() {
                     x: {
                         grid: { display: false },
                         ticks: {
-                            font: { family: "'Plus Jakarta Sans', Inter, sans-serif", size: 11, weight: '500' },
+                            font: { family: "'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', Inter, sans-serif", size: 11, weight: '500' },
                             color: '#94a3b8',
                         },
                     },
@@ -97,7 +97,7 @@ function initialize() {
                         },
                         ticks: {
                             precision: 0,
-                            font: { family: "'Plus Jakarta Sans', Inter, sans-serif", size: 11 },
+                            font: { family: "'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', Inter, sans-serif", size: 11 },
                             color: '#94a3b8',
                             padding: 8,
                         },
