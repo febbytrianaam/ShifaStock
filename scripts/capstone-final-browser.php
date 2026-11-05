@@ -19,9 +19,10 @@ use Symfony\Component\Process\Process;
 require __DIR__.'/../vendor/autoload.php';
 $app = require __DIR__.'/../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
-$phase = in_array($argv[1] ?? '', ['baseline', 'onboarding', 'transfer', 'selected-nightly', 'partial-nightly', 'nightly-ui'], true) ? $argv[1] : 'final';
+$phase = in_array($argv[1] ?? '', ['baseline', 'onboarding', 'transfer', 'selected-nightly', 'partial-nightly', 'nightly-ui', 'daily-cycle'], true) ? $argv[1] : 'final';
 $output = match (true) {
     $phase === 'onboarding' => storage_path('app/qa/onboarding'),
+    $phase === 'daily-cycle' => storage_path('app/qa/daily-cycle-browser'),
     $phase === 'transfer' => storage_path('app/qa/multi-transfer-browser'),
     $phase === 'selected-nightly' => storage_path('app/qa/selected-nightly-browser'),
     $phase === 'partial-nightly' => storage_path('app/qa/partial-nightly-browser'),
@@ -67,7 +68,7 @@ try {
         'password' => $password, 'role' => Role::Pharmacy, 'is_active' => true]);
     User::create(['username' => 'guest_simulasi', 'name' => 'Guest Simulasi', 'email' => 'guest@simulasi.example.test',
         'password' => $password, 'role' => Role::Guest, 'is_active' => true]);
-    if (in_array($phase, ['onboarding', 'selected-nightly', 'partial-nightly', 'nightly-ui'], true)) {
+    if (in_array($phase, ['onboarding', 'selected-nightly', 'partial-nightly', 'nightly-ui', 'daily-cycle'], true)) {
         foreach (['admin_simulasi' => Role::Administrator, 'apoteker_simulasi' => Role::Pharmacist] as $username => $role) {
             User::create(['username' => $username, 'name' => $role->label(), 'email' => $username.'@simulasi.example.test', 'password' => $password, 'role' => $role, 'is_active' => true]);
         }
@@ -141,6 +142,7 @@ try {
     }
     $meta = ['phase' => $phase, 'base_url' => $env['APP_URL'], 'port' => $port, 'medicine' => $medicine->id, 'other_medicine' => $other->id,
         'stress_check' => $stressCheckId ?? null,
+        'import_start' => now('Asia/Jakarta')->format('Y-m-d\TH:i'),
         'long_check' => $longCheckId ?? null,
         'warehouse' => $warehouse->id, 'pharmacy' => $pharmacy->id, 'batch' => Batch::where('number', 'SIM-BATCH-SAMA')->sole()->id,
         'commit' => trim((new Process(['git', 'rev-parse', 'HEAD'], base_path()))->mustRun()->getOutput()),
@@ -152,6 +154,7 @@ try {
         'selected-nightly' => 'scripts/test-selected-nightly-browser.cjs',
         'partial-nightly' => 'scripts/test-partial-nightly-browser.cjs',
         'nightly-ui' => 'scripts/test-nightly-workspace-browser.cjs',
+        'daily-cycle' => 'scripts/test-daily-cycle-browser.cjs',
         default => 'scripts/capstone-final-browser.cjs',
     };
     $browser = new Process(['node', base_path($browserScript)], base_path(), $env + [
@@ -196,6 +199,26 @@ try {
         }
         if ($report['mismatched_pairs'] || $report['batch_identity_issues']) throw new RuntimeException('Rekonsiliasi multi-transfer tidak sesuai.');
         echo "PASS stok multi-transfer terverifikasi dan transfer gagal tidak mengubah stok.\n";
+    }
+    if ($phase === 'daily-cycle' && $code === 0) {
+        $report = app(\App\Services\InventoryReconciliationService::class)->report();
+        $batch = fn (int $medicineId, int $locationId, string $number) => (float) DB::table('batch_stock_balances')
+            ->join('batches', 'batches.id', '=', 'batch_stock_balances.batch_id')->where('batch_stock_balances.medicine_id', $medicineId)
+            ->where('batch_stock_balances.location_id', $locationId)->where('batches.number', $number)->value('batch_stock_balances.quantity');
+        foreach ([[$medicine->id, $warehouse->id, 40, ['SIM-BATCH-SAMA' => 15, 'SIM-A-TERIMA' => 25]], [$medicine->id, $pharmacy->id, 38, ['SIM-BATCH-SAMA' => 38]],
+            [$other->id, $warehouse->id, 30, ['SIM-B-AWAL' => 30]], [$other->id, $pharmacy->id, 9, ['SIM-B-AWAL' => 9]]] as [$medicineId, $locationId, $expected, $batches]) {
+            if ((float) StockBalance::where('medicine_id', $medicineId)->where('location_id', $locationId)->value('quantity') !== (float) $expected) {
+                throw new RuntimeException('Saldo akhir satu hari klinik tidak sesuai untuk obat '.$medicineId.' di lokasi '.$locationId.'.');
+            }
+            foreach ($batches as $number => $quantity) {
+                if ($batch($medicineId, $locationId, $number) !== (float) $quantity) throw new RuntimeException('Saldo batch '.$number.' tidak sesuai.');
+            }
+        }
+        if ((float) DB::table('inventory_movements')->where('reference', 'like', 'OUT-IMP-%')->sum('quantity') !== 6.0
+            || DB::table('inventory_movements')->where('reference', 'like', 'REV-%')->count() !== 1
+            || DB::table('stock_opname_sessions')->where('status', 'finalized')->count() !== 1
+            || $report['mismatched_pairs'] || $report['batch_identity_issues']) throw new RuntimeException('Impor, reversal, opname, atau rekonsiliasi satu hari klinik tidak sesuai.');
+        echo "PASS satu hari klinik: obat A Gudang 40 dan Apotek 38, obat B Gudang 30 dan Apotek 9; impor 6, satu reversal, opname final; rekonsiliasi tanpa selisih.\n";
     }
     if ($phase === 'onboarding' && $code === 0) {
         $report = app(\App\Services\InventoryReconciliationService::class)->report();

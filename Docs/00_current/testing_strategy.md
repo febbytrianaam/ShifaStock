@@ -1,5 +1,35 @@
 # Testing Strategy
 
+## Daily Clinic Cycle Browser Run - 5 November 2026
+
+`php scripts/capstone-final-browser.php daily-cycle` runs a new phase on a random isolated MySQL database that is dropped afterwards. It drives one compressed clinic day through the real UI with a petugas and a kepala apoteker account. Each step works on the stock the previous step left:
+
+1. Opening balance.
+2. Receipt saved as a draft, then posted.
+3. Two-medicine FEFO transfer.
+4. PBF return.
+5. Manual FEFO issues.
+6. Daily count with a per-batch difference, then approval.
+7. Neoklinik imports. Files are generated during the run by `scripts/neoklinik-test-file.php`.
+8. Stock opname while service continues.
+9. Stock card trace, plus reversal of a mistaken issue.
+
+The runner then checks every medicine/location and batch balance, the imported quantity, the single reversal, the finalized opname, and reconciliation.
+
+Three checks named "Perilaku saat ini" pin current behaviour from the 4 Nov review and log an `OBSERVASI` line:
+- **F03:** a full-day export is blocked when one sale falls between count submission and approval.
+- **F04:** a backdated manual issue is accepted without warning.
+- **F05:** any transaction at the location blocks opname finalization until a recount.
+
+Update those checks if the clinic decides to change that behaviour.
+
+Actual runs on 5 Nov 2026 (08:36–08:45 WIB) from `470045c` plus this runner:
+- **13/13 plus postconditions**, three times in a row.
+- In the same session: the other browser phases (regression, onboarding 14/14, nightly-ui 20/20, partial 7/7, selected 15/15, import, and transfer 9/9, which had not been run on 4 Nov), the MySQL concurrency script 11/11, and **262 tests / 2866 assertions**.
+- Zero temporary QA databases remained.
+
+Evidence is stored in ignored `storage/app/qa/daily-cycle-browser/`.
+
 ## Capstone Evidence Refresh - 29 October 2026
 
 Actual runs on clean application baseline `05ba910ce8804ffc9e049a17e96295bb59714cb9`, starting 14:03 WIB: **213 tests / 2347 assertions**, zero failures/errors/skips on SQLite `:memory:`; **16/16 import-browser groups** on temporary MySQL; MySQL concurrent-import/retry/stock postconditions; and Vite build passed. A separate documentation browser run passed **five feature groups** covering multi-item transfer with FEFO, return/damaged stock, same-number batch location selection, batch monitoring, and a draft created by a pharmacy operator and continued by a pharmacist. Inventory/batch reconciliation had zero discrepancies. These are separate bounded groups, not an expanded manual-UAT total or a rerun of all historical operational browser suites.

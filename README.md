@@ -145,6 +145,8 @@ Runner memakai SQLite `:memory:`, melewati cache konfigurasi lokal, dan tidak me
 
 Untuk regresi browser antarmuka pemeriksaan harian, jalankan `php scripts/capstone-final-browser.php nightly-ui` setelah build frontend. Runner memerlukan Playwright/Chrome dan izin membuat/menghapus database MySQL sementara. Data simulasi 167 obat, akun, dan password dibuat untuk proses pengujian; bukan akun klinik/UAT persisten. Hasil JSON dan screenshot lokal disimpan di `storage/app/qa/nightly-workspace-browser/` dan diabaikan Git.
 
+Untuk menguji satu hari klinik dari awal sampai akhir lewat antarmuka, jalankan `php scripts/capstone-final-browser.php daily-cycle`. Alurnya: stok awal → penerimaan → transfer → retur → pengeluaran → hitung harian dan persetujuan → impor Neoklinik → opname → kartu stok dan reversal. Persyaratan dan database sementaranya sama dengan runner `nightly-ui`. Langkah berjudul "Perilaku saat ini" mencatat perilaku F03–F05 dari review 4 November sebagai `OBSERVASI`. Hasilnya disimpan di `storage/app/qa/daily-cycle-browser/`.
+
 Untuk komputer lambat, timeout dapat dinaikkan. Contoh PowerShell:
 
 ```powershell
