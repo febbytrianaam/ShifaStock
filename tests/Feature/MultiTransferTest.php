@@ -104,7 +104,7 @@ class MultiTransferTest extends TestCase
         $this->assertSame(2.0, (float) BatchStockBalance::where('batch_id', $this->bBatch)->where('location_id', $this->target->id)->value('quantity'));
         $audit = DB::table('audit_logs')->where('event', 'inventory.transfer.posted')->sole();
         $this->assertSame(2, json_decode($audit->metadata, true)['item_count']);
-        $this->get('/dashboard')->assertOk()->assertViewHas('chart', fn ($chart) => array_sum($chart['transfers']) === 1);
+        $this->dashboard()->assertViewHas('chart', fn ($chart) => array_sum($chart['transfers']) === 1);
         foreach ([$this->a, $this->b] as $medicine) {
             $this->get('/kartu-stok?medicine_id='.$medicine->id.'&location_id='.$this->target->id.'&start=2026-10-21&end=2026-10-21')
                 ->assertOk()->assertSee('MULTI-TRANSFER');

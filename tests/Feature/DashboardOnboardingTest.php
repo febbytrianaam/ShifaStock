@@ -24,9 +24,10 @@ class DashboardOnboardingTest extends TestCase
     public function test_dashboard_is_real_even_when_old_demo_query_is_supplied(): void
     {
         $this->actingAs(User::factory()->create(['role' => Role::Pharmacy]));
-        $this->get('/dashboard?data=demo')->assertOk()
-            ->assertViewHas('stats', ['verified' => 0, 'stocked' => 0, 'shortages' => 0, 'expiring' => 0])
-            ->assertViewHas('hasMonitoringParameters', false)->assertDontSee('Mode Demo')->assertDontSee('Data Demo');
+        $this->get('/dashboard?data=demo')->assertOk()->assertDontSee('Mode Demo')->assertDontSee('Data Demo');
+        $this->dashboard()
+            ->assertViewHas('stats', fn ($stats) => $stats['verified'] === 0 && $stats['stocked'] === 0 && $stats['shortages'] === 0 && $stats['expiring'] === 0 && $stats['expired'] === 0)
+            ->assertViewHas('hasMonitoringParameters', false);
         $this->assertDatabaseCount('medicines', 0);
     }
 
@@ -38,9 +39,10 @@ class DashboardOnboardingTest extends TestCase
             $medicine = Medicine::create(['code' => 'REAL-'.$number, 'name' => 'Obat '.$number]);
             StockParameter::create(['medicine_id' => $medicine->id, 'location_id' => $location->id, 'minimum_quantity' => 10]);
         }
-        $this->actingAs($user)->get('/dashboard')->assertOk()
+        $this->actingAs($user);
+        $this->dashboard()
             ->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 12)
-            ->assertViewHas('shortages', fn ($rows) => $rows->count() === 8);
+            ->assertViewHas('visibleActions', fn ($rows) => count($rows) === 8)->assertViewHas('hiddenActions', 4);
     }
 
     public function test_expiry_excludes_empty_batches_and_chart_counts_documents_not_fefo_splits(): void
@@ -55,7 +57,8 @@ class DashboardOnboardingTest extends TestCase
             BatchStockBalance::create(['medicine_id' => $medicine->id, 'batch_id' => $batch->id, 'location_id' => $location->id, 'quantity' => $quantity]);
             InventoryMovement::create(['medicine_id' => $medicine->id, 'batch_id' => $batch->id, 'type' => 'receipt', 'reference' => 'SAME-DOCUMENT', 'quantity' => 5, 'destination_location_id' => $location->id, 'occurred_at' => now(), 'created_by' => $user->id]);
         }
-        $this->actingAs($user)->get('/dashboard')->assertOk()
+        $this->actingAs($user);
+        $this->dashboard()
             ->assertViewHas('stats', fn ($stats) => $stats['expiring'] === 1 && $stats['verified'] === 1)
             ->assertViewHas('chart', fn ($chart) => array_sum($chart['receipts']) === 1);
     }
@@ -125,7 +128,7 @@ class DashboardOnboardingTest extends TestCase
         User::factory()->create(['is_active' => false]);
         DB::table('role_permissions')->updateOrInsert(['role' => Role::Administrator->value, 'permission' => 'view-receipts'], ['allowed' => true]);
         $this->assertContains('Penerimaan obat', array_column(Onboarding::steps($user), 'title'));
-        $this->actingAs($user)->get('/dashboard')->assertOk()
-            ->assertViewHas('adminStats', ['users' => 2, 'active_users' => 1, 'roles' => 4]);
+        $this->actingAs($user);
+        $this->dashboard()->assertViewHas('adminStats', ['users' => 2, 'active_users' => 1, 'roles' => 4]);
     }
 }

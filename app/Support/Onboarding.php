@@ -13,7 +13,7 @@ class Onboarding
             'description' => 'Mari kenali alur kerja persediaan Klinik Shifa Medika. Panduan ini tidak menyimpan transaksi atau mengubah stok.',
         ]];
         $menus = [
-            ['view-dashboard', 'dashboard', 'Dashboard', 'Lihat ringkasan stok, penerimaan, transfer, dan obat yang perlu ditindaklanjuti. Semua angka berasal dari data yang tersimpan.'],
+            ['view-dashboard', 'dashboard', 'Dashboard', 'Lihat stok kosong, menipis, dan kedaluwarsa, aktivitas 7 hari, serta alur kerja hari ini dalam satu layar. Semua angka berasal dari data yang tersimpan.'],
             ['manage-users', 'admin.users.index', 'Pengguna dan hak akses', 'Buka Pengguna untuk membuat akun, menonaktifkan akun, atau mengganti password.'
                 .($user->can('manage-permissions') ? ' Tab Hak Akses mengatur menu dan tindakan untuk setiap role.' : '')],
             ['manage-system-references', 'admin.references.index', 'Referensi sistem', 'Atur satuan dan lokasi yang digunakan bersama oleh petugas dan apoteker. Nonaktifkan referensi yang tidak dipakai; jangan mengganti arti satuan yang sudah memiliki riwayat.'],

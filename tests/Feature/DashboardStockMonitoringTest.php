@@ -47,9 +47,9 @@ class DashboardStockMonitoringTest extends TestCase
     {
         $this->minimum($this->warehouse);
         $this->balance($this->warehouse, 50);
-        $response = $this->get(route('dashboard'))->assertOk()
-            ->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 1)
-            ->assertSee('Perlu Restock')->assertDontSee('Belum Ada Laporan')
+        $response = $this->dashboard()
+            ->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 1 && $stats['menipis'] === 1 && $stats['kosong'] === 0)
+            ->assertSee('Menipis')->assertSee('50 Tablet dari minimum 60 Tablet')->assertDontSee('Belum Ada Laporan')
             ->assertSee(route('shortages.index', ['search' => 'MON-001', 'location_id' => $this->warehouse->id]).'#stok-minimum');
         $rows = $response->viewData('shortages');
         $this->assertCount(1, $rows);
@@ -68,13 +68,13 @@ class DashboardStockMonitoringTest extends TestCase
         $balance = $this->balance($this->warehouse, 80);
         $check = DB::table('nightly_checks')->insertGetId(['date' => '2026-01-01', 'location_id' => $this->warehouse->id, 'created_by' => $this->staff->id, 'status' => 'approved']);
         DB::table('nightly_check_items')->insert(['nightly_check_id' => $check, 'medicine_id' => $this->medicine->id, 'code' => 'MON-001', 'name' => 'Obat Monitoring', 'quantity' => 0, 'is_low' => true, 'unit' => 'Tablet']);
-        $this->get(route('dashboard'))->assertOk()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 0)
-            ->assertSee('Tidak ada stok pada atau di bawah minimum');
+        $this->dashboard()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 0)
+            ->assertSee('Tidak ada yang perlu ditindaklanjuti');
         $balance->update(['quantity' => 20]);
-        $this->get(route('dashboard'))->assertOk()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 1)
+        $this->dashboard()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 1)
             ->assertViewHas('shortages', fn ($rows) => (float) $rows->sole()->quantity === 20.0);
         $balance->update(['quantity' => 90]);
-        $this->get(route('dashboard'))->assertOk()->assertViewHas('shortages', fn ($rows) => $rows->isEmpty());
+        $this->dashboard()->assertViewHas('shortages', fn ($rows) => $rows->isEmpty());
         $this->assertDatabaseHas('nightly_check_items', ['nightly_check_id' => $check, 'quantity' => 0]);
     }
 
@@ -85,9 +85,9 @@ class DashboardStockMonitoringTest extends TestCase
         $this->minimum($pharmacy, 10);
         $this->balance($this->warehouse, 60);
         $balance = $this->balance($pharmacy, 11);
-        $this->get(route('dashboard'))->assertOk()->assertViewHas('shortages', fn ($rows) => $rows->count() === 1 && $rows->first()->location_id === $this->warehouse->id);
+        $this->dashboard()->assertViewHas('shortages', fn ($rows) => $rows->count() === 1 && $rows->first()->location_id === $this->warehouse->id);
         $balance->update(['quantity' => 0]);
-        $response = $this->get(route('dashboard'))->assertOk()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 2);
+        $response = $this->dashboard()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 2 && $stats['kosong'] === 1);
         $this->assertSame($pharmacy->id, $response->viewData('shortages')->first()->location_id);
         $this->get(route('shortages.index', ['location_id' => $pharmacy->id, 'status' => 'empty']))->assertOk()
             ->assertViewHas('parameterRows', fn ($rows) => $rows->count() === 1 && (float) $rows->first()->quantity === 0.0);
@@ -97,16 +97,16 @@ class DashboardStockMonitoringTest extends TestCase
     {
         $this->minimum($this->warehouse, 0);
         Medicine::create(['code' => 'NO-RULE', 'name' => 'Master belum diatur']);
-        $this->get(route('dashboard'))->assertOk()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 1)
+        $this->dashboard()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 1 && $stats['kosong'] === 1)
             ->assertViewHas('shortages', fn ($rows) => $rows->count() === 1 && (float) $rows->first()->quantity === 0.0 && $rows->first()->stock_updated_at === null)
-            ->assertSee('Belum ada transaksi stok di lokasi ini.');
+            ->assertSee('Kosong')->assertSee('perlu pesanan ke PBF');
     }
 
     public function test_no_minimum_is_not_presented_as_all_medicines_having_sufficient_stock(): void
     {
         $this->minimum($this->warehouse, null);
         $this->balance($this->warehouse, 0);
-        $this->get(route('dashboard'))->assertOk()->assertViewHas('hasMonitoringParameters', false)
+        $this->dashboard()->assertViewHas('hasMonitoringParameters', false)
             ->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 0)
             ->assertSee('Batas minimum stok belum diatur')->assertDontSee('Tidak Ada Kekurangan');
     }
@@ -115,8 +115,8 @@ class DashboardStockMonitoringTest extends TestCase
     {
         $this->minimum($this->warehouse);
         $this->balance($this->warehouse, 50);
-        $this->actingAs(User::factory()->create(['role' => Role::Guest]))->get(route('dashboard'))->assertOk()
-            ->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 1)->assertSee('Obat Monitoring');
+        $this->actingAs(User::factory()->create(['role' => Role::Guest]));
+        $this->dashboard()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 1)->assertSee('Obat Monitoring')->assertDontSee('Transfer dari');
         $this->postJson(route('monitoring-parameters.store'), [])->assertForbidden();
         $this->postJson(route('issues.store'), [])->assertForbidden();
         $this->assertSame('50.0000', StockBalance::sole()->quantity);

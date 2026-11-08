@@ -96,6 +96,16 @@
     }
 @endphp
 @php
+    // Live counts beside menu items that need attention; kept to two cheap counts per page load.
+    $navigationCounts = [];
+    if (auth()->user()->can('view-inventory')) {
+        if (auth()->user()->can('view-shortages')) {
+            $navigationCounts['shortages.index'] = ['count' => \App\Queries\MinimumStockAlerts::query()->count(), 'class' => 'bg-rose-50 text-rose-700'];
+        }
+        if (auth()->user()->can('view-nightly-checks')) {
+            $navigationCounts['preview.nightly'] = ['count' => \Illuminate\Support\Facades\DB::table('nightly_checks')->where('status', 'submitted')->count(), 'class' => 'bg-amber-50 text-amber-700'];
+        }
+    }
     $restoredInputFields = array_keys(session()->getOldInput());
     $onboardingConfig = ['autoStart' => auth()->user()->onboarding_seen_at === null,
         'endpoint' => route('onboarding.finish', [], false), 'token' => csrf_token(),
@@ -120,7 +130,7 @@
                             @php($activeRoutes = $activeRoutes ?: [$route])
                             @php($isActive = collect($activeRoutes)->contains(fn ($activeRoute) => request()->routeIs($activeRoute)))
                             @continue($can && !collect((array) $can)->contains(fn ($ability) => auth()->user()->can($ability)))
-                            <a data-tour-menu="{{ $route }}" class="nav-link {{ $isActive ? 'nav-active' : '' }}" href="{{ route($route) }}" @if($isActive) aria-current="page" @endif><span class="w-5 shrink-0 text-center text-base" aria-hidden="true">{{ $icon }}</span><span class="min-w-0 flex-1">{{ $label }}</span>@if($badge)<span class="text-[9px] font-semibold uppercase text-slate-400">{{ $badge }}</span>@endif</a>
+                            <a data-tour-menu="{{ $route }}" class="nav-link {{ $isActive ? 'nav-active' : '' }}" href="{{ route($route) }}" @if($isActive) aria-current="page" @endif><span class="w-5 shrink-0 text-center text-base" aria-hidden="true">{{ $icon }}</span><span class="min-w-0 flex-1">{{ $label }}</span>@if($badge)<span class="text-[9px] font-semibold uppercase text-slate-400">{{ $badge }}</span>@endif @if(($navigationCounts[$route]['count'] ?? 0) > 0)<span class="inline-grid h-5 min-w-5 place-items-center rounded-md px-1.5 text-[11px] font-bold {{ $navigationCounts[$route]['class'] }}" data-nav-count="{{ $route }}">{{ $navigationCounts[$route]['count'] }}</span>@endif</a>
                         @endforeach
                     </div>
                 @endif
@@ -143,6 +153,9 @@
                 </div>
             </div>
             <div class="flex shrink-0 items-center gap-3">
+                @isset($headerActions)
+                    <div class="hidden items-center gap-2 border-r border-slate-200 pr-3 xl:flex" data-header-actions>{{ $headerActions }}</div>
+                @endisset
                 <button type="button" data-tour-restart class="grid h-8 w-8 place-items-center rounded-md text-slate-500 hover:bg-slate-50" aria-label="Buka panduan" title="Buka panduan"><span data-tour-help-icon aria-hidden="true">?</span></button>
                 <span class="hidden text-xs text-slate-400 lg:inline">{{ now()->locale('id')->translatedFormat('d M Y') }}</span>
                 <div class="relative">

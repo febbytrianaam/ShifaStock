@@ -109,9 +109,10 @@ const crypto = require('node:crypto');
         }
         if (meta.phase !== 'baseline') {
             await record('Dashboard minimum stok memakai stok transaksi tanpa menunggu pemeriksaan harian', async () => {
-                assert.equal((await page.locator('[data-stock-shortages] > p').innerText()).trim(), '2');
-                assert.equal(await page.locator('[data-stock-shortages]').getByText('Tindak Lanjut →', { exact: true })
-                    .evaluate((element) => getComputedStyle(element).whiteSpace), 'nowrap');
+                assert.equal((await page.locator('[data-kpi="menipis"] [data-kpi-value]').innerText()).trim(), '2');
+                assert.equal((await page.locator('[data-kpi="kosong"] [data-kpi-value]').innerText()).trim(), '0');
+                const split = await page.locator('[data-kpi="menipis"]').innerText();
+                assert(split.includes('1 Gudang') && split.includes('1 Apotek'));
                 const alerts = page.locator('[data-stock-alerts]');
                 assert.equal(await alerts.locator('[data-stock-alert]').count(), 2);
                 assert((await alerts.innerText()).includes('50 Tablet'));
@@ -124,7 +125,7 @@ const crypto = require('node:crypto');
                 await page.locator('[data-stock-alerts]').scrollIntoViewIfNeeded();
                 assert(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1));
                 await page.screenshot({ path: path.join(output, 'Browser_Dashboard_Monitoring_Mobile.png') });
-                await page.locator('[data-stock-alert]').filter({ hasText: 'Gudang' }).click();
+                await page.locator('[data-stock-alert]').filter({ hasText: 'Gudang · 50 Tablet' }).locator('a').first().click();
                 await ready();
                 const url = new URL(page.url());
                 assert.equal(url.searchParams.get('location_id'), String(meta.warehouse));
@@ -192,10 +193,10 @@ const crypto = require('node:crypto');
         }, 'Browser_05_Posting_Apotek.png');
         await record('Widget dashboard membaca ulang stok Apotek setelah posting kondisi khusus', async () => {
             await goto('/dashboard');
-            assert.equal((await page.locator('[data-stock-shortages] > p').innerText()).trim(), '2');
+            assert.equal((await page.locator('[data-kpi="menipis"] [data-kpi-value]').innerText()).trim(), '2');
             const alerts = page.locator('[data-stock-alerts]');
-            assert((await alerts.locator('[data-stock-alert]').filter({ hasText: 'Apotek' }).innerText()).includes('18 Tablet'));
-            assert((await alerts.locator('[data-stock-alert]').filter({ hasText: 'Gudang' }).innerText()).includes('50 Tablet'));
+            assert((await alerts.locator('[data-stock-alert]').filter({ hasText: 'Apotek · ' }).innerText()).includes('18 Tablet'));
+            assert((await alerts.locator('[data-stock-alert]').filter({ hasText: 'Gudang · ' }).innerText()).includes('50 Tablet'));
         }, 'Browser_Dashboard_Monitoring_Setelah_Posting.png');
         for (const [route, prefix, location] of [['/transfer', 'transfer', 'source'], ['/obat-keluar', 'issue', 'location'], ['/retur-pbf', 'return', 'location']]) {
             await record('Regresi dropdown lintas lokasi pada '+route, async () => {

@@ -9,8 +9,8 @@ use App\Http\Controllers\IssueImportController;
 use App\Http\Controllers\MedicineExportController;
 use App\Http\Controllers\NightlyCheckController;
 use App\Http\Controllers\OnboardingController;
-use App\Http\Controllers\PrototypeController;
 use App\Http\Controllers\SessionController;
+use App\Livewire\Dashboard;
 use App\Livewire\MedicineIndex;
 use Illuminate\Support\Facades\Route;
 
@@ -22,7 +22,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/panduan/selesai', [OnboardingController::class, 'finish'])->name('onboarding.finish');
     Route::post('/logout', [SessionController::class, 'destroy'])->name('logout');
-    Route::get('/dashboard', [PrototypeController::class, 'dashboard'])->middleware('can:view-dashboard')->name('dashboard');
+    Route::get('/dashboard', Dashboard::class)->middleware('can:view-dashboard')->name('dashboard');
     Route::get('/obat', MedicineIndex::class)->middleware('can:view-medicines')->name('medicines.index');
     Route::get('/obat/export-template', [MedicineExportController::class, 'download'])
         ->middleware('can:view-medicines')

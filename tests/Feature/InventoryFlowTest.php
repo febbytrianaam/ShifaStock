@@ -56,7 +56,8 @@ class InventoryFlowTest extends TestCase
         $this->assertSame(25.0, (float) StockBalance::whereBelongsTo($medicine)->whereBelongsTo($apotek)->value('quantity'));
         $this->assertDatabaseHas('inventory_movements', ['type' => 'physical_count', 'reference' => 'CHECK-'.$check->id, 'quantity' => 5]);
 
-        $this->get('/dashboard?data=real')->assertOk()->assertSee('Obat A')
+        $this->dashboard()->assertViewHas('stats', fn ($stats) => $stats['stocked'] === 1);
+        $this->get('/laporan')->assertOk()->assertSee('Obat A')
             ->assertViewHas('balances', fn ($balances) => $balances->contains(fn ($balance) => $balance->location_id === $apotek->id && (float) $balance->quantity === 25.0));
         $this->get('/kedaluwarsa')->assertOk()->assertSee('BA-01')->assertSee('31/12/2027');
         $this->get('/laporan')->assertOk()->assertSee('FKT-001')->assertSee('TRF-001');

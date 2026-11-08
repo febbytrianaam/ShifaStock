@@ -20,4 +20,12 @@ abstract class TestCase extends BaseTestCase
         return $this->get(route('nightly.show', $checkId))
             ->assertOk()->viewData('observedRevision');
     }
+
+    /** Loads the full dashboard page, then returns the Livewire component so its view data can be asserted. */
+    protected function dashboard(): \Livewire\Features\SupportTesting\Testable
+    {
+        $this->get(route('dashboard'))->assertOk()->assertSeeLivewire(\App\Livewire\Dashboard::class);
+
+        return \Livewire\Livewire::test(\App\Livewire\Dashboard::class);
+    }
 }

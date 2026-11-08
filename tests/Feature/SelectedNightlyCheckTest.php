@@ -303,7 +303,7 @@ class SelectedNightlyCheckTest extends TestCase
             ->assertViewHas('summary', fn ($summary) => $summary['total'] === 1 && $summary['low'] === 1 && $summary['empty'] === 0)
             ->assertViewHas('rows', fn ($rows) => $rows->count() === 1 && $rows->first()->medicine_id === $this->other->id);
         // These history-only fixtures do not create current-stock minimum alerts.
-        $this->get(route('dashboard'))->assertOk()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 0);
+        $this->dashboard()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 0);
         $id = $this->start(['date' => '2026-01-03', 'scope' => 'complete']);
         $this->get(route('nightly.show', $id))->assertOk()->assertViewHas('baseline', function ($baseline) {
             return $baseline[$this->first->id]->quantity === 5 && $baseline[$this->first->id]->checked_date === '2026-01-02'
@@ -323,6 +323,6 @@ class SelectedNightlyCheckTest extends TestCase
             return $rows->count() === 2 && $rows->contains(fn ($row) => $row->medicine_id === $this->first->id && $row->location_id === $warehouse->id)
                 && $rows->contains(fn ($row) => $row->medicine_id === $this->other->id && $row->location_id === $this->location->id);
         });
-        $this->get(route('dashboard'))->assertOk()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 0);
+        $this->dashboard()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 0);
     }
 }

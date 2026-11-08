@@ -1,5 +1,4 @@
 import './bootstrap';
-import Chart from 'chart.js/auto';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import { initFormSafety, resetFormBaseline, allowFormNavigation, cancelFormNavigation } from './form-safety';
@@ -13,104 +12,10 @@ import { initIssueImports } from './issue-imports';
 let nightlyPage = 1;
 
 function initialize() {
-    const canvas = document.getElementById('stockChart');
-    if (canvas && !Chart.getChart(canvas)) {
-        const chart = JSON.parse(canvas.dataset.chart);
-
-        new Chart(canvas, {
-            type: 'line',
-            data: {
-                labels: chart.labels,
-                datasets: [
-                    {
-                        label: 'Penerimaan',
-                        data: chart.receipts,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.10)',
-                        borderWidth: 2.5,
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: 3.5,
-                        pointHoverRadius: 6,
-                        pointBackgroundColor: '#ffffff',
-                        pointBorderColor: '#10b981',
-                        pointBorderWidth: 2,
-                    },
-                    {
-                        label: 'Transfer',
-                        data: chart.transfers,
-                        borderColor: '#3277B2',
-                        backgroundColor: 'rgba(50, 119, 178, 0.10)',
-                        borderWidth: 2.5,
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: 3.5,
-                        pointHoverRadius: 6,
-                        pointBackgroundColor: '#ffffff',
-                        pointBorderColor: '#3277B2',
-                        pointBorderWidth: 2,
-                    },
-                ],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: false,
-                interaction: { mode: 'index', intersect: false },
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            usePointStyle: true,
-                            pointStyle: 'circle',
-                            padding: 16,
-                            font: { family: "'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', Inter, sans-serif", size: 12, weight: '600' },
-                            color: '#475569',
-                        },
-                    },
-                    tooltip: {
-                        backgroundColor: '#0f172a',
-                        titleColor: '#f8fafc',
-                        bodyColor: '#cbd5e1',
-                        borderColor: '#334155',
-                        borderWidth: 1,
-                        padding: 12,
-                        cornerRadius: 10,
-                        titleFont: { family: "'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', Inter, sans-serif", size: 13, weight: '700' },
-                        bodyFont: { family: "'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', Inter, sans-serif", size: 12 },
-                        boxPadding: 6,
-                        usePointStyle: true,
-                    },
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: {
-                            font: { family: "'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', Inter, sans-serif", size: 11, weight: '500' },
-                            color: '#94a3b8',
-                        },
-                    },
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: '#f1f5f9',
-                        },
-                        ticks: {
-                            precision: 0,
-                            font: { family: "'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', Inter, sans-serif", size: 11 },
-                            color: '#94a3b8',
-                            padding: 8,
-                        },
-                    },
-                },
-            },
-        });
-    }
     if (new URLSearchParams(location.search).has('tambah')) {
         document.getElementById('medicine-dialog')?.showModal();
     }
     filterNightlyRows();
-    initBalanceSearch();
     initSearchableSelects();
     initReceiptRows();
     initReceiptValidation();
@@ -122,19 +27,6 @@ function initialize() {
     initFormSafety();
     initOnboarding();
     initPasswordVisibility();
-}
-
-function initBalanceSearch() {
-    const input = document.getElementById('balance-search');
-    if (!input || input.dataset.initialized) return;
-    input.dataset.initialized = '1';
-    input.addEventListener('input', () => {
-        const query = input.value.trim().toLowerCase();
-        document.querySelectorAll('[data-balance-row]').forEach((row) => {
-            const text = row.textContent.toLowerCase();
-            row.hidden = query.length > 0 && !text.includes(query);
-        });
-    });
 }
 
 function initSearchableSelects(root = document) {

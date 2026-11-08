@@ -149,7 +149,7 @@ class CapstoneFunctionalTest extends TestCase
             StockParameter::create(['medicine_id' => $this->medicine->id, 'location_id' => $location->id, 'minimum_quantity' => $minimum]);
         }
         $assertAlerts = function (array $expected): void {
-            $dashboard = $this->get(route('dashboard'))->assertOk()
+            $dashboard = $this->dashboard()
                 ->assertViewHas('stats', fn ($stats) => $stats['shortages'] === count($expected));
             $monitoring = $this->get(route('shortages.index'))->assertOk();
             foreach ([$dashboard->viewData('shortages'), $monitoring->viewData('parameterRows')] as $rows) {
