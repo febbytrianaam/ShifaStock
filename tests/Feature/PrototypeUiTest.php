@@ -31,7 +31,7 @@ class PrototypeUiTest extends TestCase
     {
         $this->actingAs(User::factory()->create(['role' => Role::Pharmacy]));
         $this->get('/dashboard')->assertOk()->assertSee('stockChart')->assertSee('Perlu Ditindaklanjuti')
-            ->assertSee('Pemeriksaan Harian')->assertSee('Monitoring')->assertSee('Pengeluaran Obat');
+            ->assertSee('Pemeriksaan Harian')->assertSee('Monitoring Stok')->assertSee('Pengeluaran & Impor');
         foreach (['obat-masuk', 'transfer', 'stock-opname', 'kedaluwarsa', 'laporan'] as $path) {
             $this->get('/'.$path)->assertOk()->assertDontSee('PRATINJAU UI');
         }

@@ -55,8 +55,12 @@
     .label { @apply mb-1.5 block text-xs font-semibold text-slate-600; }
     .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50; }
     .btn-secondary { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50; }
-    .nav-link { @apply flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-700; }
-    .nav-active { @apply bg-brand-50 font-semibold text-brand-700; }
+    .nav-link { @apply relative flex h-11 w-full shrink-0 items-center gap-3 rounded-[10px] px-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 md:h-10; }
+    .nav-link .nav-icon { @apply h-[19px] w-[19px] shrink-0 text-slate-500; }
+    .nav-active { @apply bg-brand-50 font-bold text-brand-800 hover:bg-brand-50; }
+    .nav-active .nav-icon { @apply text-brand-600; }
+    .nav-count { @apply inline-grid h-5 min-w-[22px] shrink-0 place-items-center rounded-md px-1.5 text-[11px] font-bold; }
+    .sidebar-divider { @apply mx-2 my-2.5 hidden h-px bg-slate-200; }
     .error { @apply mt-1 text-xs text-rose-700; }
     .badge { @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold; }
     .badge-ok { @apply bg-emerald-50 text-emerald-700; }
@@ -178,4 +182,18 @@
     .attention-badge-warning {
         animation:none;
     }
+}
+/* Desktop icon rail, remembered per browser by resources/js/app.js. Unlayered so it can override Tailwind utilities such as md:w-64. */
+[data-sidebar-expand-icon] { display: none; }
+@media (min-width: 768px) {
+    html[data-sidebar='collapsed'] #sidebar { width: 76px; padding-inline: 10px; }
+    html[data-sidebar='collapsed'] [data-app-main] { margin-left: 76px; }
+    html[data-sidebar='collapsed'] #sidebar [data-sidebar-text] { display: none; }
+    html[data-sidebar='collapsed'] #sidebar .sidebar-divider { display: block; }
+    html[data-sidebar='collapsed'] [data-sidebar-brand] { flex-direction: column; }
+    html[data-sidebar='collapsed'] [data-sidebar-home] { flex: none; }
+    html[data-sidebar='collapsed'] .nav-link { justify-content: center; width: 44px; height: 44px; margin-inline: auto; padding: 0; }
+    html[data-sidebar='collapsed'] .nav-count { position: absolute; top: 1px; right: -2px; height: 16px; min-width: 16px; padding: 0 4px; font-size: 10px; box-shadow: 0 0 0 2px #fff; }
+    html[data-sidebar='collapsed'] [data-sidebar-collapse-icon] { display: none; }
+    html[data-sidebar='collapsed'] [data-sidebar-expand-icon] { display: block; }
 }

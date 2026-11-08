@@ -6,38 +6,58 @@
     <title>{{ $title ?? 'Dashboard' }} · Klinik Shifa Medika</title>
     <link rel="icon" type="image/png" href="{{ asset('images/shifa-medika.png') }}?v=2">
     <link rel="apple-touch-icon" href="{{ asset('images/shifa-medika.png') }}?v=2">
+    {{-- Apply the remembered collapsed sidebar before first paint so the page does not jump. --}}
+    <script>try { if (localStorage.getItem('shifastock.sidebar') === 'collapsed') document.documentElement.dataset.sidebar = 'collapsed'; } catch (error) {}</script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 </head>
 <body class="bg-[#f8fafc] text-slate-800 antialiased">
 @php
     $navigationGroups = [
-        ['label' => 'MENU UTAMA', 'inventory' => false, 'items' => [
-            ['dashboard', '▦', 'Dashboard', null, 'view-dashboard'],
+        ['label' => null, 'inventory' => false, 'items' => [
+            ['dashboard', 'dashboard', 'Dashboard', null, 'view-dashboard'],
+        ]],
+        ['label' => 'KERJA HARIAN', 'inventory' => false, 'anyCan' => ['view-nightly-checks', 'view-shortages'], 'items' => [
+            ['preview.nightly', 'check', 'Pemeriksaan Stok', null, 'view-nightly-checks', ['preview.nightly', 'nightly.show', 'preview.opname', 'nightly.history']],
+            ['shortages.index', 'monitor', 'Monitoring Stok', null, 'view-shortages', ['shortages.index', 'preview.expiry']],
+        ]],
+        ['label' => 'TRANSAKSI', 'inventory' => false, 'anyCan' => ['view-receipts', 'view-transfers', 'view-issues', 'view-returns', 'view-special-adjustments'], 'items' => [
+            ['preview.receipts', 'in', 'Penerimaan Obat', null, 'view-receipts', ['preview.receipts', 'receipts.edit']],
+            ['preview.transfers', 'transfer', 'Transfer Stok', null, 'view-transfers'],
+            ['preview.issues', 'out', 'Pengeluaran & Impor', null, 'view-issues', ['preview.issues', 'issue-imports.*']],
+            ['preview.returns', 'return', 'Retur PBF', null, 'view-returns'],
+            ['special-adjustments.index', 'special', 'Kondisi Khusus', null, 'view-special-adjustments'],
+        ]],
+        ['label' => 'DATA & LAPORAN', 'inventory' => false, 'anyCan' => ['view-medicines', 'view-opening-balances', 'view-monitoring-parameters', 'view-reports'], 'items' => [
+            ['medicines.index', 'medicine', 'Data Obat', null, 'view-medicines'],
+            ['opening-balances.index', 'opening', 'Stok Awal', null, 'view-opening-balances'],
+            ['monitoring-parameters.index', 'parameter', 'Parameter Monitoring', null, 'view-monitoring-parameters'],
+            ['preview.reports', 'report', 'Laporan & Kartu Stok', null, 'view-reports', ['preview.reports', 'stock-card.index']],
         ]],
         ['label' => 'ADMINISTRASI', 'inventory' => false, 'anyCan' => ['manage-users', 'manage-permissions', 'view-audit-logs', 'manage-system-references', 'manage-system-settings'], 'items' => [
-            ['admin.users.index', '◉', auth()->user()->can('manage-users') ? 'Pengguna' : 'Hak Akses', null, ['manage-users', 'manage-permissions']],
-            ['admin.audit-logs.index', '◌', 'Audit Log', null, 'view-audit-logs'],
-            ['admin.references.index', '◇', 'Referensi Sistem', null, 'manage-system-references'],
-            ['admin.settings.index', '⚙', 'Pengaturan Sistem', null, 'manage-system-settings'],
+            ['admin.users.index', 'users', auth()->user()->can('manage-users') ? 'Pengguna & Hak Akses' : 'Hak Akses', null, ['manage-users', 'manage-permissions']],
+            ['admin.audit-logs.index', 'audit', 'Audit Log', null, 'view-audit-logs'],
+            ['admin.references.index', 'reference', 'Referensi Sistem', null, 'manage-system-references'],
+            ['admin.settings.index', 'settings', 'Pengaturan Sistem', null, 'manage-system-settings'],
         ]],
-        ['label' => 'DATA & PERGERAKAN', 'inventory' => false, 'anyCan' => ['view-medicines', 'view-opening-balances', 'view-receipts', 'view-transfers', 'view-issues', 'view-returns'], 'items' => [
-            ['medicines.index', '▤', 'Data Obat', null, 'view-medicines'],
-            ['opening-balances.index', '+', 'Stok Awal', null, 'view-opening-balances'],
-            ['preview.receipts', '↓', 'Penerimaan Obat', null, 'view-receipts', ['preview.receipts', 'receipts.edit']],
-            ['preview.transfers', '⇄', 'Transfer Gudang–Apotek', null, 'view-transfers'],
-            ['preview.issues', '↑', 'Pengeluaran Obat', null, 'view-issues', ['preview.issues', 'issue-imports.*']],
-            ['preview.returns', '↩', 'Retur PBF', null, 'view-returns'],
-        ]],
-        ['label' => 'PEMERIKSAAN STOK', 'inventory' => false, 'anyCan' => ['view-nightly-checks', 'view-opname', 'view-nightly-history'], 'items' => [
-            ['preview.nightly', '✓', 'Pemeriksaan Stok', null, 'view-nightly-checks', ['preview.nightly', 'nightly.show', 'preview.opname', 'nightly.history']],
-        ]],
-        ['label' => 'TINDAK LANJUT', 'inventory' => false, 'anyCan' => ['view-shortages', 'view-expiry', 'view-special-adjustments', 'view-reports', 'view-stock-card', 'view-monitoring-parameters'], 'items' => [
-            ['shortages.index', '!', 'Monitoring', null, 'view-shortages', ['shortages.index', 'preview.expiry']],
-            ['monitoring-parameters.index', '⚙', 'Parameter Monitoring', null, 'view-monitoring-parameters'],
-            ['special-adjustments.index', '◇', 'Kondisi Khusus', null, 'view-special-adjustments'],
-            ['preview.reports', '▥', 'Laporan', null, 'view-reports', ['preview.reports', 'stock-card.index']],
-        ]],
+    ];
+    $navigationIcons = [
+        'dashboard' => 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z',
+        'check' => 'M9 3h6v3H9zM8 4.5H6a2 2 0 0 0-2 2V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6.5a2 2 0 0 0-2-2h-2M9 14l2 2 4-4',
+        'monitor' => 'M3 12h4l3-8 4 16 3-8h4',
+        'in' => 'M12 3v12M7 10l5 5 5-5M4 21h16',
+        'transfer' => 'M7 7h13M16 3l4 4-4 4M17 17H4M8 13l-4 4 4 4',
+        'out' => 'M12 21V9M7 14l5-5 5 5M4 3h16',
+        'return' => 'M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3',
+        'special' => 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM12 8v4M12 16h.01',
+        'medicine' => 'm10.5 20.5-7-7a4.95 4.95 0 1 1 7-7l7 7a4.95 4.95 0 1 1-7 7ZM8.5 8.5l7 7',
+        'opening' => 'M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8',
+        'parameter' => 'M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4',
+        'report' => 'M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M9 17v-3M12 17v-5M15 17v-2',
+        'users' => 'M16 20v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM22 20v-1a4 4 0 0 0-3-3.9M16 5.1a3 3 0 0 1 0 5.8',
+        'audit' => 'M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2',
+        'reference' => 'M20 13l-7 7-9-9V4h7zM7.5 7.5h.01',
+        'settings' => 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM4 12h2M18 12h2M12 4v2M12 18v2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4',
     ];
     $currentPageLabel = $title ?? 'Dashboard';
     $currentGroupLabel = null;
@@ -76,14 +96,7 @@
             $activeRoutes = $activeRoutes ?: [$route];
             if (collect($activeRoutes)->contains(fn ($activeRoute) => request()->routeIs($activeRoute))) {
                 $currentPageLabel = $label;
-                $currentGroupLabel = match ($group['label']) {
-                    'MENU UTAMA' => null,
-                    'ADMINISTRASI' => 'Administrasi',
-                    'DATA & PERGERAKAN' => 'Data dan Pergerakan',
-                    'PEMERIKSAAN STOK' => 'Pemeriksaan Stok',
-                    'TINDAK LANJUT' => 'Tindak Lanjut',
-                    default => ucwords(strtolower($group['label'])),
-                };
+                $currentGroupLabel = $group['label'] ? ucwords(strtolower($group['label'])) : null;
                 break 2;
             }
         }
@@ -106,6 +119,8 @@
             $navigationCounts['preview.nightly'] = ['count' => \Illuminate\Support\Facades\DB::table('nightly_checks')->where('status', 'submitted')->count(), 'class' => 'bg-amber-50 text-amber-700'];
         }
     }
+    $accountName = auth()->user()->name ?: auth()->user()->username;
+    $accountInitials = collect(preg_split('/\s+/', trim($accountName)))->filter()->take(2)->map(fn ($word) => mb_strtoupper(mb_substr($word, 0, 1)))->implode('') ?: 'U';
     $restoredInputFields = array_keys(session()->getOldInput());
     $onboardingConfig = ['autoStart' => auth()->user()->onboarding_seen_at === null,
         'endpoint' => route('onboarding.finish', [], false), 'token' => csrf_token(),
@@ -114,33 +129,49 @@
 <script type="application/json" data-restored-input-fields>@json($restoredInputFields)</script>
 <script type="application/json" data-onboarding-config>@json($onboardingConfig)</script>
 <div class="min-h-screen">
-    <button type="button" id="sidebar-backdrop" hidden class="fixed inset-0 z-30 bg-slate-950/40 md:hidden" aria-label="Tutup menu"></button>
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-60 -translate-x-full overflow-y-auto border-r border-slate-200 bg-white p-4 transition-transform md:translate-x-0" aria-label="Navigasi aplikasi">
-        <a href="{{ route('dashboard') }}" class="mb-6 flex items-center gap-3">
-            <img src="{{ asset('images/shifa-medika.png') }}" alt="Logo Klinik Shifa Medika" class="h-auto w-12 shrink-0">
-            <div><p class="text-sm font-bold text-slate-900">Monitoring Obat</p><p class="text-xs text-slate-400">Klinik Shifa Medika</p></div>
-        </a>
-        <nav aria-label="Menu utama">
+    <button type="button" id="sidebar-backdrop" hidden class="fixed inset-0 z-30 bg-slate-950/45 md:hidden" aria-label="Tutup menu"></button>
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 flex w-72 max-w-[86vw] -translate-x-full flex-col border-r border-slate-200 bg-white px-3.5 py-4 shadow-xl transition-transform md:w-64 md:max-w-none md:translate-x-0 md:shadow-none" aria-label="Navigasi aplikasi">
+        <div class="flex items-center gap-2.5 pb-3" data-sidebar-brand>
+            <a href="{{ route('dashboard') }}" class="flex min-w-0 flex-1 items-center gap-2.5" data-sidebar-home title="Dashboard">
+                <img src="{{ asset('images/shifa-medika.png') }}" alt="Logo Klinik Shifa Medika" class="h-9 w-9 shrink-0 object-contain">
+                <span class="min-w-0" data-sidebar-text><span class="block text-[15px] font-extrabold text-slate-900">Monitoring Obat</span><span class="block text-xs text-slate-500">Klinik Shifa Medika</span></span>
+            </a>
+            <button type="button" data-sidebar-collapse class="hidden h-8 w-8 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 md:grid" aria-label="Ciutkan menu" title="Ciutkan menu" aria-pressed="false">
+                <svg class="h-[18px] w-[18px]" data-sidebar-collapse-icon fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h18v18H3zM9 3v18M17 15l-3-3 3-3" /></svg>
+                <svg class="h-[18px] w-[18px]" data-sidebar-expand-icon fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h18v18H3zM9 3v18M14 9l3 3-3 3" /></svg>
+            </button>
+            <button type="button" data-sidebar-close class="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-600 md:hidden" aria-label="Tutup menu">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <nav class="mt-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto" aria-label="Menu utama">
             @foreach($navigationGroups as $group)
                 @if((!($group['inventory'] ?? false) || auth()->user()->can('view-inventory')) && (!isset($group['can']) || auth()->user()->can($group['can'])) && (!isset($group['anyCan']) || collect($group['anyCan'])->contains(fn ($ability) => auth()->user()->can($ability))))
-                    <p class="mb-2 mt-5 text-[10px] font-bold uppercase tracking-wider text-slate-400 first:mt-0">{{ $group['label'] }}</p>
-                    <div class="space-y-1">
-                        @foreach($group['items'] as $item)
-                            @php([$route, $icon, $label, $badge, $can, $activeRoutes] = array_pad($item, 6, []))
-                            @php($activeRoutes = $activeRoutes ?: [$route])
-                            @php($isActive = collect($activeRoutes)->contains(fn ($activeRoute) => request()->routeIs($activeRoute)))
-                            @continue($can && !collect((array) $can)->contains(fn ($ability) => auth()->user()->can($ability)))
-                            <a data-tour-menu="{{ $route }}" class="nav-link {{ $isActive ? 'nav-active' : '' }}" href="{{ route($route) }}" @if($isActive) aria-current="page" @endif><span class="w-5 shrink-0 text-center text-base" aria-hidden="true">{{ $icon }}</span><span class="min-w-0 flex-1">{{ $label }}</span>@if($badge)<span class="text-[9px] font-semibold uppercase text-slate-400">{{ $badge }}</span>@endif @if(($navigationCounts[$route]['count'] ?? 0) > 0)<span class="inline-grid h-5 min-w-5 place-items-center rounded-md px-1.5 text-[11px] font-bold {{ $navigationCounts[$route]['class'] }}" data-nav-count="{{ $route }}">{{ $navigationCounts[$route]['count'] }}</span>@endif</a>
-                        @endforeach
-                    </div>
+                    @if($group['label'])
+                        <p class="mb-1.5 mt-4 px-2.5 text-[11px] font-bold uppercase tracking-wider text-slate-400" data-sidebar-text>{{ $group['label'] }}</p>
+                        <span class="sidebar-divider" aria-hidden="true"></span>
+                    @endif
+                    @foreach($group['items'] as $item)
+                        @php([$route, $icon, $label, $badge, $can, $activeRoutes] = array_pad($item, 6, []))
+                        @php($activeRoutes = $activeRoutes ?: [$route])
+                        @php($isActive = collect($activeRoutes)->contains(fn ($activeRoute) => request()->routeIs($activeRoute)))
+                        @continue($can && !collect((array) $can)->contains(fn ($ability) => auth()->user()->can($ability)))
+                        <a data-tour-menu="{{ $route }}" class="nav-link {{ $isActive ? 'nav-active' : '' }}" href="{{ route($route) }}" title="{{ $label }}" @if($isActive) aria-current="page" @endif>
+                            <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $navigationIcons[$icon] }}" /></svg>
+                            <span class="min-w-0 flex-1 truncate" data-sidebar-text>{{ $label }}</span>
+                            @if(($navigationCounts[$route]['count'] ?? 0) > 0)<span class="nav-count {{ $navigationCounts[$route]['class'] }}" data-nav-count="{{ $route }}">{{ $navigationCounts[$route]['count'] }}</span>@endif
+                        </a>
+                    @endforeach
                 @endif
             @endforeach
         </nav>
     </aside>
-    <main class="min-h-screen min-w-0 md:ml-60">
+    <main class="min-h-screen min-w-0 md:ml-64" data-app-main>
         <header class="sticky top-0 z-20 flex min-h-14 items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-4 py-2 backdrop-blur md:px-6">
             <div class="flex min-w-0 items-center gap-3">
-                <button id="sidebar-toggle" type="button" class="rounded-md border border-slate-200 px-2 py-1.5 text-sm text-slate-600 md:hidden" aria-label="Buka menu" aria-expanded="false" aria-controls="sidebar">☰</button>
+                <button id="sidebar-toggle" type="button" class="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-600 md:hidden" aria-label="Buka menu" aria-expanded="false" aria-controls="sidebar">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
                 <div class="min-w-0">
                     <nav class="flex min-w-0 items-center gap-1 text-[11px] font-medium text-slate-400" aria-label="Breadcrumb">
                         <a href="{{ route('dashboard') }}" class="shrink-0 hover:text-slate-600">Monitoring Obat</a>
@@ -152,28 +183,35 @@
                     <h1 class="truncate text-sm font-semibold text-slate-900 sm:text-base">{{ $currentPageLabel }}</h1>
                 </div>
             </div>
-            <div class="flex shrink-0 items-center gap-3">
+            <div class="flex shrink-0 items-center gap-2.5">
                 @isset($headerActions)
                     <div class="hidden items-center gap-2 border-r border-slate-200 pr-3 xl:flex" data-header-actions>{{ $headerActions }}</div>
                 @endisset
-                <button type="button" data-tour-restart class="grid h-8 w-8 place-items-center rounded-md text-slate-500 hover:bg-slate-50" aria-label="Buka panduan" title="Buka panduan"><span data-tour-help-icon aria-hidden="true">?</span></button>
                 <span class="hidden text-xs text-slate-400 lg:inline">{{ now()->locale('id')->translatedFormat('d M Y') }}</span>
+                <button type="button" data-tour-restart class="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-sm font-bold text-slate-500 hover:bg-slate-50" aria-label="Buka panduan" title="Buka panduan"><span data-tour-help-icon aria-hidden="true">?</span></button>
                 <div class="relative">
-                    <button id="user-menu-button" data-tour-profile type="button" class="flex max-w-[150px] items-center gap-2 rounded-md px-1.5 py-1 text-sm font-semibold text-slate-600 hover:bg-slate-50 sm:max-w-[220px] sm:px-2" aria-expanded="false" aria-controls="user-menu" data-user-menu-toggle>
-                        <span class="hidden min-w-0 truncate text-right text-xs sm:inline">{{ auth()->user()->name ?: auth()->user()->username }}</span>
-                        <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700" aria-hidden="true">
-                            <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor">
-                                <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5Z" />
-                            </svg>
+                    <button id="user-menu-button" data-tour-profile type="button" class="flex items-center gap-2 rounded-full text-left hover:bg-slate-50 sm:border sm:border-slate-200 sm:py-[3px] sm:pl-[3px] sm:pr-2.5" aria-expanded="false" aria-controls="user-menu" aria-haspopup="true" data-user-menu-toggle>
+                        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-extrabold text-brand-700 sm:h-8 sm:w-8" aria-hidden="true">{{ $accountInitials }}</span>
+                        <span class="hidden min-w-0 flex-col leading-tight sm:flex">
+                            <span class="max-w-[160px] truncate text-[13px] font-bold text-slate-900">{{ $accountName }}</span>
+                            <span class="text-[11px] text-slate-500">{{ auth()->user()->role->label() }}</span>
                         </span>
                         <svg class="hidden h-3.5 w-3.5 text-slate-400 sm:block" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                             <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.17l3.71-3.94a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z" clip-rule="evenodd" />
                         </svg>
+                        <span class="sr-only">Menu akun</span>
                     </button>
-                    <div id="user-menu" hidden class="absolute right-0 z-30 mt-2 w-44 rounded-lg border border-slate-200 bg-white p-1.5 text-slate-700 shadow-lg">
+                    <div id="user-menu" hidden class="absolute right-0 z-30 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-1.5 text-slate-700 shadow-lg">
+                        <div class="mb-1 border-b border-slate-100 px-2.5 pb-2.5 pt-2">
+                            <p class="truncate text-[13px] font-bold text-slate-900">{{ $accountName }}</p>
+                            <p class="text-xs text-slate-500">{{ auth()->user()->role->label() }}</p>
+                        </div>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button class="w-full rounded-md px-3 py-2 text-left text-sm font-semibold hover:bg-slate-50">Keluar</button>
+                            <button class="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-sm font-bold text-rose-700 hover:bg-rose-50">
+                                <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
+                                Keluar
+                            </button>
                         </form>
                     </div>
                 </div>

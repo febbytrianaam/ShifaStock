@@ -15,6 +15,7 @@ function initialize() {
     if (new URLSearchParams(location.search).has('tambah')) {
         document.getElementById('medicine-dialog')?.showModal();
     }
+    setSidebarCollapsed(document.documentElement.dataset.sidebar === 'collapsed', false);
     filterNightlyRows();
     initSearchableSelects();
     initReceiptRows();
@@ -448,6 +449,23 @@ function closeSidebar() {
     if (backdrop) backdrop.hidden = true;
     document.getElementById('sidebar-toggle')?.setAttribute('aria-expanded', 'false');
 }
+function setSidebarCollapsed(collapsed, remember = true) {
+    if (collapsed) document.documentElement.dataset.sidebar = 'collapsed';
+    else delete document.documentElement.dataset.sidebar;
+    const button = document.querySelector('[data-sidebar-collapse]');
+    if (button) {
+        const label = collapsed ? 'Lebarkan menu' : 'Ciutkan menu';
+        button.setAttribute('aria-label', label);
+        button.title = label;
+        button.setAttribute('aria-pressed', String(collapsed));
+    }
+    if (!remember) return;
+    try {
+        localStorage.setItem('shifastock.sidebar', collapsed ? 'collapsed' : 'expanded');
+    } catch {
+        // Private windows may block storage; the rail still works for this page view.
+    }
+}
 function closeUserMenu() {
     const menu = document.getElementById('user-menu');
     const button = document.getElementById('user-menu-button');
@@ -609,6 +627,8 @@ document.addEventListener('click', (event) => {
     }
     if (event.target.closest('[data-close-dialog]')) event.target.closest('dialog')?.close();
     if (event.target.closest('[data-open-medicine]')) document.getElementById('medicine-dialog')?.showModal();
+    if (event.target.closest('[data-sidebar-close]')) closeSidebar();
+    if (event.target.closest('[data-sidebar-collapse]')) setSidebarCollapsed(document.documentElement.dataset.sidebar !== 'collapsed');
     if (event.target.closest('#sidebar-toggle')) {
         const sidebar = document.getElementById('sidebar');
         const open = sidebar.classList.contains('-translate-x-full');
