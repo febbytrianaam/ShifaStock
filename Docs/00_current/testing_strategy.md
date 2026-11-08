@@ -23,7 +23,7 @@ Three checks named "Perilaku saat ini" pin current behaviour from the 4 Nov revi
 
 Update those checks if the clinic decides to change that behaviour.
 
-Actual runs on 5 Nov 2026 (08:36–08:45 WIB) from `470045c` plus this runner:
+Actual runs on 5 Nov 2026 (08:36–08:45 WIB) from `b3f3d32` plus this runner:
 - **13/13 plus postconditions**, three times in a row.
 - In the same session: the other browser phases (regression, onboarding 14/14, nightly-ui 20/20, partial 7/7, selected 15/15, import, and transfer 9/9, which had not been run on 4 Nov), the MySQL concurrency script 11/11, and **262 tests / 2866 assertions**.
 - Zero temporary QA databases remained.
