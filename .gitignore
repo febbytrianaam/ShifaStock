@@ -21,6 +21,9 @@
 /storage/pail
 /vendor
 /LOCAL_DEMO_ACCOUNTS.txt
+# Database dumps and the old status note carry account hashes or demo passwords.
+*.sql
+/IMPLEMENTATION_STATUS.md
 # Clinical export contains patient/doctor identifiers; never publish it as a fixture.
 /docs/40_references/REKAP OBTA.xlsx
 Homestead.json
