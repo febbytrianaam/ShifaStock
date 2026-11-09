@@ -3,7 +3,7 @@
 ## Current Stack
 
 - Backend: Laravel 13, PHP 8.3+
-- UI: Blade, Livewire 3 for medicine master UI, Tailwind CSS 4
+- UI: Blade, Livewire 3 for the dashboard, Monitoring Stok, and medicine master UI, Tailwind CSS 4
 - Frontend build: Vite
 - JavaScript libraries: Chart.js, SweetAlert2, Axios bootstrap
 - Database: MySQL for app runtime; PHPUnit is configured for SQLite memory tests when `pdo_sqlite` is available
@@ -12,7 +12,8 @@
 ## Major Modules
 
 - Auth/session: `SessionController`, `EnsureActiveAccount`
-- Dashboard: `PrototypeController`
+- Dashboard: `Livewire\Dashboard`, `DashboardSummary`
+- Monitoring Stok: `Livewire\StockMonitoring`, `StockMonitoringSummary` (one row per medicine below minimum with warehouse-to-location transfer or PBF order suggestions, expiry buckets, latest approved count results)
 - Master medicine: `MedicineIndex`, `Medicine`, `Unit`, `MedicinePackage`, `MedicineAudit`
 - Inventory: `InventoryController`, `InventoryStockService`
 - Daily checks: `NightlyCheckController`

@@ -131,7 +131,7 @@ const crypto = require('node:crypto');
                 assert.equal(url.searchParams.get('location_id'), String(meta.warehouse));
                 assert.equal(url.searchParams.get('search'), 'FINAL-001');
                 assert.equal(url.hash, '#stok-minimum');
-                assert.equal(await page.locator('#stok-minimum tbody tr').count(), 1);
+                assert.equal(await page.locator('#stok-minimum [data-monitor-row]').count(), 1);
                 assert((await page.locator('#stok-minimum').innerText()).includes('50 Tablet'));
                 await page.setViewportSize({ width: 1440, height: 900 });
             });

@@ -221,7 +221,7 @@ const assert = require('node:assert/strict');
             await page.getByRole('button', { name: 'Ya, setujui dan sesuaikan', exact: true }).click();
             await ready();
             assert((await page.locator('[role="status"]').innerText()).includes('Disetujui'));
-            await goto('/kekurangan-permintaan');
+            await goto('/kekurangan-permintaan?tab=hitung');
             assert((await page.locator('body').innerText()).includes('Obat Simulasi Final'));
             assert((await page.locator('body').innerText()).includes('masing-masing obat'));
         });

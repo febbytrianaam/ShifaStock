@@ -43,6 +43,14 @@ class DashboardStockMonitoringTest extends TestCase
         return StockBalance::create(['medicine_id' => $this->medicine->id, 'location_id' => $location->id, 'quantity' => $quantity]);
     }
 
+    /** Location => quantity for every empty or low cell on Monitoring Stok, optionally at one location. */
+    private function shortCells(array $medicines, ?int $locationId = null): array
+    {
+        return collect($medicines)->flatMap(fn ($medicine) => $medicine['cells'])->whereIn('status', ['kosong', 'menipis'])
+            ->when($locationId, fn ($cells) => $cells->where('location_id', $locationId))
+            ->mapWithKeys(fn ($cell) => [$cell['location_id'] => $cell['quantity']])->all();
+    }
+
     public function test_dashboard_matches_minimum_monitoring_without_any_daily_report(): void
     {
         $this->minimum($this->warehouse);
@@ -55,8 +63,8 @@ class DashboardStockMonitoringTest extends TestCase
         $this->assertCount(1, $rows);
         $this->assertSame(50.0, (float) $rows->first()->quantity);
         $this->assertSame('Tablet', $rows->first()->unit);
-        $monitor = $this->get(route('shortages.index'))->assertOk()->assertSee('id="stok-minimum"', false);
-        $this->assertEquals($monitor->viewData('parameterRows')->all(), $rows->all());
+        $monitor = $this->monitoring()->assertSee('id="stok-minimum"', false);
+        $this->assertEquals($rows->mapWithKeys(fn ($row) => [$row->location_id => (float) $row->quantity])->all(), $this->shortCells($monitor->viewData('medicines')));
         $this->assertDatabaseCount('nightly_checks', 0);
         $this->assertDatabaseCount('inventory_movements', 0);
         $this->assertSame('50.0000', StockBalance::sole()->quantity);
@@ -89,8 +97,8 @@ class DashboardStockMonitoringTest extends TestCase
         $balance->update(['quantity' => 0]);
         $response = $this->dashboard()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 2 && $stats['kosong'] === 1);
         $this->assertSame($pharmacy->id, $response->viewData('shortages')->first()->location_id);
-        $this->get(route('shortages.index', ['location_id' => $pharmacy->id, 'status' => 'empty']))->assertOk()
-            ->assertViewHas('parameterRows', fn ($rows) => $rows->count() === 1 && (float) $rows->first()->quantity === 0.0);
+        $this->assertSame([$pharmacy->id => 0.0], $this->shortCells($this->monitoring(['location_id' => $pharmacy->id, 'status' => 'empty'])->viewData('visibleMedicines'), $pharmacy->id));
+        $this->assertSame([], $this->monitoring(['location_id' => $pharmacy->id, 'status' => 'low'])->viewData('visibleMedicines'));
     }
 
     public function test_configured_minimum_without_stock_is_zero_but_unconfigured_master_is_not_a_shortage(): void

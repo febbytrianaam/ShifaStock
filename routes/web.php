@@ -12,6 +12,7 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\SessionController;
 use App\Livewire\Dashboard;
 use App\Livewire\MedicineIndex;
+use App\Livewire\StockMonitoring;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route(auth()->check() ? 'dashboard' : 'login'));
@@ -105,7 +106,7 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/kedaluwarsa', [InventoryController::class, 'expiry'])->middleware('can:view-expiry')->name('preview.expiry');
         Route::get('/laporan', [InventoryController::class, 'reports'])->middleware('can:view-reports')->name('preview.reports');
         Route::get('/riwayat-stok', [NightlyCheckController::class, 'history'])->middleware('can:view-nightly-history')->name('nightly.history');
-        Route::get('/kekurangan-permintaan', [NightlyCheckController::class, 'shortages'])->middleware('can:view-shortages')->name('shortages.index');
+        Route::get('/kekurangan-permintaan', StockMonitoring::class)->middleware('can:view-shortages')->name('shortages.index');
         Route::get('/pengecekan-malam', [NightlyCheckController::class, 'index'])->middleware('can:view-nightly-checks')->name('preview.nightly');
         Route::post('/pengecekan-malam', [NightlyCheckController::class, 'store'])->middleware(['can:view-nightly-checks', 'can:operate-inventory'])->name('nightly.store');
         Route::get('/pengecekan-malam/{id}', [NightlyCheckController::class, 'show'])->middleware('can:view-nightly-checks')->whereNumber('id')->name('nightly.show');

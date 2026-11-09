@@ -466,6 +466,33 @@ function setSidebarCollapsed(collapsed, remember = true) {
         // Private windows may block storage; the rail still works for this page view.
     }
 }
+async function copyText(button) {
+    const text = button.dataset.copyText || '';
+    let copied = false;
+    try {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+    } catch {
+        // Plain http on the clinic network has no Clipboard API; copy through a hidden selection instead.
+        const field = document.createElement('textarea');
+        field.value = text;
+        field.setAttribute('readonly', '');
+        field.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+        document.body.appendChild(field);
+        field.select();
+        try {
+            copied = document.execCommand('copy');
+        } catch {
+            copied = false;
+        }
+        field.remove();
+    }
+    const label = button.dataset.copyLabel ?? button.textContent.trim();
+    button.dataset.copyLabel = label;
+    button.textContent = copied ? (button.dataset.copyDone || 'Tersalin') : 'Gagal menyalin, coba lagi';
+    clearTimeout(button.copyTimer);
+    button.copyTimer = setTimeout(() => { button.textContent = label; }, 2500);
+}
 function closeUserMenu() {
     const menu = document.getElementById('user-menu');
     const button = document.getElementById('user-menu-button');
@@ -627,6 +654,8 @@ document.addEventListener('click', (event) => {
     }
     if (event.target.closest('[data-close-dialog]')) event.target.closest('dialog')?.close();
     if (event.target.closest('[data-open-medicine]')) document.getElementById('medicine-dialog')?.showModal();
+    const copyButton = event.target.closest('[data-copy-text]');
+    if (copyButton) copyText(copyButton);
     if (event.target.closest('[data-sidebar-close]')) closeSidebar();
     if (event.target.closest('[data-sidebar-collapse]')) setSidebarCollapsed(document.documentElement.dataset.sidebar !== 'collapsed');
     if (event.target.closest('#sidebar-toggle')) {

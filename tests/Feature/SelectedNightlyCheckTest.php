@@ -272,7 +272,7 @@ class SelectedNightlyCheckTest extends TestCase
         $this->assertSame($beforeWarehouse, StockBalance::where('location_id', $warehouse->id)->first()->getRawOriginal());
         $this->assertSame($beforeOtherBatches, BatchStockBalance::where('medicine_id', $this->other->id)->get()->toArray());
         $this->assertSame(1, InventoryMovement::where('reference', 'CHECK-'.$id)->count());
-        $this->get(route('shortages.index'))->assertOk()->assertViewHas('rows', fn ($rows) => $rows->count() === 1 && $rows->first()->requested_quantity === 30);
+        $this->monitoring(['tab' => 'hitung'])->assertViewHas('counts', fn ($rows) => count($rows) === 1 && preg_match('/^30( |$)/', $rows[0]['requested']) === 1);
     }
 
     public function test_existing_daily_report_is_reopened_without_changing_scope_or_items(): void
@@ -299,9 +299,8 @@ class SelectedNightlyCheckTest extends TestCase
     {
         $this->approved('2026-01-01', [$this->first->id => [0, false], $this->other->id => [2, true]]);
         $this->approved('2026-01-02', [$this->first->id => [5, false]]);
-        $this->get(route('shortages.index'))->assertOk()
-            ->assertViewHas('summary', fn ($summary) => $summary['total'] === 1 && $summary['low'] === 1 && $summary['empty'] === 0)
-            ->assertViewHas('rows', fn ($rows) => $rows->count() === 1 && $rows->first()->medicine_id === $this->other->id);
+        $this->monitoring(['tab' => 'hitung'])
+            ->assertViewHas('counts', fn ($rows) => count($rows) === 1 && $rows[0]['medicine_id'] === $this->other->id && $rows[0]['status'] === 'menipis');
         // These history-only fixtures do not create current-stock minimum alerts.
         $this->dashboard()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 0);
         $id = $this->start(['date' => '2026-01-03', 'scope' => 'complete']);
@@ -319,9 +318,11 @@ class SelectedNightlyCheckTest extends TestCase
         $this->approved('2026-01-02', [$this->first->id => [0, false]], $warehouse->id);
         $id = $this->start(['date' => '2026-01-02']);
         $this->get(route('nightly.show', $id))->assertOk()->assertViewHas('baseline', fn ($baseline) => $baseline[$this->first->id]->quantity === 0 && $baseline[$this->first->id]->checked_date === '2026-01-01');
-        $this->get(route('shortages.index'))->assertOk()->assertViewHas('rows', function ($rows) use ($warehouse) {
-            return $rows->count() === 2 && $rows->contains(fn ($row) => $row->medicine_id === $this->first->id && $row->location_id === $warehouse->id)
-                && $rows->contains(fn ($row) => $row->medicine_id === $this->other->id && $row->location_id === $this->location->id);
+        $this->monitoring(['tab' => 'hitung'])->assertViewHas('counts', function ($rows) use ($warehouse) {
+            $rows = collect($rows);
+
+            return $rows->count() === 2 && $rows->contains(fn ($row) => $row['medicine_id'] === $this->first->id && $row['location_id'] === $warehouse->id)
+                && $rows->contains(fn ($row) => $row['medicine_id'] === $this->other->id && $row['location_id'] === $this->location->id);
         });
         $this->dashboard()->assertViewHas('stats', fn ($stats) => $stats['shortages'] === 0);
     }

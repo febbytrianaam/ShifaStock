@@ -28,4 +28,12 @@ abstract class TestCase extends BaseTestCase
 
         return \Livewire\Livewire::test(\App\Livewire\Dashboard::class);
     }
+
+    /** Loads Monitoring Stok with the given query string, then returns the component for view-data assertions. */
+    protected function monitoring(array $query = []): \Livewire\Features\SupportTesting\Testable
+    {
+        $this->get(route('shortages.index', $query))->assertOk()->assertSeeLivewire(\App\Livewire\StockMonitoring::class);
+
+        return \Livewire\Livewire::withQueryParams($query)->test(\App\Livewire\StockMonitoring::class);
+    }
 }

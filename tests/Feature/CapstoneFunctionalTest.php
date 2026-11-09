@@ -151,11 +151,9 @@ class CapstoneFunctionalTest extends TestCase
         $assertAlerts = function (array $expected): void {
             $dashboard = $this->dashboard()
                 ->assertViewHas('stats', fn ($stats) => $stats['shortages'] === count($expected));
-            $monitoring = $this->get(route('shortages.index'))->assertOk();
-            foreach ([$dashboard->viewData('shortages'), $monitoring->viewData('parameterRows')] as $rows) {
-                $actual = $rows->mapWithKeys(fn ($row) => [$row->location_id => (float) $row->quantity])->all();
-                $this->assertEquals($expected, $actual);
-            }
+            $this->assertEquals($expected, $dashboard->viewData('shortages')->mapWithKeys(fn ($row) => [$row->location_id => (float) $row->quantity])->all());
+            $monitoring = collect($this->monitoring()->viewData('medicines'))->flatMap(fn ($medicine) => $medicine['cells'])->whereIn('status', ['kosong', 'menipis']);
+            $this->assertEquals($expected, $monitoring->mapWithKeys(fn ($cell) => [$cell['location_id'] => $cell['quantity']])->all());
         };
         $this->receipt('SIM-DRAFT', 'draft');
         $assertAlerts([$this->warehouse->id => 0.0, $this->pharmacy->id => 0.0]);
@@ -222,10 +220,10 @@ class CapstoneFunctionalTest extends TestCase
     {
         $this->receipt();
         StockParameter::create(['medicine_id' => $this->medicine->id, 'location_id' => $this->warehouse->id, 'minimum_quantity' => 60]);
-        $this->get(route('shortages.index', ['location_id' => $this->warehouse->id]))->assertOk()
-            ->assertViewHas('parameterRows', fn ($rows) => $rows->count() === 1 && (float) $rows->first()->quantity === 50.0)
+        $this->monitoring(['location_id' => $this->warehouse->id])
+            ->assertViewHas('visibleMedicines', fn ($rows) => count($rows) === 1 && collect($rows[0]['cells'])->firstWhere('location_id', $this->warehouse->id)['quantity'] === 50.0)
             ->assertSee('Obat Simulasi Final')->assertSee('Gudang');
-        $this->get(route('shortages.index', ['location_id' => $this->pharmacy->id]))->assertViewHas('parameterRows', fn ($rows) => $rows->isEmpty());
+        $this->monitoring(['location_id' => $this->pharmacy->id])->assertViewHas('visibleMedicines', []);
         $early = Batch::where('number', 'SIM-EARLY')->sole();
         $early->update(['expiry_date' => '2026-10-17']);
         $this->get(route('preview.expiry', ['location_id' => $this->warehouse->id]))->assertOk()

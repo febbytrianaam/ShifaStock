@@ -7,7 +7,6 @@ use App\Models\Batch;
 use App\Models\InventoryMovement;
 use App\Models\Unit;
 use App\Queries\LatestNightlyItems;
-use App\Queries\MinimumStockAlerts;
 use App\Services\DailyPhysicalCountService;
 use App\Services\InventoryStockService;
 use Illuminate\Http\Request;
@@ -17,65 +16,6 @@ use Illuminate\Validation\ValidationException;
 
 class NightlyCheckController extends Controller
 {
-    public function shortages(Request $r)
-    {
-        $data = $r->validate([
-            'search' => ['nullable', 'string', 'max:255'],
-            'location_id' => ['nullable', 'integer', 'exists:locations,id'],
-            'status' => ['nullable', 'in:all,empty,low'],
-        ]);
-
-        $query = LatestNightlyItems::query()
-            ->join('locations as l', 'l.id', '=', 'c.location_id')
-            ->where(fn ($q) => $q->where('i.quantity', 0)->orWhere('i.is_low', true))
-            ->select('i.*', 'c.date', 'l.name as location', 'c.location_id');
-
-        if (! empty($data['search'])) {
-            $query->where(fn ($q) => $q
-                ->where('i.name', 'like', '%'.$data['search'].'%')
-                ->orWhere('i.code', 'like', '%'.$data['search'].'%'));
-        }
-        if (! empty($data['location_id'])) {
-            $query->where('c.location_id', $data['location_id']);
-        }
-        if (($data['status'] ?? 'all') === 'empty') {
-            $query->where('i.quantity', 0);
-        } elseif (($data['status'] ?? 'all') === 'low') {
-            $query->where('i.quantity', '>', 0)->where('i.is_low', true);
-        }
-
-        $parameterQuery = MinimumStockAlerts::query();
-
-        if (! empty($data['search'])) {
-            $parameterQuery->where(fn ($q) => $q
-                ->where('m.name', 'like', '%'.$data['search'].'%')
-                ->orWhere('m.code', 'like', '%'.$data['search'].'%'));
-        }
-        if (! empty($data['location_id'])) {
-            $parameterQuery->where('p.location_id', $data['location_id']);
-        }
-        if (($data['status'] ?? 'all') === 'empty') {
-            $parameterQuery->whereRaw('COALESCE(b.quantity, 0) = 0');
-        } elseif (($data['status'] ?? 'all') === 'low') {
-            $parameterQuery->whereRaw('COALESCE(b.quantity, 0) > 0');
-        }
-
-        $allLatestShortages = LatestNightlyItems::query()
-            ->where(fn ($q) => $q->where('i.quantity', 0)->orWhere('i.is_low', true));
-
-        return view('nightly.shortages', [
-            'rows' => $query->orderBy('l.name')->orderBy('i.name')->paginate(25)->withQueryString(),
-            'parameterRows' => $parameterQuery->orderBy('l.name')->orderBy('m.name')->get(),
-            'locations' => DB::table('locations')->where('is_active', true)->orderBy('name')->get(),
-            'summary' => [
-                'total' => (clone $allLatestShortages)->count(),
-                'empty' => (clone $allLatestShortages)->where('quantity', 0)->count(),
-                'low' => (clone $allLatestShortages)->where('quantity', '>', 0)->where('is_low', true)->count(),
-                'requested' => (clone $allLatestShortages)->whereNotNull('requested_quantity')->count(),
-            ],
-        ]);
-    }
-
     public function history(Request $r)
     {
         $d = $r->validate(['from' => ['nullable', 'date_format:Y-m-d'], 'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'], 'search' => ['nullable', 'string', 'max:255'], 'location_id' => ['nullable', 'integer', 'exists:locations,id']]);

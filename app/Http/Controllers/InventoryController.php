@@ -285,6 +285,7 @@ class InventoryController extends Controller
     {
         return view('inventory.transfers', [
             'prefill' => $this->transactionPrefill($request),
+            'prefillItems' => $this->transferPrefillItems($request),
             'medicines' => $this->operationalMedicines()->with(['unit', 'batches'])->orderBy('name')->get(),
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
             'nextReference' => $this->nextReference('transfer', 'TRF'),
@@ -1203,6 +1204,29 @@ class InventoryController extends Controller
         }
 
         return $data;
+    }
+
+    /** Several transfer lines at once, e.g. the warehouse-to-pharmacy plan from Monitoring Stok. */
+    private function transferPrefillItems(Request $request): array
+    {
+        $data = $request->validate([
+            'items' => ['nullable', 'array', 'max:50'],
+            'items.*' => ['array:medicine_id,batch_id,quantity'],
+            'items.*.medicine_id' => ['required', 'integer', 'exists:medicines,id'],
+            'items.*.batch_id' => ['nullable', 'integer', 'exists:batches,id'],
+            'items.*.quantity' => ['nullable', 'numeric', 'min:0.0001', 'decimal:0,4', 'max:999999999999.9999'],
+        ]);
+        foreach ($data['items'] ?? [] as $index => $item) {
+            if (! empty($item['batch_id']) && ! Batch::whereKey($item['batch_id'])->where('medicine_id', $item['medicine_id'])->exists()) {
+                throw ValidationException::withMessages(['items.'.$index.'.batch_id' => 'Batch pada pintasan tidak sesuai dengan obat.']);
+            }
+        }
+
+        return collect($data['items'] ?? [])->map(fn ($item) => [
+            'medicine_id' => (string) $item['medicine_id'],
+            'batch_id' => isset($item['batch_id']) ? (string) $item['batch_id'] : '',
+            'quantity' => isset($item['quantity']) ? \App\Support\Quantity::input($item['quantity']) : '',
+        ])->values()->all();
     }
 
     private function normalizeReceiptItems(Request $request): void

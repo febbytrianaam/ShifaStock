@@ -43,8 +43,8 @@ class NightlyCheckTest extends TestCase
         $this->actingAs($p)->post($url, ['draft_revision' => 3, 'action' => 'submit', 'observed_revision' => $this->nightlyObservedRevision($c->id), 'items' => [$i->id => ['quantity' => 0, 'unit' => 'Tablet', 'requested_quantity' => 20]]])->assertRedirect();
         $this->actingAs($k)->post($url.'/review', ['action' => 'approve'])->assertRedirect();
         $this->assertDatabaseHas('nightly_checks', ['id' => $c->id, 'status' => 'approved']);
-        $this->get('/kekurangan-permintaan')->assertOk()
-            ->assertSee('Stok Fisik')->assertSee('Jumlah Diminta')
+        $this->get('/kekurangan-permintaan?tab=hitung')->assertOk()
+            ->assertSee('stok fisik 0')->assertSee('Diminta')->assertSee('20 Tablet')
             ->assertSee('Obat A')
             ->assertSee('Kosong');
         $this->get('/riwayat-stok?search=Obat')->assertOk()->assertSee('Obat A');

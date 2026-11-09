@@ -14,7 +14,7 @@
     @php
         $targetId = old('destination_location_id', $prefill['destination_location_id'] ?? $locations->firstWhere('code', 'APT')?->id ?? $locations->last()?->id);
         $sourceId = old('source_location_id', $prefill['source_location_id'] ?? $locations->first(fn ($location) => $location->code === 'GDG' && $location->id != $targetId)?->id ?? $locations->first(fn ($location) => $location->id != $targetId)?->id);
-        $items = old('items', [
+        $items = old('items', $prefillItems ?: [
             ['medicine_id' => old('medicine_id', $prefill['medicine_id'] ?? ''), 'batch_id' => old('batch_id', $prefill['batch_id'] ?? ''), 'quantity' => old('quantity', '')],
             ['medicine_id' => '', 'batch_id' => '', 'quantity' => ''],
         ]);

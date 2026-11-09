@@ -2,7 +2,6 @@
 
 use App\Enums\Role;
 use App\Http\Controllers\InventoryController;
-use App\Http\Controllers\NightlyCheckController;
 use App\Models\User;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Http\Request;
@@ -28,7 +27,6 @@ foreach ([
     [InventoryController::class, 'issues', 'preview.issues', [], 'data-stock-entry-context'],
     [InventoryController::class, 'returns', 'preview.returns', [], 'data-stock-entry-context'],
     [InventoryController::class, 'specialAdjustments', 'special-adjustments.index', [], 'data-adjust-save'],
-    [NightlyCheckController::class, 'shortages', 'shortages.index', [], 'Stok Sistem pada atau di Bawah Minimum'],
 ] as [$controller, $method, $routeName, $query, $expected]) {
     $request = Request::create(route($routeName, $query), 'GET');
     $request->setUserResolver(fn () => $user);
@@ -50,6 +48,16 @@ foreach ([
     }
     echo $routeName.($query ? ' (history)' : '').": render OK\n";
 }
+
+// Monitoring Stok is a Livewire page, so it renders through Livewire rather than a controller action.
+$request = Request::create(route('shortages.index'), 'GET');
+$request->setUserResolver(fn () => $user);
+$request->setLaravelSession($app['session']->driver());
+$app->instance('request', $request);
+if (! str_contains(Livewire\Livewire::mount(App\Livewire\StockMonitoring::class), 'Obat di bawah batas minimum')) {
+    throw new RuntimeException('Missing expected content on shortages.index');
+}
+echo "shortages.index: render OK\n";
 
 if (in_array('--fixtures', $argv, true)) {
     $balance = App\Models\StockBalance::with(['medicine.unit', 'location'])->where('quantity', '>', 0)
