@@ -41,24 +41,7 @@
             ['admin.settings.index', 'settings', 'Pengaturan Sistem', null, 'manage-system-settings'],
         ]],
     ];
-    $navigationIcons = [
-        'dashboard' => 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z',
-        'check' => 'M9 3h6v3H9zM8 4.5H6a2 2 0 0 0-2 2V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6.5a2 2 0 0 0-2-2h-2M9 14l2 2 4-4',
-        'monitor' => 'M3 12h4l3-8 4 16 3-8h4',
-        'in' => 'M12 3v12M7 10l5 5 5-5M4 21h16',
-        'transfer' => 'M7 7h13M16 3l4 4-4 4M17 17H4M8 13l-4 4 4 4',
-        'out' => 'M12 21V9M7 14l5-5 5 5M4 3h16',
-        'return' => 'M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3',
-        'special' => 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM12 8v4M12 16h.01',
-        'medicine' => 'm10.5 20.5-7-7a4.95 4.95 0 1 1 7-7l7 7a4.95 4.95 0 1 1-7 7ZM8.5 8.5l7 7',
-        'opening' => 'M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8',
-        'parameter' => 'M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4',
-        'report' => 'M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M9 17v-3M12 17v-5M15 17v-2',
-        'users' => 'M16 20v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM22 20v-1a4 4 0 0 0-3-3.9M16 5.1a3 3 0 0 1 0 5.8',
-        'audit' => 'M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2',
-        'reference' => 'M20 13l-7 7-9-9V4h7zM7.5 7.5h.01',
-        'settings' => 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM4 12h2M18 12h2M12 4v2M12 18v2M6.3 6.3l1.4 1.4M16.3 16.3l1.4 1.4M6.3 17.7l1.4-1.4M16.3 7.7l1.4-1.4',
-    ];
+    $navigationIcons = \App\Support\Icons::PATHS;
     $currentPageLabel = $title ?? 'Dashboard';
     $currentGroupLabel = null;
     $pageDescription = null;
@@ -220,9 +203,7 @@
         <x-uat-notice />
         <div class="p-4 md:p-6" data-tour-main>
             @if($pageDescription && !$hideDescription)
-                <div class="mb-5 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-medium leading-6 text-slate-600">
-                    {{ $pageDescription }}
-                </div>
+                <p class="page-intro" data-page-intro>{{ $pageDescription }}</p>
             @endif
             {{ $slot }}
         </div>

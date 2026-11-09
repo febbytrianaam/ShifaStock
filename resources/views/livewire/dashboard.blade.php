@@ -418,22 +418,42 @@
     </div>
 @else
     @if($adminStats)
-        <div class="mb-5 border-b border-slate-200 pb-4">
-            <span class="inline-flex items-center gap-1.5 rounded-md border border-brand-100 bg-brand-50 px-2 py-0.5 text-[11px] font-semibold text-brand-700"><span class="h-1.5 w-1.5 rounded-full bg-brand-600"></span>Portal Administrator</span>
-            <h2 class="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">Manajemen Akses & Konfigurasi Sistem</h2>
-            <p class="mt-1 text-sm leading-relaxed text-slate-500">Kelola akses pengguna dan referensi sistem Klinik Shifa Medika.</p>
-        </div>
-        <div class="grid gap-3 sm:grid-cols-3">
-            @foreach([['Pengguna Terdaftar', $adminStats['users'], 'Akun individu'], ['Akun Aktif', $adminStats['active_users'], 'Dapat mengakses sistem'], ['Role Sistem', $adminStats['roles'], 'Admin, petugas, kepala, guest']] as [$label, $value, $hint])
-                <div class="card p-4">
-                    <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{{ $label }}</p>
-                    <p class="mt-3 text-2xl font-bold tabular-nums text-slate-900">{{ $value }}</p>
-                    <p class="mt-1 text-xs text-slate-500">{{ $hint }}</p>
+        {{-- Inline @php statements: a block @php here would pair with the inline ones above it. --}}
+        @php($inactiveUsers = $adminStats['users'] - $adminStats['active_users'])
+        @php($adminMenus = array_filter([
+            ($user->can('manage-users') || $user->can('manage-permissions')) ? ['admin.users.index', 'users', 'brand', $user->can('manage-users') ? 'Pengguna & Hak Akses' : 'Hak Akses', 'Tambah akun, ubah role, nonaktifkan petugas, dan atur matrix hak akses.'] : null,
+            $user->can('view-audit-logs') ? ['admin.audit-logs.index', 'audit', 'slate', 'Audit Log', 'Telusuri login, perubahan pengguna, hak akses, dan transaksi stok.'] : null,
+            $user->can('manage-system-references') ? ['admin.references.index', 'reference', 'teal', 'Referensi Sistem', 'Lokasi stok dan satuan obat yang dipakai di semua transaksi.'] : null,
+            $user->can('manage-system-settings') ? ['admin.settings.index', 'settings', 'violet', 'Pengaturan Sistem', 'Default lokasi penerimaan dan identitas klinik di laporan.'] : null,
+        ]))
+        @php($menuTone = ['brand' => 'bg-brand-100 text-brand-700', 'slate' => 'bg-slate-100 text-slate-600', 'teal' => 'bg-teal-100 text-teal-700', 'violet' => 'bg-violet-100 text-violet-700'])
+        <p class="mb-3.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+            <span class="badge badge-brand">Portal Administrator</span>
+            <span>Manajemen akses dan konfigurasi sistem Klinik Shifa Medika</span>
+        </p>
+        <section aria-label="Ringkasan akun" class="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4">
+            <x-ui.stat label="Pengguna Terdaftar" :value="$adminStats['users']" unit="akun" sub="Akun individu" theme="brand" icon="users" :href="$user->can('manage-users') ? route('admin.users.index') : null" />
+            <x-ui.stat label="Akun Aktif" :value="$adminStats['active_users']" unit="akun" sub="Dapat mengakses sistem" theme="green" icon="ok" :href="$user->can('manage-users') ? route('admin.users.index', ['status' => 'active']) : null" />
+            <x-ui.stat label="Akun Nonaktif" :value="$inactiveUsers" unit="akun" :sub="$inactiveUsers > 0 ? 'Tidak bisa login, riwayat tetap tersimpan' : 'Semua akun aktif'" :theme="$inactiveUsers > 0 ? 'amber' : 'neutral'" icon="lock" :href="$user->can('manage-users') ? route('admin.users.index', ['status' => 'inactive']) : null" />
+            <x-ui.stat label="Role Sistem" :value="$adminStats['roles']" unit="role" sub="Admin, petugas, kepala, guest" theme="neutral" icon="key" :href="$user->can('manage-permissions') ? route('admin.users.index', ['tab' => 'permissions']) : null" />
+        </section>
+        @if($adminMenus)
+            <x-ui.section class="mt-4" title="Menu administrasi" icon="settings" tone="slate" subtitle="Semua perubahan di menu ini tercatat di Audit Log.">
+                <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    @foreach($adminMenus as [$route, $icon, $tone, $label, $hint])
+                        <a href="{{ route($route) }}" class="flex min-w-0 items-start gap-3 rounded-xl border border-slate-200 p-3.5 hover:border-slate-300 hover:bg-slate-50">
+                            <span class="icon-tile {{ $menuTone[$tone] }}"><x-ui.icon :name="$icon" /></span>
+                            <span class="min-w-0">
+                                <span class="block text-[13px] font-extrabold text-slate-900">{{ $label }}</span>
+                                <span class="mt-0.5 block text-xs text-slate-500">{{ $hint }}</span>
+                            </span>
+                        </a>
+                    @endforeach
                 </div>
-            @endforeach
-        </div>
+            </x-ui.section>
+        @endif
     @else
-        <p class="text-sm text-slate-500">Ringkasan persediaan belum diaktifkan untuk akun ini. Gunakan menu yang tersedia di sidebar.</p>
+        <div class="callout max-w-3xl">Ringkasan persediaan belum diaktifkan untuk akun ini. Gunakan menu yang tersedia di sidebar.</div>
     @endif
 @endcan
 </div>

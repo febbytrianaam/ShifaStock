@@ -20,6 +20,7 @@
 - Admin users/RBAC: `Admin\UserController`, `Permissions`, `Role`
 - Audit log: `AuditLogger`, `AuditLog`, `Admin\AuditLogController`
 - UI shell: `resources/views/components/layouts/app.blade.php`
+- UI theme: shared classes in `resources/css/app.css` (`@layer components`: card, buttons, fields, badges, segmented tabs, pills, section header, callouts) and Blade components `resources/views/components/ui/{section,stat,tabs,search,icon}`; icon paths live in `App\Support\Icons` and are shared with the sidebar. Every menu page follows the Dashboard/Monitoring look.
 - Frontend behavior: `resources/js/app.js`, `resources/css/app.css`
 - Onboarding: `Onboarding`, `OnboardingController`, and Driver.js; targetless centered welcome followed by permission-filtered menu spotlights.
 - Login password visibility: `resources/js/password-visibility.js`, initialized by `app.js`, using Lucide Eye/EyeOff without changing authentication.

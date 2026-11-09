@@ -1,8 +1,9 @@
 @php($b = $baseline->get($i->medicine_id))
+@php($rowState = $i->quantity === null ? 'unchecked' : ($i->quantity === 0 ? 'empty' : ($i->is_low ? 'low' : 'counted')))
 <article class="nightly-row" data-nightly-row data-search="{{ Illuminate\Support\Str::lower($i->name.' '.$i->code) }}" data-quantity="{{ $i->quantity }}" data-low="{{ $i->is_low ? '1' : '0' }}" data-system-quantity="{{ $systemBalances[$i->medicine_id] ?? 0 }}">
     <div class="nightly-line">
         <div class="nightly-medicine"><b>{{ $i->name }}</b><small>{{ $i->code }}</small></div>
-        <div class="nightly-system">{{ \App\Support\Quantity::format($systemBalances[$i->medicine_id] ?? 0) }}<small>{{ $medicineUnits->get($i->medicine_id) ?: $i->unit }} &middot; sistem</small></div>
+        <div class="nightly-system"><span class="nightly-system-value">{{ \App\Support\Quantity::format($systemBalances[$i->medicine_id] ?? 0) }}</span><small>{{ $medicineUnits->get($i->medicine_id) ?: $i->unit }} &middot; sistem</small></div>
         <div class="nightly-quantity">
             <span class="nightly-quantity-label" aria-hidden="true">Jumlah fisik / satuan</span>
             @if($editable)
@@ -20,10 +21,10 @@
                     @foreach($unitOptions as $unitName)<option value="{{ $unitName }}" @selected($selectedUnit === $unitName)>{{ $unitName }}</option>@endforeach
                 </select>
             @else
-                <span class="text-xs font-semibold">{{ $i->quantity ?? 'Belum dicek' }}</span><span class="text-xs">{{ $i->unit }}</span>
+                <span @class(['nightly-count-value', 'nightly-count-missing' => $i->quantity === null])>{{ $i->quantity ?? 'Belum dicek' }}</span><span class="nightly-count-unit">{{ $i->unit }}</span>
             @endif
         </div>
-        <div class="nightly-row-actions"><span class="nightly-state" data-nightly-state>{{ $i->quantity === null ? 'Belum dicek' : ($i->quantity === 0 ? 'Kosong' : ($i->is_low ? 'Menipis' : 'Diperiksa')) }}</span><button type="button" class="nightly-row-toggle" data-nightly-row-toggle aria-expanded="false" aria-controls="nightly-details-{{ $i->id }}" aria-label="Rincian {{ $i->name }}">Rincian <span data-nightly-icon="down" aria-hidden="true"></span></button></div>
+        <div class="nightly-row-actions"><span class="nightly-state" data-nightly-state data-state="{{ $rowState }}">{{ $i->quantity === null ? 'Belum dicek' : ($i->quantity === 0 ? 'Kosong' : ($i->is_low ? 'Menipis' : 'Diperiksa')) }}</span><button type="button" class="nightly-row-toggle" data-nightly-row-toggle aria-expanded="false" aria-controls="nightly-details-{{ $i->id }}" aria-label="Rincian {{ $i->name }}">Rincian <span data-nightly-icon="down" aria-hidden="true"></span></button></div>
     </div>
     <div id="nightly-details-{{ $i->id }}" class="nightly-details" data-nightly-row-details hidden>
         <div><x-nightly-batches :item="$i" :batches="$batchOptions->get($i->medicine_id, collect())" :balances="$batchBalances" :editable="$editable" /></div>
@@ -35,7 +36,7 @@
                 @if($unitChanged)<p class="text-xs text-amber-800">Satuan tersimpan berbeda dari Data Obat. Periksa kembali jumlahnya lalu pilih satuan stok.</p>
                 @elseif(!$masterUnit)<p class="text-xs text-amber-800">Satuan Data Obat belum diatur. Pilih referensi sesuai fisik; hasil lebih dari 0 memerlukan satuan di Data Obat.</p>@endif
                 @error('items.'.$i->id.'.unit')<p class="text-xs text-rose-700" role="alert">{{ $message }}</p>@enderror
-                <label class="flex items-center gap-2"><input aria-label="Menipis {{ $i->name }}" type="checkbox" name="items[{{ $i->id }}][is_low]" value="1" @checked(old('items.'.$i->id.'.is_low', $i->is_low))> Tandai stok menipis</label>
+                <label class="nightly-check"><input aria-label="Menipis {{ $i->name }}" type="checkbox" name="items[{{ $i->id }}][is_low]" value="1" @checked(old('items.'.$i->id.'.is_low', $i->is_low))> Tandai stok menipis</label>
                 <label><span class="label">Jumlah diminta ({{ $masterUnit ?: $i->unit }})</span><input aria-label="Permintaan {{ $i->name }}" class="field" type="number" min="0" max="2147483647" step="1" name="items[{{ $i->id }}][requested_quantity]" value="{{ old('items.'.$i->id.'.requested_quantity', $i->requested_quantity) }}"></label>
                 <label><span class="label">Catatan</span><input aria-label="Catatan {{ $i->name }}" class="field" maxlength="1000" name="items[{{ $i->id }}][note]" value="{{ old('items.'.$i->id.'.note', $i->note) }}"></label>
             @else

@@ -113,7 +113,11 @@ function initSearchableSelects(root = document) {
         if (select.closest('.receipt-entry, .transfer-entry, .issue-import-mapping')) {
             window.addEventListener('resize', close);
             document.addEventListener('scroll', (event) => {
-                if (event.target === document || event.target.contains?.(wrapper)) close();
+                if (menu.hidden || !(event.target === document || event.target.contains?.(wrapper))) return;
+                // Focusing a half-visible field on a phone scrolls it into view; keep the menu attached instead of closing it.
+                const rect = input.getBoundingClientRect();
+                if (rect.bottom < 0 || rect.top > window.innerHeight) close();
+                else open();
             }, true);
         }
         const render = () => {

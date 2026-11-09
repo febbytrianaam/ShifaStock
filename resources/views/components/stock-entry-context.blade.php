@@ -10,9 +10,12 @@
         ])->values(),
     ];
 @endphp
-<div class="col-span-full border-t border-slate-200 pt-3 text-xs text-slate-600" data-stock-entry-context
+<div class="col-span-full flex items-start gap-2.5 rounded-xl bg-slate-50 px-3.5 py-2.5 text-[13px] text-slate-600" data-stock-entry-context
      data-medicine="{{ $medicine }}" data-location="{{ $location }}" data-quantity="{{ $quantity }}" data-batch="{{ $batch }}" data-fefo="{{ $fefo ? '1' : '0' }}">
     <script type="application/json" data-stock-context-data>@json($contextData)</script>
-    <p data-stock-context-summary aria-live="polite">Pilih obat dan lokasi untuk melihat stok tersedia.</p>
-    <p class="mt-1" data-stock-context-plan aria-live="polite"></p>
+    <x-ui.icon name="box" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+    <div class="min-w-0">
+        <p data-stock-context-summary aria-live="polite">Pilih obat dan lokasi untuk melihat stok tersedia.</p>
+        <p class="mt-1 font-semibold text-slate-700 empty:hidden" data-stock-context-plan aria-live="polite"></p>
+    </div>
 </div>

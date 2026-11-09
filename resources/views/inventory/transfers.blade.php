@@ -1,13 +1,9 @@
 <x-layouts.app title="Transfer Gudang–Apotek">
     @if(session('status'))
-        <div class="mb-4 rounded-lg border border-[#b2d4ee] bg-[#edf5fb] p-3 text-sm font-semibold text-[#266194]">
-            {{ session('status') }}
-        </div>
+        <div role="status" class="callout-ok mb-4 font-semibold">{{ session('status') }}</div>
     @endif
     @if($errors->any())
-        <div class="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-700">
-            {{ $errors->first() }}
-        </div>
+        <div role="alert" class="callout-danger mb-4 font-semibold">{{ $errors->first() }}</div>
     @endif
 
     @can('operate-inventory')
@@ -20,48 +16,51 @@
         ]);
         $items = collect(is_array($items) ? $items : [])->filter(fn ($item) => is_array($item))->take(50)
             ->map(fn ($item) => array_map(fn ($value) => is_scalar($value) ? $value : '', array_intersect_key($item, array_flip(['medicine_id', 'batch_id', 'quantity']))))->values()->all() ?: [[]];
+        $headerField = 'field min-h-11 text-xs lg:min-h-9';
     @endphp
-    <form method="POST" action="{{ route('transfers.store') }}" class="transfer-entry mb-6" data-transfer-form data-required-alert="Lengkapi data transfer" novalidate>
+    <form method="POST" action="{{ route('transfers.store') }}" class="transfer-entry mb-4 flex flex-col gap-4" data-transfer-form data-required-alert="Lengkapi data transfer" novalidate>
         @csrf
-        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div>
-            <label class="label text-xs font-semibold text-slate-700" for="transfer-reference">Referensi</label>
-            <input class="field w-full bg-slate-50 text-xs font-semibold text-slate-700" id="transfer-reference" name="reference" value="{{ old('reference', $nextReference) }}" readonly required maxlength="100">
-        </div>
-        <div>
-            <label class="label text-xs font-semibold text-slate-700" for="transfer-source">Lokasi sumber</label>
-            <select class="field w-full text-xs" id="transfer-source" name="source_location_id" required>
-                @foreach($locations as $location)
-                    <option value="{{ $location->id }}" @selected((string) $sourceId === (string) $location->id)>{{ $location->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <label class="label text-xs font-semibold text-slate-700" for="transfer-target">Lokasi tujuan</label>
-            <select class="field w-full text-xs" id="transfer-target" name="destination_location_id" required>
-                @foreach($locations as $location)
-                    <option value="{{ $location->id }}" @selected((string) $targetId === (string) $location->id)>{{ $location->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <label class="label text-xs font-semibold text-slate-700" for="transfer-time">Waktu transfer</label>
-            <input class="field w-full text-xs" id="transfer-time" name="occurred_at" type="datetime-local" value="{{ old('occurred_at',now('Asia/Jakarta')->format('Y-m-d\\TH:i')) }}" required>
-        </div>
-        <div class="md:col-span-2 xl:col-span-4">
-            <label class="label text-xs font-semibold text-slate-700" for="transfer-notes">Catatan</label>
-            <input class="field w-full text-xs" id="transfer-notes" name="notes" value="{{ old('notes') }}" placeholder="Catatan mutasi antar unit (opsional)" maxlength="1000">
-        </div>
-        </div>
-        <div class="mt-5 overflow-hidden rounded-lg border border-slate-200">
-            <div class="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2">
-                <h2 class="text-xs font-semibold text-slate-600">Item Transfer</h2>
-                <button type="button" class="btn-secondary px-2.5 py-1 text-xs" data-transfer-add-row><span data-transfer-add-icon aria-hidden="true">+</span> Baris</button>
+        <x-ui.section title="Dokumen transfer" icon="transfer">
+            <div class="grid gap-x-4 gap-y-3.5 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
+                <div>
+                    <label class="label" for="transfer-reference">Referensi</label>
+                    <input class="{{ $headerField }} bg-slate-50 font-mono font-semibold text-slate-700" id="transfer-reference" name="reference" value="{{ old('reference', $nextReference) }}" readonly required maxlength="100">
+                </div>
+                <div>
+                    <label class="label" for="transfer-source">Lokasi sumber</label>
+                    <select class="{{ $headerField }}" id="transfer-source" name="source_location_id" required>
+                        @foreach($locations as $location)
+                            <option value="{{ $location->id }}" @selected((string) $sourceId === (string) $location->id)>{{ $location->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="label" for="transfer-target">Lokasi tujuan</label>
+                    <select class="{{ $headerField }}" id="transfer-target" name="destination_location_id" required>
+                        @foreach($locations as $location)
+                            <option value="{{ $location->id }}" @selected((string) $targetId === (string) $location->id)>{{ $location->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="label" for="transfer-time">Waktu transfer</label>
+                    <input class="{{ $headerField }}" id="transfer-time" name="occurred_at" type="datetime-local" value="{{ old('occurred_at',now('Asia/Jakarta')->format('Y-m-d\\TH:i')) }}" required>
+                </div>
+                <div class="sm:col-span-2 xl:col-span-4 2xl:col-span-1">
+                    <label class="label" for="transfer-notes">Catatan</label>
+                    <input class="{{ $headerField }}" id="transfer-notes" name="notes" value="{{ old('notes') }}" placeholder="Catatan mutasi antar unit (opsional)" maxlength="1000">
+                </div>
             </div>
+        </x-ui.section>
+
+        <x-ui.section title="Item transfer" subtitle="Maksimal 50 baris. Batch kosong memakai kedaluwarsa terdekat." icon="list" tone="teal" flush>
+            <x-slot:actions>
+                <button type="button" class="btn-secondary min-h-11 px-2.5 py-1 text-xs lg:min-h-8" data-transfer-add-row><span data-transfer-add-icon aria-hidden="true">+</span> Baris</button>
+            </x-slot:actions>
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[760px] table-fixed text-left text-sm">
+                <table class="w-full min-w-[760px] table-fixed text-left text-[13px]">
                     <colgroup><col class="w-[40%]"><col class="w-[34%]"><col class="w-[19%]"><col class="w-[7%]"></colgroup>
-                    <thead class="bg-brand-50 text-brand-700"><tr><th scope="col">Obat</th><th scope="col">Batch (opsional)</th><th scope="col">Jumlah dipindahkan</th><th scope="col" class="text-center">Aksi</th></tr></thead>
+                    <thead class="table-head"><tr><th scope="col">Obat</th><th scope="col">Batch (opsional)</th><th scope="col">Jumlah dipindahkan</th><th scope="col" class="text-center">Aksi</th></tr></thead>
                     <tbody data-transfer-items>
                         @foreach($items as $index => $item)
                             <x-transfer-row :medicines="$medicines" :batch-balances="$batchBalances" :index="$index" :item="$item" />
@@ -69,11 +68,11 @@
                     </tbody>
                 </table>
             </div>
-        </div>
-        @error('items')<p class="error" role="alert">{{ $message }}</p>@enderror
-        <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <p class="text-xs text-slate-500">Pilih batch untuk menentukan pengambilan, atau biarkan otomatis sesuai kedaluwarsa terdekat.</p>
-            <button class="btn text-xs" type="submit">Simpan Transfer</button>
+        </x-ui.section>
+        @error('items')<p class="callout-danger" role="alert">{{ $message }}</p>@enderror
+        <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
+            <p class="w-full text-xs text-slate-500 sm:mr-auto sm:w-auto">Pilih batch untuk menentukan pengambilan, atau biarkan otomatis sesuai kedaluwarsa terdekat.</p>
+            <button class="btn min-h-11 w-full sm:w-auto lg:min-h-9" type="submit">Simpan Transfer</button>
         </div>
         @php
             $contextData = [
@@ -92,18 +91,18 @@
     </form>
     @endcan
 
-    <div class="card overflow-hidden">
+    <x-ui.section title="Riwayat transfer" icon="history" tone="slate" flush :meta="$rows->total().' mutasi'">
         <div class="overflow-x-auto">
-            <table class="w-full whitespace-nowrap text-left text-sm">
-                <thead class="bg-[#edf5fb] border-b border-[#d6e8f6] text-[#266194]">
+            <table class="w-full whitespace-nowrap text-left text-[13px]">
+                <thead class="table-head">
                     <tr>
-                        <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Waktu</th>
-                        <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Referensi</th>
-                        <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Obat</th>
-                        <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Perpindahan</th>
-                        <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Jumlah</th>
-                        <th class="p-4 text-[11px] font-bold uppercase tracking-wider">Petugas</th>
-                        <th class="p-4 text-right text-[11px] font-bold uppercase tracking-wider">Kartu Stok</th>
+                        <th class="px-4 py-2.5">Waktu</th>
+                        <th class="px-4 py-2.5">Referensi</th>
+                        <th class="px-4 py-2.5">Obat</th>
+                        <th class="px-4 py-2.5">Perpindahan</th>
+                        <th class="px-4 py-2.5">Jumlah</th>
+                        <th class="px-4 py-2.5">Petugas</th>
+                        <th class="px-4 py-2.5 text-right">Kartu Stok</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -118,40 +117,32 @@
                                 'end' => $cardEnd,
                             ];
                         @endphp
-                        <tr class="hover:bg-slate-50/70 transition-colors">
-                            <td class="p-4 text-xs font-medium text-slate-600 tabular-nums">{{ $row->occurred_at->format('d/m/Y H:i') }}</td>
-                            <td class="p-4">
-                                <span class="inline-flex rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[11px] font-semibold text-slate-700">{{ $row->reference }}</span>
-                            </td>
-                            <td class="p-4 font-bold text-slate-900 tracking-tight">{{ $row->medicine->name }}<span class="mt-1 block text-xs font-normal text-slate-500">Batch: {{ $row->batch?->number ?? '-' }}</span></td>
-                            <td class="p-4 text-slate-700 font-medium">
-                                <span class="inline-flex items-center gap-1.5 rounded-lg bg-[#edf5fb] text-[#266194] px-2.5 py-1 text-xs font-semibold">
-                                    {{ $row->sourceLocation->name }} → {{ $row->destinationLocation->name }}
-                                </span>
-                            </td>
-                            <td class="p-4 font-bold tabular-nums text-slate-900">
-                                {{ \App\Support\Quantity::format((float)$row->quantity) }} {{ $row->medicine->unit?->name }}
-                            </td>
-                            <td class="p-4 text-slate-600 font-medium text-xs">{{ $row->creator->name }}</td>
-                            <td class="p-4">
+                        <tr>
+                            <td class="px-4 py-2.5 tabular-nums text-slate-600">{{ $row->occurred_at->format('d/m/Y H:i') }}</td>
+                            <td class="px-4 py-2.5"><span class="inline-block rounded bg-slate-100 px-1.5 font-mono text-[11px] font-semibold text-slate-600">{{ $row->reference }}</span></td>
+                            <td class="px-4 py-2.5"><b class="font-extrabold text-slate-900">{{ $row->medicine->name }}</b><p class="text-xs text-slate-500">Batch: {{ $row->batch?->number ?? '-' }}</p></td>
+                            <td class="px-4 py-2.5"><span class="badge badge-brand">{{ $row->sourceLocation->name }} → {{ $row->destinationLocation->name }}</span></td>
+                            <td class="px-4 py-2.5 font-extrabold tabular-nums text-slate-900">{{ \App\Support\Quantity::format((float)$row->quantity) }} {{ $row->medicine->unit?->name }}</td>
+                            <td class="px-4 py-2.5 text-slate-600">{{ $row->creator->name }}</td>
+                            <td class="px-4 py-2.5">
                                 @can('view-stock-card')
-                                    <div class="flex justify-end gap-2">
-                                        <a class="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600 hover:bg-slate-50" href="{{ route('stock-card.index', $baseCardParams + ['location_id' => $row->source_location_id]) }}">Asal</a>
-                                        <a class="rounded-lg border border-[#b2d4ee] bg-[#edf5fb] px-2.5 py-1 text-xs font-bold text-[#266194] hover:bg-[#dcecf8]" href="{{ route('stock-card.index', $baseCardParams + ['location_id' => $row->destination_location_id]) }}">Tujuan</a>
+                                    <div class="flex justify-end gap-1.5">
+                                        <a class="btn-secondary min-h-11 px-2.5 py-1 text-xs lg:min-h-8" href="{{ route('stock-card.index', $baseCardParams + ['location_id' => $row->source_location_id]) }}">Asal</a>
+                                        <a class="btn-secondary min-h-11 px-2.5 py-1 text-xs lg:min-h-8" href="{{ route('stock-card.index', $baseCardParams + ['location_id' => $row->destination_location_id]) }}">Tujuan</a>
                                     </div>
                                 @else
-                                    <span class="block text-right text-xs font-medium text-slate-400">-</span>
+                                    <span class="block text-right text-xs text-slate-400">-</span>
                                 @endcan
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="p-8 text-center text-slate-500 font-medium">Belum ada transfer yang diposting.</td>
+                            <td colspan="7" class="empty-state">Belum ada transfer yang diposting.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-    </div>
-    <div class="mt-4">{{ $rows->links() }}</div>
+        @if($rows->hasPages())<div class="border-t border-slate-100 px-4 py-3">{{ $rows->links() }}</div>@endif
+    </x-ui.section>
 </x-layouts.app>

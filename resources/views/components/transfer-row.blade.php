@@ -6,7 +6,7 @@
 @endphp
 <tr data-transfer-row data-transfer-index="{{ $index }}">
     <td class="relative align-top">
-        <span class="block px-3 pt-2 text-[10px] text-slate-500" data-transfer-row-label>{{ is_int($index) ? 'Baris '.($index + 1) : '' }}</span>
+        <span class="block px-3 pt-2 text-[11px] font-semibold text-slate-400" data-transfer-row-label>{{ is_int($index) ? 'Baris '.($index + 1) : '' }}</span>
         <label for="{{ $medicineId }}" class="sr-only">Obat</label>
         <select class="field text-xs" id="{{ $medicineId }}" name="items[{{ $index }}][medicine_id]" data-transfer-medicine data-searchable-select data-search-placeholder="Cari kode atau nama obat...">
             <option value="">Pilih obat</option>
@@ -15,7 +15,7 @@
             @endforeach
         </select>
         @error('items.'.$index.'.medicine_id')<p class="error px-3 pb-2" role="alert">{{ $message }}</p>@enderror
-        <div class="break-words px-3 pb-3 text-xs text-slate-500" data-stock-entry-context data-stock-context-source="#transfer-stock-context"
+        <div class="break-words px-3 pb-2.5 text-xs leading-relaxed text-slate-500" data-stock-entry-context data-stock-context-source="#transfer-stock-context"
              data-medicine="#{{ $medicineId }}" data-location="#transfer-source" data-quantity="#{{ $quantityId }}" data-batch="#{{ $batchId }}" data-fefo="1">
             <p data-stock-context-summary aria-live="polite">Pilih obat untuk melihat stok sumber.</p>
             <p class="mt-1" data-stock-context-plan aria-live="polite"></p>
@@ -35,11 +35,11 @@
     </td>
     <td class="relative align-top">
         <label for="{{ $quantityId }}" class="sr-only">Jumlah yang dipindahkan</label>
-        <input class="field text-xs" id="{{ $quantityId }}" name="items[{{ $index }}][quantity]" data-transfer-quantity type="number" min="0.0001" max="999999999999.9999" step="0.0001" placeholder="0" value="{{ $item['quantity'] ?? '' }}">
+        <input class="field text-xs tabular-nums" id="{{ $quantityId }}" name="items[{{ $index }}][quantity]" data-transfer-quantity type="number" min="0.0001" max="999999999999.9999" step="0.0001" placeholder="0" value="{{ $item['quantity'] ?? '' }}">
         <span class="block px-3 pb-2 text-xs text-slate-500" data-transfer-unit></span>
         @error('items.'.$index.'.quantity')<p class="error px-3 pb-2" role="alert">{{ $message }}</p>@enderror
     </td>
     <td class="text-center align-top">
-        <button type="button" class="m-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-30" data-transfer-remove-row title="Hapus baris" aria-label="Hapus baris"><span data-transfer-remove-icon aria-hidden="true">&times;</span></button>
+        <button type="button" class="m-1.5 inline-flex h-11 w-11 items-center justify-center rounded-md text-slate-500 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-30 lg:h-8 lg:w-8" data-transfer-remove-row title="Hapus baris" aria-label="Hapus baris"><span data-transfer-remove-icon aria-hidden="true">&times;</span></button>
     </td>
 </tr>

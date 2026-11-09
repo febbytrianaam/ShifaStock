@@ -1,45 +1,50 @@
 <x-layouts.app title="Audit Log">
-    <form method="GET" class="card mb-5 grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-[1fr_220px_220px_220px_150px_150px_auto]">
-        <input name="search" value="{{ $filters['search'] ?? '' }}" class="field text-xs" placeholder="Cari aktivitas, pengguna, event, atau IP">
-        <select name="event" class="field text-xs">
+    @php
+        $control = 'field min-h-11 lg:min-h-[34px] lg:py-1.5';
+    @endphp
+    <form method="GET" class="mb-3.5 grid gap-2 sm:grid-cols-2 xl:flex xl:flex-wrap xl:items-center">
+        <x-ui.search name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Cari aktivitas, pengguna, event, atau IP" label="Cari aktivitas" width="sm:col-span-2 xl:w-80" />
+        <select name="event" class="{{ $control }} xl:w-48" aria-label="Event">
             <option value="">Semua event</option>
             @foreach($events as $event)
                 <option value="{{ $event }}" @selected(($filters['event'] ?? '') === $event)>{{ $event }}</option>
             @endforeach
         </select>
-        <select name="user_id" class="field text-xs">
+        <select name="user_id" class="{{ $control }} xl:w-44" aria-label="Pelaku">
             <option value="">Semua pelaku</option>
             @foreach($actors as $actor)
                 <option value="{{ $actor->id }}" @selected((string)($filters['user_id'] ?? '') === (string)$actor->id)>{{ $actor->name }}</option>
             @endforeach
         </select>
-        <select name="auditable_type" class="field text-xs">
+        <select name="auditable_type" class="{{ $control }} xl:w-44" aria-label="Subjek">
             <option value="">Semua subjek</option>
             @foreach($auditableTypes as $type)
                 <option value="{{ $type }}" @selected(($filters['auditable_type'] ?? '') === $type)>{{ class_basename($type) }}</option>
             @endforeach
         </select>
-        <input name="from" type="date" value="{{ $filters['from'] ?? '' }}" class="field text-xs">
-        <input name="to" type="date" value="{{ $filters['to'] ?? '' }}" class="field text-xs">
-        <div class="flex gap-2">
-            <button class="btn-secondary flex-1 text-xs">Filter</button>
-            <button class="btn flex-1 text-xs" name="export" value="csv">CSV</button>
+        <label class="flex items-center gap-2 text-xs font-bold text-slate-600">Dari <input name="from" type="date" value="{{ $filters['from'] ?? '' }}" class="{{ $control }} xl:w-40"></label>
+        <label class="flex items-center gap-2 text-xs font-bold text-slate-600">s.d. <input name="to" type="date" value="{{ $filters['to'] ?? '' }}" class="{{ $control }} xl:w-40"></label>
+        <div class="flex gap-2 sm:col-span-2 xl:col-span-1">
+            <button class="btn-secondary min-h-11 flex-1 lg:min-h-[34px] lg:py-1.5">Filter</button>
+            <button class="btn-secondary min-h-11 flex-1 lg:min-h-[34px] lg:py-1.5" name="export" value="csv"><x-ui.icon name="download" /> CSV</button>
         </div>
     </form>
 
-    <div class="card overflow-hidden">
+    <x-ui.section title="Riwayat aktivitas" icon="audit" tone="slate" flush
+        subtitle="Login, perubahan pengguna, hak akses, dan transaksi stok, terbaru di atas."
+        :meta="$logs->total().' aktivitas'">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-100 text-sm">
-                <thead class="bg-slate-50 text-left text-slate-500">
+            <table class="block min-w-full text-[13px] md:table">
+                <thead class="table-head hidden text-left md:table-header-group">
                     <tr>
-                        <th class="table-cell">Aktivitas</th>
-                        <th class="table-cell">Pelaku</th>
-                        <th class="table-cell">IP</th>
-                        <th class="table-cell">Waktu</th>
-                        <th class="table-cell text-right">Detail</th>
+                        <th class="px-4 py-2.5">Aktivitas</th>
+                        <th class="px-4 py-2.5">Pelaku</th>
+                        <th class="px-4 py-2.5">IP</th>
+                        <th class="px-4 py-2.5">Waktu</th>
+                        <th class="px-4 py-2.5 text-right">Detail</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="block md:table-row-group">
                     @forelse($logs as $log)
                         @php
                             $tone = match (true) {
@@ -49,27 +54,27 @@
                                 default => 'badge-brand',
                             };
                         @endphp
-                        <tr>
-                            <td class="table-cell align-top">
+                        <tr class="flex flex-wrap gap-x-4 gap-y-1.5 border-t border-slate-100 px-4 py-3 first:border-t-0 md:table-row md:p-0 md:first:border-t">
+                            <td class="w-full md:w-auto md:px-4 md:py-2.5 md:align-top">
                                 <span class="badge {{ $tone }}">{{ $log->event }}</span>
-                                <p class="mt-2 font-semibold text-slate-900">{{ $log->description }}</p>
+                                <p class="mt-1.5 font-bold text-slate-900">{{ $log->description }}</p>
                                 @if($log->auditable_type)
-                                    <p class="mt-1 font-mono text-[11px] text-slate-400">{{ class_basename($log->auditable_type) }} #{{ $log->auditable_id }}</p>
+                                    <p class="mt-1 inline-block rounded bg-slate-100 px-1.5 font-mono text-[11px] font-semibold text-slate-600">{{ class_basename($log->auditable_type) }} #{{ $log->auditable_id }}</p>
                                 @endif
                             </td>
-                            <td class="table-cell align-top">
-                                <p class="font-semibold text-slate-800">{{ $log->actor_name ?? 'Sistem' }}</p>
-                                <p class="mt-1 text-xs text-slate-500">{{ $log->actor_role ?? '-' }}</p>
+                            <td class="md:px-4 md:py-2.5 md:align-top">
+                                <p class="font-bold text-slate-800">{{ $log->actor_name ?? 'Sistem' }}</p>
+                                <p class="mt-0.5 text-xs text-slate-500">{{ $log->actor_role ?? '-' }}</p>
                             </td>
-                            <td class="table-cell align-top font-mono text-xs text-slate-600">{{ $log->ip_address ?? '-' }}</td>
-                            <td class="table-cell align-top text-xs font-medium text-slate-600 tabular-nums">
+                            <td class="self-end font-mono md:px-4 md:py-2.5 md:align-top text-xs text-slate-600">{{ $log->ip_address ?? '-' }}</td>
+                            <td class="self-end whitespace-nowrap md:px-4 md:py-2.5 md:align-top text-xs font-semibold tabular-nums text-slate-600">
                                 {{ $log->created_at->timezone('Asia/Jakarta')->format('d/m/Y H:i') }}
                             </td>
-                            <td class="table-cell align-top text-right">
+                            <td class="w-full md:w-auto md:px-4 md:py-2.5 md:text-right md:align-top">
                                 @if($log->metadata)
                                     <details class="inline-block text-left">
-                                        <summary class="btn-secondary text-xs">Lihat</summary>
-                                        <pre class="mt-2 max-h-72 w-[min(520px,80vw)] overflow-auto rounded-lg border border-slate-200 bg-slate-950 p-3 text-xs leading-relaxed text-slate-100">{{ json_encode($log->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                                        <summary class="btn-secondary min-h-11 lg:min-h-8 lg:py-1">Lihat</summary>
+                                        <pre class="mt-2 max-h-72 w-[min(520px,80vw)] overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-relaxed text-slate-800">{{ json_encode($log->metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                                     </details>
                                 @else
                                     <span class="text-xs text-slate-400">-</span>
@@ -78,12 +83,14 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="table-cell text-center text-sm text-slate-500">Belum ada aktivitas tercatat.</td>
+                            <td colspan="5" class="empty-state">Belum ada aktivitas tercatat.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        <div class="border-t border-slate-100 p-4">{{ $logs->links() }}</div>
-    </div>
+        @if($logs->hasPages())
+            <div class="border-t border-slate-100 px-4 py-3">{{ $logs->links() }}</div>
+        @endif
+    </x-ui.section>
 </x-layouts.app>
