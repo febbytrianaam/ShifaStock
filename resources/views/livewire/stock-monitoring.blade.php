@@ -49,7 +49,8 @@
         'hitung' => ['Hasil pemeriksaan & permintaan', 'Dari hitung fisik terakhir yang disetujui untuk masing-masing obat di setiap lokasi.', $resultCount.' obat'],
     ][$activeTab];
     $cols = count($locations);
-    $grid = 'lg:grid-cols-[minmax(220px,1.6fr)_repeat(var(--monitor-cols),minmax(150px,1fr))_minmax(190px,1.2fr)]';
+    // Minimums sized so the list still fits beside the side panel on a 1280-1440 px laptop; wider screens share the extra space.
+    $grid = 'lg:grid-cols-[minmax(170px,1.6fr)_repeat(var(--monitor-cols),minmax(112px,1fr))_minmax(150px,1.2fr)]';
     $filtered = trim($search) !== '' || $locationId !== null || $filter !== null;
     $card = 'rounded-2xl border border-slate-200 bg-white p-4';
     $outline = 'inline-flex min-h-11 items-center justify-center rounded-lg border px-3 text-xs font-bold lg:min-h-[30px] lg:px-2.5';
@@ -112,7 +113,7 @@
         </div>
     </div>
 
-    <div class="mt-3.5 grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <div class="mt-3.5 grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         <section aria-labelledby="judul-monitor" @if($activeTab === 'minimum') id="stok-minimum" @endif class="min-w-0 scroll-mt-24 overflow-hidden rounded-2xl border border-slate-200 bg-white" data-monitor-panel="{{ $activeTab }}">
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3.5">
                 <div>
@@ -161,7 +162,7 @@
                         @endforeach
                         <div class="min-w-0">
                             @if($suggestion && $suggestion['url'])
-                                <a href="{{ $suggestion['url'] }}" data-monitor-action="{{ $suggestion['type'] }}" class="{{ $outline }} w-full border-brand-600 bg-brand-600 text-white hover:bg-brand-700 lg:w-auto lg:border-brand-200 lg:bg-white lg:text-brand-800 lg:hover:bg-brand-50">{{ $suggestion['label'] }}</a>
+                                <a href="{{ $suggestion['url'] }}" data-monitor-action="{{ $suggestion['type'] }}" class="{{ $outline }} w-full max-w-full text-center border-brand-600 bg-brand-600 text-white hover:bg-brand-700 lg:w-auto lg:border-brand-200 lg:bg-white lg:text-brand-800 lg:hover:bg-brand-50">{{ $suggestion['label'] }}</a>
                             @elseif($suggestion)
                                 <span data-monitor-action="{{ $suggestion['type'] }}" class="inline-flex items-center gap-1.5 text-xs font-bold {{ $suggestion['type'] === 'order' ? 'text-amber-800' : 'text-brand-800' }}">
                                     @if($suggestion['type'] === 'order')<svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h12l2 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6zM4 6h16M9 11h6M9 15h4" /></svg>@endif

@@ -19,7 +19,7 @@
             </div>
             <div class="issue-import-list-scroll relative overflow-auto" tabindex="0" role="region" aria-label="Daftar pencocokan obat">
                 <table class="issue-import-mapping issue-import-match-table w-full table-fixed text-left text-xs" data-import-mappings>
-                    <thead class="table-head sticky top-0 z-10"><tr><th class="w-[5%] px-3 py-2.5">No.</th><th class="w-[16%] px-3 py-2.5">Tanggal Jual (WIB)</th><th class="w-[23%] px-3 py-2.5">Obat pada Excel</th><th class="w-[26%] px-3 py-2.5">Obat di ShifaStock</th><th class="w-[20%] px-3 py-2.5">Samakan satuannya</th><th class="w-[10%] px-3 py-2.5">Sudah benar</th></tr></thead>
+                    <thead class="table-head sticky top-0 z-10"><tr><th class="w-[44px] px-3 py-2.5">No.</th><th class="w-[15%] px-3 py-2.5">Tanggal Jual (WIB)</th><th class="px-3 py-2.5">Obat pada Excel</th><th class="w-[30%] px-3 py-2.5">Obat di ShifaStock</th><th class="w-[19%] px-3 py-2.5">Samakan satuannya</th><th class="w-[84px] px-3 py-2.5">Sudah benar</th></tr></thead>
                     <tbody class="divide-y divide-slate-100">@foreach($preview['groups'] as $key => $group)
                         @php($selectedId = old('mappings.'.$key.'.medicine_id', $group['mapping']?->medicine_id ?? $group['suggestion']?->id))
                         @php($selectedMedicine = $medicines->firstWhere('id', $selectedId))
@@ -31,7 +31,7 @@
                                 <option value="">Cari obat yang sama</option>@foreach($medicines as $medicine)<option value="{{ $medicine->id }}" data-unit="{{ $medicine->unit?->name }}" @selected($selectedId==$medicine->id)>{{ $medicine->code }} - {{ $medicine->name }} ({{ $medicine->unit?->name }})</option>@endforeach
                             </select></td>
                             <td class="px-3 py-3 align-top text-slate-600" data-label="Samakan satuannya"><label for="factor-{{ $key }}" class="mb-1.5 block">1 {{ $group['unit'] }} pada Excel berisi:</label><div class="flex min-w-0 flex-wrap items-center gap-2"><input id="factor-{{ $key }}" class="field w-20 text-xs tabular-nums" type="number" min="0.0001" max="1000000" step="0.0001" name="mappings[{{ $key }}][factor]" value="{{ old('mappings.'.$key.'.factor', \App\Support\Quantity::input($group['mapping']?->factor ?? 1)) }}" required><span class="min-w-0 break-words font-semibold text-slate-700" data-import-target-unit>{{ $selectedMedicine?->unit?->name ?? 'pilih obat dahulu' }}</span></div>@if($group['unit'] === '-')<p class="mt-2 text-amber-800">Satuan Excel kosong. Tanyakan satuannya sebelum menyimpan.</p>@endif</td>
-                            <td class="px-3 py-3 align-top" data-label="Sudah benar"><label class="flex min-h-11 items-center gap-2 font-semibold text-slate-700 lg:min-h-0"><input type="checkbox" class="h-4 w-4 shrink-0" name="mappings[{{ $key }}][confirmed]" value="1" data-import-map-confirm @checked(old('mappings.'.$key.'.confirmed'))> Benar</label></td>
+                            <td class="px-3 py-3 align-top" data-label="Sudah benar"><label class="flex min-h-11 items-center gap-2 whitespace-nowrap font-semibold text-slate-700 [overflow-wrap:normal] lg:min-h-0"><input type="checkbox" class="h-4 w-4 shrink-0" name="mappings[{{ $key }}][confirmed]" value="1" data-import-map-confirm @checked(old('mappings.'.$key.'.confirmed'))> Benar</label></td>
                         </tr>
                         <tr data-import-match-details @if($needsMapping > 0 && !$group['needs_mapping']) hidden @endif><td colspan="6" class="!p-0"><x-issue-import-source-details :rows="$group['details']" :document="$document" /></td></tr>
                     @endforeach</tbody>
@@ -51,12 +51,14 @@
                     <li>Daftar diringkas per obat dan satuan. Tanggal yang berbeda ditulis sebagai rentang; buka rincian untuk melihat waktu dan jumlah setiap baris Excel.</li>
                 </ol>
             </details>
-            <div class="space-y-3 border-t border-slate-100 pt-4">
+            <div class="space-y-2.5 border-t border-slate-100 pt-3">
                 @if($needsMapping > 0)<p class="text-xs leading-relaxed text-slate-600" data-import-confirmation-help>Pilih obat yang sesuai, periksa isi per satuan, lalu centang <b>Benar</b> dan simpan pilihan. Isian otomatis masih berupa saran.</p>@endif
                 <label class="flex items-start gap-2 text-xs leading-relaxed text-slate-700"><input type="checkbox" class="mt-0.5 h-4 w-4 shrink-0" data-import-select-visible><span>Tandai pilihan yang tampil dan sudah saya periksa</span></label>
                 <button class="btn min-h-11 w-full lg:min-h-9" type="submit" form="import-mapping-form">Simpan Pilihan &amp; Lanjutkan</button>
-                <p class="text-xs leading-relaxed text-slate-500">Hanya pilihan yang ditandai Benar yang disimpan. Stok belum berkurang.</p>
-                <a class="link inline-flex min-h-11 items-center text-xs lg:min-h-0" href="{{ route('issue-imports.show', [$document, 'step' => 'review']) }}">Lihat hasil pemeriksaan</a>
+                <p class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs leading-relaxed text-slate-500">
+                    <span>Hanya pilihan yang ditandai Benar yang disimpan. Stok belum berkurang.</span>
+                    <a class="link inline-flex min-h-11 items-center lg:min-h-0" href="{{ route('issue-imports.show', [$document, 'step' => 'review']) }}">Lihat hasil pemeriksaan →</a>
+                </p>
             </div>
         </aside>
     </div>

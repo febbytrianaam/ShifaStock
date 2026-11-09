@@ -151,74 +151,74 @@
     @if($receiptHistory || !auth()->user()->can('operate-inventory'))
     <div class="flex flex-col gap-4">
         <x-ui.section title="Dokumen penerimaan" icon="file" tone="slate" flush :meta="$receipts->total().' dokumen'">
-            <div class="overflow-x-auto">
-                <table class="w-full whitespace-nowrap text-left text-[13px]">
-                    <thead class="table-head">
-                        <tr>
-                            <th class="px-4 py-2.5">Referensi</th>
-                            <th class="px-4 py-2.5">Status</th>
-                            <th class="px-4 py-2.5">Supplier</th>
-                            <th class="px-4 py-2.5">Lokasi</th>
-                            <th class="px-4 py-2.5">Item</th>
-                            <th class="px-4 py-2.5">Diterima</th>
-                            <th class="px-4 py-2.5">Posting</th>
-                            <th class="px-4 py-2.5 text-right">Aksi</th>
+            {{-- One row per document so its reference, items and actions stay together; below xl each row stacks into a card. --}}
+            <table class="block w-full text-left text-[13px] xl:table xl:table-fixed">
+                <thead class="table-head hidden xl:table-header-group">
+                    <tr>
+                        <th class="px-4 py-2.5">Referensi &amp; obat</th>
+                        <th class="w-[124px] px-4 py-2.5">Status</th>
+                        <th class="w-[13%] px-4 py-2.5">Supplier &amp; lokasi</th>
+                        <th class="w-[128px] px-4 py-2.5">Item</th>
+                        <th class="w-[188px] px-4 py-2.5">Waktu</th>
+                        <th class="w-[240px] px-4 py-2.5 text-right">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="block divide-y divide-slate-100 xl:table-row-group">
+                    @forelse($receipts as $receipt)
+                        <tr class="grid grid-cols-2 gap-x-3 gap-y-2 px-4 py-3 xl:table-row xl:p-0">
+                            <td class="col-span-2 block min-w-0 xl:table-cell xl:px-4 xl:py-3 xl:align-top">
+                                <span class="{{ $code }}">{{ $receipt->reference }}</span>
+                                <p class="mt-1 text-xs text-slate-500">Faktur supplier: {{ $receipt->supplier_invoice_number ?: 'Belum dicatat' }}</p>
+                                <div class="mt-2 flex flex-wrap gap-1.5">
+                                    @foreach($receipt->items as $item)
+                                        <span class="inline-flex max-w-full rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-600 [overflow-wrap:anywhere]">
+                                            {{ $item->medicine->name }} · {{ $item->batch_number }} · {{ \App\Support\Quantity::format((float)$item->quantity) }} {{ $item->medicine->unit?->name }}
+                                            @if($item->input_quantity && ($item->input_unit_name || (float) $item->conversion_factor !== 1.0))
+                                                · faktur {{ \App\Support\Quantity::format((float)$item->input_quantity) }} {{ $item->input_unit_name ?: 'satuan' }} x {{ \App\Support\Quantity::format((float)$item->conversion_factor) }}
+                                            @endif
+                                        </span>
+                                    @endforeach
+                                </div>
+                            </td>
+                            <td class="block xl:table-cell xl:px-4 xl:py-3 xl:align-top"><span class="badge {{ $receipt->status === 'posted' ? 'badge-ok' : 'badge-warn' }}">{{ $receipt->status === 'posted' ? 'Stok ditambahkan' : 'Draf' }}</span></td>
+                            <td class="block min-w-0 text-right xl:table-cell xl:px-4 xl:py-3 xl:text-left xl:align-top">
+                                <p class="text-slate-700">{{ $receipt->counterparty ?: '-' }}</p>
+                                <p class="text-xs text-slate-500">ke {{ $receipt->destinationLocation?->name ?? 'Gudang' }}</p>
+                            </td>
+                            <td class="block xl:table-cell xl:px-4 xl:py-3 xl:align-top">
+                                <p class="font-extrabold tabular-nums text-slate-900">{{ $receipt->items->count() }} item</p>
+                                <p class="whitespace-nowrap text-xs tabular-nums text-slate-500">{{ \App\Support\Quantity::format($receipt->items->sum(fn ($item) => (float) $item->quantity)) }} satuan dasar</p>
+                            </td>
+                            <td class="block text-right text-xs tabular-nums text-slate-500 xl:table-cell xl:px-4 xl:py-3 xl:text-left xl:align-top">
+                                <p class="whitespace-nowrap">Diterima <span class="font-semibold text-slate-700">{{ $receipt->received_at->format('d/m/Y H:i') }}</span></p>
+                                <p class="mt-0.5 whitespace-nowrap">@if($receipt->posted_at)Posting <span class="font-semibold text-slate-700">{{ $receipt->posted_at->format('d/m/Y H:i') }}</span>@else<span class="text-slate-400">Belum posting</span>@endif</p>
+                            </td>
+                            <td class="col-span-2 block xl:table-cell xl:px-4 xl:py-3 xl:align-top">
+                                <div class="flex flex-wrap gap-1.5 xl:justify-end">
+                                    @if($receipt->status === 'draft')
+                                        @can('operate-inventory')
+                                            <a class="btn-secondary {{ $small }}" href="{{ route('receipts.edit', $receipt) }}">Edit Draf</a>
+                                            <form method="POST" action="{{ route('receipts.post', $receipt) }}">
+                                                @csrf
+                                                <button class="btn {{ $small }}">Tambah ke Stok</button>
+                                            </form>
+                                            <form method="POST" action="{{ route('receipts.destroy', $receipt) }}" data-confirm-receipt-draft>
+                                                @csrf
+                                                @method('DELETE')
+                                                <button class="btn-danger {{ $small }}">Batalkan</button>
+                                            </form>
+                                        @endcan
+                                    @else
+                                        <span class="text-xs font-semibold text-slate-400">Selesai</span>
+                                    @endif
+                                </div>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($receipts as $receipt)
-                            <tr class="border-t border-slate-100">
-                                <td class="px-4 pb-2 pt-3 align-top"><span class="{{ $code }}">{{ $receipt->reference }}</span><p class="mt-1 text-xs text-slate-500">Faktur supplier: {{ $receipt->supplier_invoice_number ?: 'Belum dicatat' }}</p></td>
-                                <td class="px-4 pb-2 pt-3 align-top"><span class="badge {{ $receipt->status === 'posted' ? 'badge-ok' : 'badge-warn' }}">{{ $receipt->status === 'posted' ? 'Stok ditambahkan' : 'Draf' }}</span></td>
-                                <td class="px-4 pb-2 pt-3 align-top text-slate-700">{{ $receipt->counterparty ?: '-' }}</td>
-                                <td class="px-4 pb-2 pt-3 align-top text-slate-700">{{ $receipt->destinationLocation?->name ?? 'Gudang' }}</td>
-                                <td class="px-4 pb-2 pt-3 align-top">
-                                    <p class="font-extrabold tabular-nums text-slate-900">{{ $receipt->items->count() }} item</p>
-                                    <p class="text-xs tabular-nums text-slate-500">{{ \App\Support\Quantity::format($receipt->items->sum(fn ($item) => (float) $item->quantity)) }} satuan dasar</p>
-                                </td>
-                                <td class="px-4 pb-2 pt-3 align-top tabular-nums text-slate-600">{{ $receipt->received_at->format('d/m/Y H:i') }}</td>
-                                <td class="px-4 pb-2 pt-3 align-top tabular-nums {{ $receipt->posted_at ? 'text-slate-600' : 'text-slate-400' }}">{{ $receipt->posted_at?->format('d/m/Y H:i') ?? 'Belum posting' }}</td>
-                                <td class="px-4 pb-2 pt-3 align-top">
-                                    <div class="flex justify-end gap-1.5">
-                                        @if($receipt->status === 'draft')
-                                            @can('operate-inventory')
-                                                <a class="btn-secondary {{ $small }}" href="{{ route('receipts.edit', $receipt) }}">Edit Draf</a>
-                                                <form method="POST" action="{{ route('receipts.post', $receipt) }}">
-                                                    @csrf
-                                                    <button class="btn {{ $small }}">Tambah ke Stok</button>
-                                                </form>
-                                                <form method="POST" action="{{ route('receipts.destroy', $receipt) }}" data-confirm-receipt-draft>
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button class="btn-danger {{ $small }}">Batalkan</button>
-                                                </form>
-                                            @endcan
-                                        @else
-                                            <span class="text-xs font-semibold text-slate-400">Selesai</span>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="8" class="px-4 pb-3 pt-0">
-                                    <div class="flex flex-wrap gap-1.5">
-                                        @foreach($receipt->items as $item)
-                                            <span class="inline-flex rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
-                                                {{ $item->medicine->name }} · {{ $item->batch_number }} · {{ \App\Support\Quantity::format((float)$item->quantity) }} {{ $item->medicine->unit?->name }}
-                                                @if($item->input_quantity && ($item->input_unit_name || (float) $item->conversion_factor !== 1.0))
-                                                    · faktur {{ \App\Support\Quantity::format((float)$item->input_quantity) }} {{ $item->input_unit_name ?: 'satuan' }} x {{ \App\Support\Quantity::format((float)$item->conversion_factor) }}
-                                                @endif
-                                            </span>
-                                        @endforeach
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="8" class="empty-state">Belum ada dokumen penerimaan.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                    @empty
+                        <tr class="block xl:table-row"><td colspan="6" class="empty-state block xl:table-cell">Belum ada dokumen penerimaan.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
             @if($receipts->hasPages())<div class="border-t border-slate-100 px-4 py-3">{{ $receipts->links() }}</div>@endif
         </x-ui.section>
 

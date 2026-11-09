@@ -336,13 +336,14 @@
         <div class="flex min-w-0 flex-col gap-4 lg:col-span-5 xl:col-span-3">
             <section id="kedaluwarsa" aria-labelledby="judul-radar" class="{{ $sectionCard }}">
                 <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2.5">
+                    <div class="flex min-w-0 items-center gap-2.5">
                         <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-violet-100 text-violet-700">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v5l3 2" /><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" /></svg>
                         </span>
-                        <h2 id="judul-radar" class="text-base font-extrabold text-slate-900">Radar Kedaluwarsa</h2>
+                        <h2 id="judul-radar" class="whitespace-nowrap text-base font-extrabold text-slate-900">Radar Kedaluwarsa</h2>
                     </div>
-                    @if($expiryUrl)<a href="{{ $expiryUrl }}" class="text-xs font-extrabold text-violet-700 hover:underline">Semua →</a>@endif
+                    {{-- On 1280-1535 px the column is narrow, so the link keeps only its arrow there. --}}
+                    @if($expiryUrl)<a href="{{ $expiryUrl }}" class="shrink-0 whitespace-nowrap text-xs font-extrabold text-violet-700 hover:underline" title="Semua batch kedaluwarsa"><span class="xl:sr-only 2xl:not-sr-only">Semua </span>→</a>@endif
                 </div>
                 @if(count($radar['markers']))
                     <div class="relative mt-7" aria-hidden="true">

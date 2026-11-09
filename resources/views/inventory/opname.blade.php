@@ -43,7 +43,7 @@
         <x-ui.stat class="col-span-2 xl:col-span-1" label="Rekap harian disetujui" :value="$rows->total()" unit="hasil hitung" theme="teal" icon="check" sub="Dari pemeriksaan harian yang disetujui" />
     </section>
 
-    <div class="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
+    <div class="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         @if($hasSessionBlock)
         <div class="flex min-w-0 flex-col gap-3 xl:col-start-1 xl:row-start-1">
             @if($sessions->isNotEmpty())
@@ -75,21 +75,21 @@
                     <div>
                     @endcan
                         <div class="overflow-x-auto">
-                            <table class="block w-full text-left text-[13px] md:table">
+                            <table class="block w-full text-left text-[13px] md:table md:table-fixed">
                                 <thead class="table-head hidden md:table-header-group">
                                     <tr>
                                         <th class="px-4 py-2.5">Obat / Batch</th>
-                                        <th class="px-4 py-2.5">Stok Sistem</th>
-                                        <th class="px-4 py-2.5">Fisik</th>
-                                        <th class="px-4 py-2.5">Selisih</th>
-                                        <th class="px-4 py-2.5">Alasan</th>
+                                        <th class="w-[84px] px-4 py-2.5">Stok Sistem</th>
+                                        <th class="w-[112px] px-4 py-2.5">Fisik</th>
+                                        <th class="w-[84px] px-4 py-2.5">Selisih</th>
+                                        <th class="w-[28%] px-4 py-2.5">Alasan</th>
                                     </tr>
                                 </thead>
                                 <tbody class="block md:table-row-group">
                                     @forelse($selectedSession->items as $item)
                                         @php($difference = $item->physical_quantity === null ? null : (float)$item->physical_quantity - (float)$item->system_quantity)
                                         <tr class="{{ $entryRow }}">
-                                            <td class="{{ $cell }} col-span-2 row-start-1 md:min-w-52">
+                                            <td class="{{ $cell }} col-span-2 row-start-1 min-w-0 [overflow-wrap:anywhere]">
                                                 <span class="font-extrabold text-slate-900">{{ $item->medicine->name }}</span>
                                                 <span class="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-500"><span class="rounded bg-slate-100 px-1.5 font-mono text-[11px] font-semibold text-slate-600">{{ $item->batch?->number ?? 'Tanpa batch' }}</span>{{ $item->unit_name }}</span>
                                             </td>
@@ -97,7 +97,7 @@
                                             <td class="{{ $cell }} col-start-1 row-start-3">
                                                 <span class="mb-1 block text-xs font-bold text-slate-500 md:hidden" aria-hidden="true">Fisik</span>
                                                 @can('operate-inventory')
-                                                <input class="field w-full tabular-nums md:w-28 lg:py-1.5" name="items[{{ $item->id }}][physical_quantity]" type="number" min="0" step="0.0001" value="{{ $useOldCountInput ? old('items.'.$item->id.'.physical_quantity', $item->physical_quantity) : $item->physical_quantity }}" @disabled($selectedSession->status === 'finalized')>
+                                                <input class="field w-full tabular-nums lg:py-1.5" name="items[{{ $item->id }}][physical_quantity]" type="number" min="0" step="0.0001" value="{{ $useOldCountInput ? old('items.'.$item->id.'.physical_quantity', \App\Support\Quantity::input($item->physical_quantity)) : \App\Support\Quantity::input($item->physical_quantity) }}" @disabled($selectedSession->status === 'finalized')>
                                                 @else
                                                 <span class="tabular-nums">{{ $item->physical_quantity !== null ? \App\Support\Quantity::format($item->physical_quantity) : 'Belum diisi' }}</span>
                                                 @endcan
@@ -108,7 +108,7 @@
                                             <td class="{{ $cell }} col-start-2 row-start-3">
                                                 <span class="mb-1 block text-xs font-bold text-slate-500 md:hidden" aria-hidden="true">Alasan</span>
                                                 @can('operate-inventory')
-                                                <input class="field w-full md:w-64 lg:py-1.5" name="items[{{ $item->id }}][reason]" value="{{ $useOldCountInput ? old('items.'.$item->id.'.reason', $item->reason) : $item->reason }}" placeholder="Penyebab selisih jika ada" maxlength="1000" @disabled($selectedSession->status === 'finalized')>
+                                                <input class="field w-full lg:py-1.5" name="items[{{ $item->id }}][reason]" value="{{ $useOldCountInput ? old('items.'.$item->id.'.reason', $item->reason) : $item->reason }}" placeholder="Penyebab selisih jika ada" maxlength="1000" @disabled($selectedSession->status === 'finalized')>
                                                 @else
                                                 <span>{{ $item->reason ?: '-' }}</span>
                                                 @endcan
@@ -158,7 +158,7 @@
         </div>
         @endif
 
-        <aside aria-label="Sesi bulanan" @class(['flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-start-1', 'xl:row-span-2' => $hasSessionBlock])>
+        <aside aria-label="Sesi bulanan" class="flex min-w-0 flex-col gap-4 xl:col-start-2 xl:row-start-1">
             @can('operate-inventory')
             <x-ui.section title="Buat sesi bulanan" subtitle="Snapshot stok satu lokasi pada batas waktu" icon="plus">
                 <form method="POST" action="{{ route('opname.store') }}" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-1" data-required-alert="Lengkapi sesi stock opname" novalidate>
@@ -199,7 +199,8 @@
             </x-ui.section>
         </aside>
 
-        <x-ui.section @class(['xl:col-start-1', 'xl:row-start-2' => $hasSessionBlock, 'xl:row-start-1' => ! $hasSessionBlock]) title="Rekap Pemeriksaan Harian Disetujui" heading-id="judul-rekap-harian" icon="report" tone="teal" flush
+        {{-- Under a session the recap takes the full width, so its six columns fit on a 1280-1440 px laptop. --}}
+        <x-ui.section @class(['xl:col-start-1', 'xl:col-span-2 xl:row-start-2' => $hasSessionBlock, 'xl:row-start-1' => ! $hasSessionBlock]) title="Rekap Pemeriksaan Harian Disetujui" heading-id="judul-rekap-harian" icon="report" tone="teal" flush
             :subtitle="'Hasil hitung fisik dari pemeriksaan harian yang disetujui pada '.$periodLabel.'.'" :meta="$rows->total().' hasil'">
             <div class="overflow-x-auto">
                 <table class="block w-full text-left text-[13px] md:table">
@@ -218,7 +219,7 @@
                             <tr class="{{ $stackRow }}">
                                 <td class="{{ $cell }} col-start-1 row-start-2 whitespace-nowrap text-xs font-semibold tabular-nums text-slate-600 md:text-[13px] md:text-slate-700">{{ \Carbon\Carbon::parse($row->date)->locale('id')->translatedFormat('j M Y') }}</td>
                                 <td class="{{ $cell }} col-start-2 row-start-2 whitespace-nowrap text-xs font-semibold text-slate-600 md:text-[13px] md:text-slate-700"><span class="md:hidden">· </span>{{ $row->location }}</td>
-                                <td class="{{ $cell }} col-span-2 col-start-1 row-start-1 min-w-0 md:min-w-52">
+                                <td class="{{ $cell }} col-span-2 col-start-1 row-start-1 min-w-0 md:min-w-44">
                                     <span class="font-extrabold text-slate-900">{{ $row->name }}</span>
                                     <span class="mt-1 block"><span class="rounded bg-slate-100 px-1.5 font-mono text-[11px] font-semibold text-slate-600">{{ $row->code }}</span></span>
                                 </td>

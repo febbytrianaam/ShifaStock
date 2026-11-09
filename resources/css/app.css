@@ -116,7 +116,7 @@
     .issue-import-mapping .searchable-select-menu { position: fixed; right: auto; margin-top: 0; }
     /* Import workspace: list card on the left, a white side panel (document, steps, summary, confirmation) on the right at xl. */
     .issue-import-workspace { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 24px; }
-    .issue-import-info { display: grid; min-width: 0; gap: 16px; border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; padding: 16px; }
+    .issue-import-info { display: grid; min-width: 0; gap: 12px; border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; padding: 16px; }
     .issue-import-list-scroll { max-height: 34rem; scroll-padding-top: 48px; }
     @media (min-width: 1280px) {
         .issue-import-workspace { grid-template-columns: minmax(0, 1fr) 340px; }

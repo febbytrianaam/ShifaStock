@@ -1,64 +1,76 @@
 <x-layouts.app title="Monitoring Kedaluwarsa">
-    <x-page-tabs :links="[
-        ['route' => 'shortages.index', 'label' => 'Kekurangan Stok', 'can' => 'view-shortages'],
-        ['route' => 'preview.expiry', 'label' => 'Kedaluwarsa', 'can' => 'view-expiry'],
-    ]" />
-
     @php
         $activeStatus = $filters['status'] ?? 'all';
-        $keptFilters = array_filter(['search' => $filters['search'] ?? null, 'location_id' => $filters['location_id'] ?? null, 'from' => $filters['from'] ?? null, 'to' => $filters['to'] ?? null], fn ($value) => filled($value));
+        $activeLocation = $filters['location_id'] ?? null;
+        $keptFilters = array_filter(['search' => $filters['search'] ?? null, 'location_id' => $activeLocation, 'from' => $filters['from'] ?? null, 'to' => $filters['to'] ?? null], fn ($value) => filled($value));
         $statusUrl = fn (string $status) => route('preview.expiry', $keptFilters + ['status' => $activeStatus === $status ? 'all' : $status]);
+        $locationUrl = fn ($id) => route('preview.expiry', array_filter(['location_id' => $id] + $keptFilters + ['status' => $activeStatus], fn ($value) => filled($value) && $value !== 'all'));
+        $filtered = $keptFilters !== [] || $activeStatus !== 'all';
         $outline = 'inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-lg border px-3 text-xs font-bold lg:min-h-[28px] lg:px-2.5';
-        $control = 'field w-full min-h-11 py-1.5 sm:w-auto lg:min-h-[34px] lg:py-1';
+        $control = 'field w-auto min-h-11 py-1.5 lg:min-h-[32px] lg:py-1';
         // Batches outside the warning period keep their actions as quiet text links so the list stays calm.
         $quiet = 'inline-flex min-h-11 items-center whitespace-nowrap px-1.5 text-xs font-bold text-brand-700 hover:underline lg:min-h-[28px]';
         // Below md each row stacks into a small grid so the actions stay on screen; from md up it is a normal table.
         $stackRow = 'grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-1.5 border-t border-slate-100 px-4 py-3 first:border-t-0 md:table-row md:p-0 md:first:border-t';
         $cell = 'block md:table-cell md:px-4 md:py-2.5 md:align-top';
+        // The same three views as Monitoring Stok, plus this page: every stocked batch, including the safe ones.
+        $views = auth()->user()->can('view-shortages') ? [
+            ['label' => 'Stok minimum', 'href' => route('shortages.index'), 'active' => false],
+            ['label' => 'Kedaluwarsa', 'href' => route('shortages.index', ['tab' => 'ed']), 'active' => false],
+            ['label' => 'Hasil pemeriksaan', 'href' => route('shortages.index', ['tab' => 'hitung']), 'active' => false],
+        ] : [];
+        $views[] = ['label' => 'Semua batch', 'href' => route('preview.expiry'), 'active' => true, 'count' => $counts['expired'] + $counts['near'] + $counts['safe']];
     @endphp
 
     @if($errors->any())
         <div class="callout-danger mb-4 font-semibold" role="alert">{{ $errors->first() }}</div>
     @endif
 
-    <section aria-label="Ringkasan kedaluwarsa" class="grid grid-cols-2 gap-3 xl:grid-cols-3 xl:gap-4">
-        <x-ui.stat label="Kedaluwarsa" :value="$counts['expired']" unit="batch" icon="clock" :theme="$counts['expired'] > 0 ? 'rose' : 'green'"
-            sub="Sudah melewati tanggal batas" :href="$statusUrl('expired')" :active="$activeStatus === 'expired'" data-expiry-kpi="expired" />
-        <x-ui.stat :label="'Dalam '.$warningMonths.' Bulan'" :value="$counts['near']" unit="batch" icon="calendar" :theme="$counts['near'] > 0 ? 'violet' : 'green'"
+    <section aria-label="Ringkasan kedaluwarsa" class="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-4">
+        <x-ui.stat label="Lewat ED" :value="$counts['expired']" unit="batch" icon="clock" :theme="$counts['expired'] > 0 ? 'rose' : 'green'"
+            :sub="$counts['expired'] > 0 ? 'Sudah melewati tanggal batas' : 'Tidak ada batch lewat ED'" :href="$statusUrl('expired')" :active="$activeStatus === 'expired'" data-expiry-kpi="expired" />
+        <x-ui.stat :label="'ED ≤ '.$warningMonths.' bulan'" :value="$counts['near']" unit="batch" icon="calendar" :theme="$counts['near'] > 0 ? 'violet' : 'green'"
             sub="Perlu prioritas penggunaan (FEFO)" :href="$statusUrl('near')" :active="$activeStatus === 'near'" data-expiry-kpi="near" />
-        <x-ui.stat class="col-span-2 xl:col-span-1" :label="'Di Luar '.$warningMonths.' Bulan'" :value="$counts['safe']" unit="batch" icon="ok" theme="green"
+        <x-ui.stat :label="'ED > '.$warningMonths.' bulan'" :value="$counts['safe']" unit="batch" icon="ok" theme="green"
             sub="Masa simpan masih aman" :href="$statusUrl('safe')" :active="$activeStatus === 'safe'" data-expiry-kpi="safe" />
+        <x-ui.stat label="Batch berstok" :value="$counts['expired'] + $counts['near'] + $counts['safe']" unit="batch" icon="box" theme="neutral"
+            :sub="$activeLocation ? 'Di lokasi yang dipilih' : 'Di semua lokasi'" :href="route('preview.expiry', $keptFilters)" :active="$activeStatus === 'all'" data-expiry-kpi="all" />
     </section>
 
-    <form method="GET" class="mb-3.5 mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center" role="search" aria-label="Saring batch kedaluwarsa">
-        <x-ui.search id="expiry-search" name="search" value="{{ $filters['search'] ?? '' }}" label="Obat / batch" placeholder="Cari nama, kode, atau batch" width="col-span-2 sm:w-72" />
-        <label class="sr-only" for="expiry-location">Lokasi stok</label>
-        <select class="{{ $control }}" id="expiry-location" name="location_id">
-            <option value="">Semua lokasi</option>
-            @foreach($locations as $location)
-                <option value="{{ $location->id }}" @selected(($filters['location_id'] ?? null)==$location->id)>{{ $location->name }}</option>
-            @endforeach
-        </select>
-        <label class="sr-only" for="expiry-status">Status</label>
-        <select class="{{ $control }}" id="expiry-status" name="status">
-            <option value="all" @selected(($filters['status'] ?? 'all')==='all')>Semua status</option>
-            <option value="expired" @selected(($filters['status'] ?? 'all')==='expired')>Kedaluwarsa</option>
-            <option value="near" @selected(($filters['status'] ?? 'all')==='near')>Dalam {{ $warningMonths }} bulan</option>
-            <option value="safe" @selected(($filters['status'] ?? 'all')==='safe')>Aman</option>
-        </select>
-        <span class="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-1.5">
-            <label class="text-xs font-bold text-slate-600" for="expiry-from">ED dari</label>
-            <input class="{{ $control }}" id="expiry-from" name="from" type="date" value="{{ $filters['from'] ?? '' }}">
-        </span>
-        <span class="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-1.5">
-            <label class="text-xs font-bold text-slate-600" for="expiry-to">ED sampai</label>
-            <input class="{{ $control }}" id="expiry-to" name="to" type="date" value="{{ $filters['to'] ?? '' }}">
-        </span>
-        <button class="btn min-h-11 lg:min-h-[34px] lg:py-1">Tampilkan</button>
-        <a class="btn-secondary min-h-11 lg:min-h-[34px] lg:py-1" href="{{ route('preview.expiry') }}">Reset</a>
-    </form>
+    <div class="mb-3.5 mt-4 flex flex-wrap items-center justify-between gap-2.5">
+        <x-ui.tabs :links="$views" label="Pilih tampilan monitoring" />
+        <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <form method="GET" role="search" aria-label="Cari batch" class="w-full sm:w-auto">
+                @foreach(array_filter(['location_id' => $activeLocation, 'status' => $activeStatus === 'all' ? null : $activeStatus, 'from' => $filters['from'] ?? null, 'to' => $filters['to'] ?? null], fn ($value) => filled($value)) as $name => $value)
+                    <input type="hidden" name="{{ $name }}" value="{{ $value }}">
+                @endforeach
+                <x-ui.search id="expiry-search" name="search" value="{{ $filters['search'] ?? '' }}" label="Cari obat atau batch" placeholder="Cari nama, kode, atau batch" />
+            </form>
+            <nav aria-label="Saring lokasi" class="flex flex-wrap gap-1">
+                <a href="{{ $locationUrl(null) }}" @class(['pill', 'pill-active' => ! $activeLocation]) @if(! $activeLocation) aria-current="true" @endif>Semua</a>
+                @foreach($locations as $location)
+                    <a href="{{ $locationUrl($location->id) }}" @class(['pill', 'pill-active' => $activeLocation == $location->id]) @if($activeLocation == $location->id) aria-current="true" @endif>{{ $location->name }}</a>
+                @endforeach
+            </nav>
+        </div>
+    </div>
 
     <x-ui.section title="Batch berstok per tanggal kedaluwarsa" subtitle="Diurutkan dari ED terdekat. Tindak lanjut tersedia per lokasi stok." icon="calendar" tone="violet" flush :meta="$batches->total().' batch'">
+        <form method="GET" class="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-slate-100 bg-slate-50/60 px-4 py-2.5" aria-label="Saring tanggal kedaluwarsa">
+            @foreach(array_filter(['search' => $filters['search'] ?? null, 'location_id' => $activeLocation, 'status' => $activeStatus === 'all' ? null : $activeStatus], fn ($value) => filled($value)) as $name => $value)
+                <input type="hidden" name="{{ $name }}" value="{{ $value }}">
+            @endforeach
+            <span class="text-xs font-bold text-slate-600">Tanggal ED</span>
+            <label class="sr-only" for="expiry-from">ED dari</label>
+            <input class="{{ $control }}" id="expiry-from" name="from" type="date" value="{{ $filters['from'] ?? '' }}">
+            <span class="text-xs text-slate-500">s/d</span>
+            <label class="sr-only" for="expiry-to">ED sampai</label>
+            <input class="{{ $control }}" id="expiry-to" name="to" type="date" value="{{ $filters['to'] ?? '' }}">
+            <button class="btn-secondary min-h-11 py-1 text-xs lg:min-h-[32px]">Terapkan</button>
+            @if($filtered)
+                <a class="link ml-auto inline-flex min-h-11 items-center text-xs lg:min-h-0" href="{{ route('preview.expiry') }}">Hapus semua saringan</a>
+            @endif
+        </form>
         <div class="overflow-x-auto">
             <table class="block w-full text-left text-[13px] md:table">
                 <thead class="table-head hidden md:table-header-group">

@@ -47,5 +47,6 @@ class Icons
         'chevron-right' => 'm9 6 6 6-6 6',
         'arrow-right' => 'M5 12h14M13 6l6 6-6 6',
         'lock' => 'M6 11h12v10H6zM8 11V7a4 4 0 1 1 8 0v4',
+        'user' => 'M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
     ];
 }

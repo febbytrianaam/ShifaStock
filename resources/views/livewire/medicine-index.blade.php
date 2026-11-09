@@ -234,127 +234,118 @@
     <x-ui.section title="Daftar obat" icon="list" tone="brand" flush class="mt-3.5"
         subtitle="Data impor masuk sebagai nonaktif sampai diverifikasi. Template Excel: isi kolom kuning, lalu serahkan ke kepala apoteker untuk ditinjau; unduhan tidak mengubah data ShifaStock."
         :meta="\App\Support\Quantity::format($medicines->total()).' obat'">
-        <div class="overflow-x-auto">
-            <table class="w-full min-w-[1180px] text-left text-[13px]">
-                <thead class="table-head">
-                    <tr>
-                        <th class="px-4 py-2.5">Obat</th>
-                        <th class="px-4 py-2.5">Sediaan</th>
-                        <th class="px-4 py-2.5">Kemasan</th>
-                        <th class="px-4 py-2.5">Lokasi</th>
-                        <th class="px-4 py-2.5">Stok</th>
-                        <th class="px-4 py-2.5">Verifikasi</th>
-                        <th class="px-4 py-2.5">Status</th>
-                        <th class="px-4 py-2.5">Audit</th>
+        {{-- From xl up this is a six-column table sized for a 1280-1440 px laptop; below xl each row stacks into a small card. --}}
+        <table class="block w-full text-left text-[13px] xl:table xl:table-fixed">
+            <thead class="table-head hidden xl:table-header-group">
+                <tr>
+                    <th class="w-[23%] px-4 py-2.5">Obat</th>
+                    <th class="w-[16%] px-4 py-2.5">Sediaan &amp; kemasan</th>
+                    <th class="w-[15%] px-4 py-2.5">Stok &amp; lokasi</th>
+                    <th class="px-4 py-2.5">Status &amp; verifikasi</th>
+                    <th class="w-[13%] px-4 py-2.5">Audit terakhir</th>
+                    @can('manage-medicines')
+                        <th class="w-[176px] px-4 py-2.5 text-right">Aksi</th>
+                    @endcan
+                </tr>
+            </thead>
+            <tbody class="block divide-y divide-slate-100 xl:table-row-group">
+                @forelse($medicines as $medicine)
+                    @php
+                        $stock = (float) $medicine->balances->sum('quantity');
+                        $locations = $medicine->balances
+                            ->filter(fn($balance) => (float) $balance->quantity > 0)
+                            ->sortBy(fn($balance) => $balance->location?->name)
+                            ->values();
+                        $parameters = $medicine->stockParameters->whereNotNull('minimum_quantity');
+                        $low = $parameters->contains(fn($parameter) => (float) ($medicine->balances->firstWhere('location_id', $parameter->location_id)?->quantity ?? 0) <= (float) $parameter->minimum_quantity);
+                        $package = $medicine->packages->first();
+                        $audit = $medicine->audits->sortByDesc('created_at')->first();
+                        $statusClass = match ($medicine->verification_status) {
+                            'terverifikasi' => 'badge-ok',
+                            'perlu_revisi' => 'badge-warn',
+                            default => 'badge-muted',
+                        };
+                        $statusLabel = match ($medicine->verification_status) {
+                            'terverifikasi' => 'Terverifikasi',
+                            'perlu_revisi' => 'Perlu Revisi',
+                            default => 'Belum Diverifikasi',
+                        };
+                    @endphp
+                    <tr wire:key="medicine-{{ $medicine->id }}" class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2.5 px-4 py-3 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)] xl:table-row xl:p-0">
+                        <td class="col-span-2 block min-w-0 sm:col-span-1 xl:table-cell xl:px-4 xl:py-3 xl:align-top">
+                            <p class="font-extrabold text-slate-900 [overflow-wrap:anywhere]">{{ $medicine->name }}</p>
+                            <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+                                <span class="rounded bg-slate-100 px-1.5 font-mono text-[11px] font-semibold text-slate-600">{{ $medicine->code }}</span>
+                                <span class="min-w-0 [overflow-wrap:anywhere]">{{ $medicine->original_name ?: 'Nama klinik belum ada' }}</span>
+                            </p>
+                            @if($medicine->generic_name)
+                                <p class="mt-0.5 text-xs text-slate-400 [overflow-wrap:anywhere]">{{ $medicine->generic_name }}</p>
+                            @endif
+                        </td>
+                        <td class="block min-w-0 text-slate-700 xl:table-cell xl:px-4 xl:py-3 xl:align-top">
+                            <p class="font-semibold">{{ $medicine->dosage_form ?: 'Sediaan belum diisi' }}</p>
+                            <p class="mt-0.5 text-xs text-slate-400">{{ $medicine->strength ?: 'Kekuatan belum diisi' }}</p>
+                            <p class="mt-1 text-xs text-slate-600">
+                                {{ $package?->name ?: ($medicine->purchase_unit_name ?: 'Kemasan belum diatur') }}
+                                <span class="text-slate-400">· {{ $package ? 'isi '.\App\Support\Quantity::format($package->conversion_factor).' '.$medicine->unit?->name : ($medicine->conversion_candidate ? 'kandidat isi '.\App\Support\Quantity::format($medicine->conversion_candidate) : 'konversi belum pasti') }}</span>
+                            </p>
+                        </td>
+                        <td class="block min-w-0 text-right sm:text-left xl:table-cell xl:px-4 xl:py-3 xl:align-top">
+                            <p class="font-extrabold tabular-nums text-slate-900">{{ $medicine->balances->isEmpty() ? 'Belum ada stok' : \App\Support\Quantity::format($stock).' '.$medicine->unit?->name }}</p>
+                            @if($low)
+                                <span class="badge badge-warn mt-1">Stok menipis</span>
+                            @endif
+                            <p class="mt-1 flex flex-wrap justify-end gap-x-2.5 gap-y-0.5 text-xs font-semibold text-slate-600 sm:justify-start">
+                                @forelse($locations as $balance)
+                                    <span class="inline-flex items-center gap-1">
+                                        <span class="h-1.5 w-1.5 rounded-full {{ str_contains(strtolower($balance->location?->name ?? ''), 'gudang') ? 'bg-brand-600' : 'bg-slate-400' }}"></span>
+                                        {{ $balance->location?->name ?? 'Lokasi tidak diketahui' }}
+                                    </span>
+                                @empty
+                                    <span class="font-normal text-slate-400">Belum ada posisi</span>
+                                @endforelse
+                            </p>
+                        </td>
+                        <td class="col-span-2 block min-w-0 sm:col-span-3 xl:table-cell xl:px-4 xl:py-3 xl:align-top">
+                            <div class="flex flex-wrap gap-1">
+                                <span class="badge {{ $medicine->is_active ? 'badge-brand' : 'badge-muted' }}">{{ $medicine->is_active ? 'Aktif' : 'Nonaktif' }}</span>
+                                <span class="badge {{ $statusClass }}">{{ $statusLabel }}</span>
+                            </div>
+                            @if($medicine->verification_note)
+                                {{-- Long review notes are clamped here; the hover title and the Edit dialog show them in full. --}}
+                                <p class="mt-1.5 line-clamp-3 text-xs leading-snug text-slate-500" title="{{ $medicine->verification_note }}">{{ $medicine->verification_note }}</p>
+                            @endif
+                        </td>
+                        <td class="col-span-2 block min-w-0 text-xs text-slate-500 sm:col-span-3 xl:table-cell xl:px-4 xl:py-3 xl:align-top">
+                            @if($audit)
+                                <span class="font-bold text-slate-700">{{ ucfirst(str_replace('_', ' ', $audit->action)) }}</span>
+                                <span class="xl:block"><span class="xl:hidden">· </span>{{ $audit->user?->name ?: 'Sistem' }}</span>
+                                <span class="tabular-nums xl:block"><span class="xl:hidden">· </span>{{ $audit->created_at?->format('d/m/Y H:i') }}</span>
+                            @else
+                                Belum ada audit
+                            @endif
+                        </td>
                         @can('manage-medicines')
-                            <th class="px-4 py-2.5 text-right">Aksi</th>
-                        @endcan
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    @forelse($medicines as $medicine)
-                        @php
-                            $stock = (float) $medicine->balances->sum('quantity');
-                            $locations = $medicine->balances
-                                ->filter(fn($balance) => (float) $balance->quantity > 0)
-                                ->sortBy(fn($balance) => $balance->location?->name)
-                                ->values();
-                            $parameters = $medicine->stockParameters->whereNotNull('minimum_quantity');
-                            $low = $parameters->contains(fn($parameter) => (float) ($medicine->balances->firstWhere('location_id', $parameter->location_id)?->quantity ?? 0) <= (float) $parameter->minimum_quantity);
-                            $package = $medicine->packages->first();
-                            $audit = $medicine->audits->sortByDesc('created_at')->first();
-                            $statusClass = match ($medicine->verification_status) {
-                                'terverifikasi' => 'badge-ok',
-                                'perlu_revisi' => 'badge-warn',
-                                default => 'badge-muted',
-                            };
-                            $statusLabel = match ($medicine->verification_status) {
-                                'terverifikasi' => 'Terverifikasi',
-                                'perlu_revisi' => 'Perlu Revisi',
-                                default => 'Belum Diverifikasi',
-                            };
-                        @endphp
-                        <tr wire:key="medicine-{{ $medicine->id }}" class="align-top">
-                            <td class="max-w-[340px] px-4 py-3">
-                                <p class="font-extrabold text-slate-900">{{ $medicine->name }}</p>
-                                <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
-                                    <span class="rounded bg-slate-100 px-1.5 font-mono text-[11px] font-semibold text-slate-600">{{ $medicine->code }}</span>
-                                    <span>{{ $medicine->original_name ?: 'Nama klinik belum ada' }}</span>
-                                </p>
-                                @if($medicine->generic_name)
-                                    <p class="mt-0.5 text-xs text-slate-400">{{ $medicine->generic_name }}</p>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-slate-700">
-                                <p class="font-semibold">{{ $medicine->dosage_form ?: 'Belum diisi' }}</p>
-                                <p class="mt-0.5 text-xs text-slate-400">{{ $medicine->strength ?: 'Kekuatan belum diisi' }}</p>
-                            </td>
-                            <td class="px-4 py-3 text-slate-700">
-                                <p class="font-semibold">{{ $package?->name ?: ($medicine->purchase_unit_name ?: 'Belum diatur') }}</p>
-                                <p class="mt-0.5 text-xs text-slate-400">
-                                    {{ $package ? 'Isi '.\App\Support\Quantity::format($package->conversion_factor).' '.$medicine->unit?->name : ($medicine->conversion_candidate ? 'Kandidat isi '.\App\Support\Quantity::format($medicine->conversion_candidate) : 'Konversi belum pasti') }}
-                                </p>
-                            </td>
-                            <td class="px-4 py-3">
-                                <div class="flex max-w-[240px] flex-wrap gap-1.5">
-                                    @forelse($locations as $balance)
-                                        <span class="badge">
-                                            <span class="h-1.5 w-1.5 rounded-full {{ str_contains(strtolower($balance->location?->name ?? ''), 'gudang') ? 'bg-brand-600' : 'bg-slate-400' }}"></span>
-                                            {{ $balance->location?->name ?? 'Lokasi tidak diketahui' }}
-                                        </span>
-                                    @empty
-                                        <span class="text-xs text-slate-400">Belum ada posisi</span>
-                                    @endforelse
+                            <td class="col-span-2 block sm:col-span-3 xl:table-cell xl:px-4 xl:py-3 xl:align-top">
+                                <div class="flex flex-wrap gap-1.5 xl:justify-end">
+                                    <button type="button" wire:click="edit({{ $medicine->id }})" class="{{ $rowAction }} justify-center border-brand-200 bg-white text-brand-800 hover:bg-brand-50">Edit</button>
+                                    @if($medicine->verification_status !== 'terverifikasi')
+                                        <button type="button" wire:click="verify({{ $medicine->id }})" class="{{ $rowAction }} justify-center border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50">Verifikasi</button>
+                                    @endif
+                                    <button type="button" wire:click="toggleActive({{ $medicine->id }})" class="{{ $rowAction }} justify-center border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
+                                        {{ $medicine->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
+                                    </button>
                                 </div>
                             </td>
-                            <td class="px-4 py-3">
-                                <p class="font-extrabold tabular-nums text-slate-900">{{ $medicine->balances->isEmpty() ? 'Belum ada stok' : \App\Support\Quantity::format($stock).' '.$medicine->unit?->name }}</p>
-                                @if($low)
-                                    <span class="badge badge-warn mt-1">Stok menipis</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="badge {{ $statusClass }}">{{ $statusLabel }}</span>
-                                @if($medicine->verification_note)
-                                    <p class="mt-1.5 max-w-[240px] text-xs text-slate-500">{{ $medicine->verification_note }}</p>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="badge {{ $medicine->is_active ? 'badge-brand' : 'badge-muted' }}">
-                                    {{ $medicine->is_active ? 'Aktif' : 'Nonaktif' }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 text-xs text-slate-500">
-                                @if($audit)
-                                    <p class="font-bold text-slate-700">{{ ucfirst(str_replace('_', ' ', $audit->action)) }}</p>
-                                    <p>{{ $audit->user?->name ?: 'Sistem' }}</p>
-                                    <p class="tabular-nums">{{ $audit->created_at?->format('d/m/Y H:i') }}</p>
-                                @else
-                                    Belum ada audit
-                                @endif
-                            </td>
-                            @can('manage-medicines')
-                                <td class="px-4 py-3 text-right">
-                                    <div class="flex flex-wrap justify-end gap-1.5">
-                                        <button type="button" wire:click="edit({{ $medicine->id }})" class="{{ $rowAction }} border-brand-200 bg-white text-brand-800 hover:bg-brand-50">Edit</button>
-                                        @if($medicine->verification_status !== 'terverifikasi')
-                                            <button type="button" wire:click="verify({{ $medicine->id }})" class="{{ $rowAction }} border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50">Verifikasi</button>
-                                        @endif
-                                        <button type="button" wire:click="toggleActive({{ $medicine->id }})" class="{{ $rowAction }} border-slate-300 bg-white text-slate-700 hover:bg-slate-50">
-                                            {{ $medicine->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
-                                        </button>
-                                    </div>
-                                </td>
-                            @endcan
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="{{ $canManage ? 9 : 8 }}" class="empty-state">Belum ada obat yang sesuai.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                        @endcan
+                    </tr>
+                @empty
+                    <tr class="block xl:table-row">
+                        <td colspan="{{ $canManage ? 6 : 5 }}" class="empty-state block xl:table-cell">Belum ada obat yang sesuai.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </x-ui.section>
 
     <div class="mt-4">{{ $medicines->links() }}</div>
