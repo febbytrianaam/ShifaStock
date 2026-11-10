@@ -2,7 +2,13 @@
     @php
         $control = 'field min-h-11 lg:min-h-[34px] lg:py-1.5';
     @endphp
-    <form method="GET" class="mb-3.5 grid gap-2 sm:grid-cols-2 xl:flex xl:flex-wrap xl:items-center">
+    @if($errors->any())
+        <div role="alert" class="callout-danger mb-4 font-semibold">
+            {{ $errors->first() }}
+        </div>
+    @endif
+
+    <form method="GET" class="mb-3.5 grid gap-2 sm:grid-cols-2 xl:flex xl:flex-wrap xl:items-center" data-required-alert="Periksa saringan audit log" data-date-range-start="#audit-from" data-date-range-end="#audit-to">
         <x-ui.search name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Cari aktivitas, pengguna, event, atau IP" label="Cari aktivitas" width="sm:col-span-2 xl:w-80" />
         <select name="event" class="{{ $control }} xl:w-48" aria-label="Event">
             <option value="">Semua event</option>
@@ -22,8 +28,8 @@
                 <option value="{{ $type }}" @selected(($filters['auditable_type'] ?? '') === $type)>{{ class_basename($type) }}</option>
             @endforeach
         </select>
-        <label class="flex items-center gap-2 text-xs font-bold text-slate-600">Dari <input name="from" type="date" value="{{ $filters['from'] ?? '' }}" class="{{ $control }} xl:w-40"></label>
-        <label class="flex items-center gap-2 text-xs font-bold text-slate-600">s.d. <input name="to" type="date" value="{{ $filters['to'] ?? '' }}" class="{{ $control }} xl:w-40"></label>
+        <label class="flex items-center gap-2 text-xs font-bold text-slate-600">Dari <input id="audit-from" name="from" type="date" value="{{ old('from', $filters['from'] ?? '') }}" class="{{ $control }} xl:w-40"></label>
+        <label class="flex items-center gap-2 text-xs font-bold text-slate-600">s.d. <input id="audit-to" name="to" type="date" value="{{ old('to', $filters['to'] ?? '') }}" class="{{ $control }} xl:w-40"></label>
         <div class="flex gap-2 sm:col-span-2 xl:col-span-1">
             <button class="btn-secondary min-h-11 flex-1 lg:min-h-[34px] lg:py-1.5">Filter</button>
             <button class="btn-secondary min-h-11 flex-1 lg:min-h-[34px] lg:py-1.5" name="export" value="csv"><x-ui.icon name="download" /> CSV</button>

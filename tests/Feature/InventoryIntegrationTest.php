@@ -92,6 +92,19 @@ class InventoryIntegrationTest extends TestCase
         $this->assertReconciled();
     }
 
+    public function test_stock_card_confirms_a_reversal_after_redirect(): void
+    {
+        $this->receipt('REV-CARD-SEED', [['batch_number' => 'REV-CARD', 'expiry_date' => '2027-12-31', 'quantity' => 10]]);
+        $movement = InventoryMovement::where('reference', 'REV-CARD-SEED')->sole();
+        $card = route('stock-card.index', ['medicine_id' => $this->medicine->id, 'location_id' => $this->warehouse->id,
+            'start' => '2026-10-01', 'end' => '2026-10-31']);
+        $this->actingAs($this->pharmacist)->from($card)->followingRedirects()
+            ->post(route('movements.reverse', $movement), ['reason' => 'Penerimaan tercatat ganda'])
+            ->assertOk()->assertSee('role="status"', false)->assertSee('Mutasi final berhasil dibalik dengan catatan reversal.')
+            ->assertSee('Sudah dibalik');
+        $this->assertReconciled();
+    }
+
     public function test_opname_rejects_changed_snapshot_and_repeated_finalization(): void
     {
         $this->receipt('OP-SEED', [['batch_number' => 'OP-BATCH', 'expiry_date' => '2027-12-31', 'quantity' => 10]]);

@@ -4,7 +4,7 @@ const fields = {
     medicine_id: 'Pilih obat dari daftar.',
     batch_number: 'Isi nomor batch.',
     expiry_date: 'Isi tanggal kedaluwarsa yang valid.',
-    input_quantity: 'Isi jumlah faktur lebih dari 0.',
+    input_quantity: 'Isi jumlah faktur lebih dari 0, maksimal empat angka di belakang koma.',
     input_unit_name: 'Pilih satuan faktur.',
     conversion_factor: 'Isi jumlah satuan stok dalam 1 kemasan, lebih dari 0.',
     quantity: 'Jumlah stok belum dapat dihitung. Periksa jumlah faktur dan isi kemasan.',

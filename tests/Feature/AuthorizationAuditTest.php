@@ -152,4 +152,27 @@ class AuthorizationAuditTest extends TestCase
         $this->withSession([$sessionName => $admin->id, 'password_hash_web' => $oldHash])
             ->getJson(route('dashboard'))->assertUnauthorized();
     }
+
+    public function test_audit_log_explains_a_rejected_reversed_date_range(): void
+    {
+        $admin = User::factory()->create(['role' => Role::Administrator]);
+        $this->actingAs($admin)->from(route('admin.audit-logs.index'))->followingRedirects()
+            ->get(route('admin.audit-logs.index', ['from' => '2026-11-10', 'to' => '2026-11-09']))
+            ->assertOk()->assertSee('role="alert"', false)
+            ->assertSee('Tanggal sampai harus berupa tanggal yang sama dengan atau setelah tanggal dari.')
+            ->assertSee('data-date-range-end="#audit-to"', false);
+    }
+
+    public function test_generic_validation_messages_are_indonesian(): void
+    {
+        $admin = User::factory()->create(['role' => Role::Administrator]);
+        $taken = User::factory()->create(['role' => Role::Pharmacy]);
+        $this->actingAs($admin)->post(route('admin.users.store'), [
+            'name' => 'Simulasi', 'username' => $taken->username, 'email' => 'baru@example.test',
+            'role' => Role::Pharmacy->value, 'password' => 'Ab12', 'password_confirmation' => 'Ab13',
+        ])->assertSessionHasErrors([
+            'username' => 'Username sudah digunakan.',
+            'password' => 'Password minimal 6 karakter.',
+        ]);
+    }
 }

@@ -4,6 +4,7 @@
         ['route' => 'stock-card.index', 'label' => 'Kartu Stok', 'can' => 'view-stock-card'],
     ]" />
 
+    @if(session('status'))<p role="status" class="callout-ok mb-4">{{ session('status') }}</p>@endif
     @if($errors->any())
         <div role="alert" class="callout-danger mb-4 font-semibold">
             {{ $errors->first() }}
