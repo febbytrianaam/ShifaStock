@@ -1,5 +1,32 @@
 # Testing Strategy
 
+## Black Box Run - 10 November 2026
+
+The run covers a catalog of **134 black box cases** over 22 modules. It includes valid input, invalid input, boundary values (password 5/6 characters, quantity 0 and five decimals, expiry warning 0/1/24/25 months, footer 500/501 characters, 50 transfer rows), role access, and status flows.
+
+**How it runs**
+- Each case drives the real UI in Chrome (Playwright, 1440×900, `id-ID`, Asia/Jakarta) against a throwaway MySQL database named `shifastock_blackbox_*`.
+- The database is seeded from the read-only UAT master snapshot plus six `BB-*` medicines with known batches. It is dropped afterwards.
+- Each case records what the screen showed (message, warning, HTTP status, batch stock, or download) and keeps one screenshot.
+- The runner refuses a dirty `app`/`resources` tree and never connects to `shifastock_uat`.
+
+**Results**
+
+| Run | Commit | Time (WIB) | Berhasil | Gagal |
+| --- | --- | --- | --- | --- |
+| Initial | `307e746` | 15:10–15:19 | 132 | 2 |
+| Retest | `07b4231` | 16:26–16:35 | 134 | 0 |
+
+- The two initial failures:
+  - Audit Log did not show why a reversed date range was rejected.
+  - Kartu Stok did not show the reversal success message.
+- The initial run also logged ten English generic validation messages and a five-decimal receipt warning that did not name the limit.
+- Both runs ended with reconciliation 0/0 and the database dropped.
+
+**Where things are**
+- The Word report, evidence and runner copies are in the uncommitted `Docs/Capstone_Testing_BlackBox/2026-11-10/` folder of the main checkout. The runner copies are under `reproduce/`.
+- This is automated browser testing, not manual clinic UAT.
+
 ## Daily Clinic Cycle Browser Run - 5 November 2026
 
 `php scripts/capstone-final-browser.php daily-cycle` runs a new phase on a random isolated MySQL database that is dropped afterwards. It drives one compressed clinic day through the real UI with a petugas and a kepala apoteker account. Each step works on the stock the previous step left:
