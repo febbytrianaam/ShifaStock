@@ -4,24 +4,55 @@
 
 ShifaStock membantu pencatatan obat masuk, transfer gudang ke apotek, pengeluaran, pemeriksaan fisik, dan tindak lanjut stok. Persediaan dapat ditelusuri per obat, batch, tanggal kedaluwarsa, dan lokasi melalui kartu stok serta laporan.
 
-Aplikasi berfokus pada pengelolaan obat, bukan pelayanan pasien atau sinkronisasi otomatis Neoklinik. Rekap pengeluaran Neoklinik dapat diimpor melalui Excel dengan pemeriksaan dan konfirmasi petugas. Dashboard dan transaksi operasional menggunakan database aplikasi, tanpa mode data dummy. Panduan sorotan menu muncul pada login pertama, mengikuti hak akses, dan dapat dibuka ulang dari tombol tanda tanya di topbar.
+Aplikasi berfokus pada pengelolaan obat, bukan pelayanan pasien atau sinkronisasi otomatis Neoklinik. Rekap pengeluaran Neoklinik dapat diimpor melalui Excel dengan pemeriksaan dan konfirmasi petugas. Dashboard dan transaksi operasional membaca database aplikasi, tanpa mode data dummy.
+
+## Status Proyek
+
+Per 11 November 2026, versi UAT terakhir adalah tag `uat-2026-11-10`.
+
+- Fitur inti sudah lengkap dan lulus pengujian otomatis, termasuk black box 134/134. Rinciannya ada di [Pengujian](#pengujian).
+- **Belum siap production.** Yang masih perlu dilakukan:
+  - UAT manual oleh petugas farmasi dan apoteker klinik, termasuk impor Neoklinik nyata;
+  - keputusan kepala apoteker tentang tiga aturan alur stok: batas waktu impor Neoklinik terhadap pemeriksaan harian, pengeluaran manual bertanggal mundur, dan transaksi di lokasi yang sedang opname;
+  - penentuan server production, HTTPS, dan scheduler;
+  - uji backup dan restore di database terpisah.
 
 ## ✨ Fitur Utama
 
 | Area | Fitur |
 | --- | --- |
-| Master obat | Pencarian, verifikasi, status aktif, preview/import referensi, satuan stok, dan konversi kemasan beli per obat |
+| Dashboard | Muat satu layar 1920×1080 dan menyegarkan diri tiap menit. Kartu stok kosong, menipis, kedaluwarsa, dan kesehatan stok dengan tren 7 hari; daftar tindak lanjut bertab; grafik aktivitas; alur pemeriksaan hari ini; radar kedaluwarsa termasuk batch yang sudah lewat; serta kondisi per lokasi |
+| Monitoring Stok | Satu baris per obat dengan semua lokasi berdampingan, kartu KPI yang sekaligus menjadi filter, serta tab stok minimum, kedaluwarsa, dan hasil pemeriksaan terakhir. Kekurangan diisi dari lokasi penerimaan hanya bila stoknya di atas minimum lokasi itu sendiri; sisanya menjadi estimasi pesanan PBF. Rencana transfer membuka form transfer yang sudah terisi, dan daftar pesanan/permintaan dapat disalin |
+| Monitoring Kedaluwarsa | Tab yang sama dengan Monitoring Stok ditambah tampilan Semua batch, kartu KPI, pencarian, pilihan lokasi, dan rentang tanggal |
+| Master obat | Pencarian, verifikasi, status aktif, preview/import referensi, satuan stok, konversi kemasan beli per obat, dan unduhan template Excel untuk review master |
 | Penerimaan | Input banyak baris, pilihan obat searchable, nomor faktur supplier, konversi satuan, edit/batalkan draf, posting ke lokasi tujuan, dan peringatan faktur ganda |
 | Pergerakan stok | Stok awal per batch, transfer banyak obat dalam satu referensi dengan penyimpanan atomik, pengeluaran, retur PBF, serta kondisi khusus dengan batch wajib |
 | Impor pengeluaran | Excel Neoklinik, pencocokan obat/satuan, rincian transaksi, pencarian, pratinjau dan posting atomik, pencegahan impor ganda, hapus pratinjau, serta lanjutkan pemeriksaan setelah pindah tab |
 | Pemilihan batch | Mengikuti obat dan lokasi; FEFO otomatis untuk transfer/pengeluaran tanpa pilihan batch eksplisit, dengan pengecualian batch kedaluwarsa |
-| Pemeriksaan harian | Draf bersama petugas/apoteker dengan identitas pembuat, pelaksana per obat, riwayat aktivitas, dan perlindungan versi lama; daftar responsif, rincian batch, tambah obat, dan kirim sebagian; tinjauan hanya menyesuaikan obat yang diperiksa |
+| Pemeriksaan harian | Draf bersama petugas/apoteker dengan identitas pembuat, pelaksana per obat, riwayat aktivitas, dan perlindungan versi lama; daftar responsif, rincian batch, tambah obat, dan kirim sebagian; tinjauan hanya menyesuaikan obat yang diperiksa; cetak laporan A4 |
 | Opname periodik | Snapshot stok, isian fisik, finalisasi, dan Mulai Hitung Ulang dengan konfirmasi serta pencatatan isian lama di audit log |
-| Monitoring | Stok kosong/menipis, parameter minimum stok, kedaluwarsa beserta lokasi, dan pintasan tindak lanjut |
-| Pelaporan | Kartu stok per obat/lokasi/batch/periode, cetak dengan identitas klinik, laporan persediaan, dan riwayat pemeriksaan |
-| Administrasi | Pengguna, matriks RBAC, referensi lokasi/satuan, pengaturan sistem, audit log, dan ekspor audit |
+| Pelaporan | Kartu stok per obat/lokasi/batch/periode, cetak dengan identitas klinik, laporan persediaan termasuk stok per lokasi, dan riwayat pemeriksaan |
+| Administrasi | Pengguna, matriks RBAC, referensi lokasi/satuan, pengaturan sistem, audit log dengan filter tanggal, dan ekspor audit |
 
-Pencarian obat dan batch terhubung ke backend. Validasi dan konfirmasi tindakan penting menggunakan SweetAlert.
+Template Excel master obat hanya untuk review; isinya tidak diimpor kembali ke aplikasi.
+
+## Tampilan Dan Navigasi
+
+- Sidebar mengikuti alur kerja harian. Menu yang tampil mengikuti hak akses masing-masing akun.
+
+  | Kelompok | Menu |
+  | --- | --- |
+  | Kerja Harian | Pemeriksaan Stok, Stock Opname Periodik, Riwayat Pemeriksaan, Monitoring Stok, Monitoring Kedaluwarsa |
+  | Transaksi | Penerimaan Obat, Transfer Stok, Pengeluaran & Impor, Retur PBF, Kondisi Khusus |
+  | Data & Laporan | Data Obat, Stok Awal, Parameter Monitoring, Laporan, Kartu Stok |
+  | Administrasi | Pengguna, Audit Log, Referensi Sistem, Pengaturan Sistem |
+
+- Jumlah yang perlu ditindaklanjuti tampil di samping menu. Sidebar dapat diciutkan menjadi deretan ikon (diingat per browser) dan menjadi drawer di HP.
+- Semua menu, halaman login, dan halaman error memakai tema yang sama dengan Dashboard. Target desain 1920×1080; tampilan juga diperiksa pada laptop 1280–1536 px dan HP. Form penerimaan dan transfer banyak baris masih perlu digeser ke samping di HP.
+- Bahasa default aplikasi adalah `id`, sehingga pesan validasi, nama kolom, dan paginasi berbahasa Indonesia.
+- Font Plus Jakarta Sans dibundel bersama aplikasi, tanpa permintaan ke Google Fonts.
+- Panduan sorotan menu muncul pada login pertama, mengikuti hak akses, dan dapat dibuka ulang dari tombol tanda tanya di topbar.
+- Pencarian obat dan batch terhubung ke backend. Validasi dan konfirmasi tindakan penting menggunakan SweetAlert.
 
 Panduan di Pemeriksaan Stok menjelaskan stok awal, stok sistem, jumlah fisik, dan kapan persetujuan menyesuaikan stok. Judul kolom memiliki bantuan yang dapat dibuka lewat hover, keyboard, atau ketukan pada HP. Pengeluaran Obat menjelaskan pencatatan manual tanpa sinkronisasi Neoklinik, jumlah keluar versus sisa stok, FEFO, serta pencegahan pencatatan ganda.
 
@@ -29,16 +60,18 @@ Impor Excel memakai tiga langkah: pilih file, cocokkan obat, lalu periksa dan si
 
 ## Role Dan Hak Akses
 
-| Role | Username Demo Lokal | Tanggung Jawab Default |
-| --- | --- | --- |
-| Administrator | `admin` | Pengguna, hak akses, referensi sistem, pengaturan, dan audit log |
-| Petugas Farmasi | `petugas` | Pencatatan dan pemantauan stok operasional |
-| Kepala Apoteker | `kepala` | Master obat, review/finalisasi pemeriksaan, dan pengawasan persediaan |
-| Guest | `guest` | Seluruh menu persediaan gabungan petugas/apoteker, hanya baca, tanpa menu superadmin |
+| Role | Tanggung Jawab Default |
+| --- | --- |
+| Administrator | Pengguna, hak akses, referensi sistem, pengaturan, dan audit log |
+| Petugas Farmasi | Pencatatan dan pemantauan stok operasional |
+| Kepala Apoteker | Master obat, review/finalisasi pemeriksaan, dan pengawasan persediaan |
+| Guest | Seluruh menu persediaan gabungan petugas/apoteker, hanya baca, tanpa menu superadmin |
 
-Hak akses diatur melalui **Administrasi > Pengguna > Hak Akses**. Matriks mengatur menu serta tindakan backend; beberapa izin inti administrator dikunci untuk mencegah kehilangan akses administrasi.
+Hak akses diatur melalui **Administrasi > Pengguna > Hak Akses**. Matriks mengatur menu serta tindakan backend; beberapa izin inti administrator dikunci untuk mencegah kehilangan akses administrasi. Bila izin gagal dibaca dari database, akses ditolak.
 
-Pengelolaan password dilakukan melalui pengguna yang berwenang mengelola akun. Daftar password akun tidak dipublikasikan di README, halaman login, atau output seeder. Kolom password pada form login tersembunyi secara default dan memiliki ikon mata untuk menampilkan atau menyembunyikan isian sendiri.
+Pengguna non-Administrator yang diberi izin mengelola akun tidak dapat memberikan role Administrator, mengubah atau menonaktifkan Administrator, maupun mereset password akun yang sudah ada. Penggantian password mengakhiri sesi lama akun tersebut.
+
+Username, password, dan data akun lain tidak dicantumkan di README, halaman login, atau output seeder. Kolom password pada form login tersembunyi secara default dan memiliki ikon mata untuk menampilkan atau menyembunyikan isian sendiri.
 
 Halaman 403, 404, dan 500 menggunakan identitas klinik dan petunjuk pemulihan berbahasa Indonesia. Halaman 500 mengingatkan pengguna memeriksa riwayat sebelum mengulang transaksi. Detail teknis error tidak ditampilkan saat `APP_DEBUG=false`.
 
@@ -56,8 +89,8 @@ Peringatan faktur supplier ganda tetap memerlukan pemeriksaan petugas. Dua refer
 
 ## Stack Dan Prasyarat
 
-- Laravel 13, Livewire 3, dan MySQL.
-- Tailwind CSS 4, Vite 7, Chart.js, dan SweetAlert2.
+- Laravel 13, Livewire 3, dan MySQL. Dashboard dan Monitoring Stok adalah komponen Livewire.
+- Tailwind CSS 4, Vite 7, SweetAlert2, driver.js untuk panduan menu, dan PhpSpreadsheet untuk impor/ekspor Excel. Grafik dashboard dirender sebagai SVG dari server.
 - Composer serta Node.js yang memenuhi persyaratan Vite pada `package-lock.json`.
 - **PHP 8.4.1 atau lebih baru untuk dependency yang terkunci saat ini.** Walaupun `composer.json` mencantumkan `^8.3`, sejumlah dependency di `composer.lock` membutuhkan versi lebih tinggi. Pengujian lokal terakhir menggunakan PHP 8.5.9.
 - Ekstensi PHP yang dibutuhkan Composer, termasuk `pdo_mysql`; pengujian terisolasi juga membutuhkan `pdo_sqlite`.
@@ -103,37 +136,23 @@ Master obat dapat dimasukkan melalui menu Data Obat, termasuk preview/import ref
 
 ## Pengujian
 
-**Dokumentasi Capstone, 29 Oktober 2026:** tersedia [15 screenshot dalam satu folder bertanggal](Docs/Capstone_Screenshots/2026-10-29/README.md), lengkap dengan caption dan tabel hasil pengujian aktual. Baseline aplikasi `05ba910`; eksekusi sesi dokumentasi lulus **213 tes / 2347 assertions**, **16 kelompok browser impor**, dan **5 kelompok browser fitur tambahan**, beserta rekonsiliasi stok, pemeriksaan MySQL impor, dan build. Seluruh data simulasi memakai database terpisah; gambar lama dipertahankan. [Log, sumber bukti, dan batas verifikasi](Docs/evidence/2026-10-29/README.md). Tidak menggantikan UAT manual petugas klinik.
+### Hasil Terakhir
 
-**Verifikasi paket impor, 29 Oktober 2026:** eksekusi ulang lulus **213 tes / 2347 assertions**, **16 kelompok pengujian browser**, uji MySQL dua worker dengan perlindungan transaksi ganda, dan build frontend. Semua fixture memakai database sementara, bukan inventori klinik/UAT persisten. Composer validate dan pemeriksaan format juga lulus. [Implementasi dan bukti aktual](Docs/30_implemented/2026-10-27-issue-import-guided-ui/implementation_report.md#publication-verification-29-october-2026). Ini bukan pengganti UAT petugas klinik.
+Pengujian otomatis terakhir dijalankan pada 9–10 November 2026. Semua pengujian tulis memakai database sementara yang langsung dihapus; data klinik dan UAT tidak disentuh.
 
-**Panduan operasional dan bantuan kolom, 23 Oktober 2026:** verifikasi tahap implementasi lulus **179 tes / 1885 assertions**, **20 kasus browser pemeriksaan stok**, dan **17 kasus browser operasional**, beserta build frontend. Pengujian memakai database terpisah, dengan pemeriksaan desktop, tablet, HP, bantuan keyboard, dan isian yang tetap utuh. Angka tiap tahap serta batasannya tercatat pada [panduan pemeriksaan](Docs/30_implemented/2026-10-23-daily-count-guidance/implementation_report.md) dan [panduan pengeluaran](Docs/30_implemented/2026-10-23-issue-guidance/implementation_report.md).
+| Pengujian | Hasil |
+| --- | --- |
+| PHPUnit | **284 tes / 3089 assertions** lulus pada `07b4231` |
+| Browser per fase | Regresi 18, panduan 14, workspace pemeriksaan 20, kirim sebagian 7, pemeriksaan obat tertentu 15, transfer 9, satu hari klinik 13, dan impor pengeluaran 21 cek lulus pada `307e746`. Semua fase lulus lagi pada `07b4231` |
+| Transaksi bersamaan MySQL | 11 skenario lulus |
+| Black box | 134 kasus di 22 modul, dijalankan otomatis lewat Chrome. Putaran awal pada `307e746`: 132 Berhasil, 2 Gagal. Setelah perbaikan di `07b4231`: **134/134 Berhasil**, rekonsiliasi stok 0 selisih |
+| Build | `npm run build` dan kompilasi view Blade berhasil |
 
-**Draf pemeriksaan bersama, 22 Oktober 2026:** pengujian working tree pada `af37ff0` lulus **172 tes / 1777 assertions**, **38 kasus browser** (15 UI, 7 kirim sebagian, 16 operasional), dan **10 skenario MySQL bersamaan**, termasuk penyimpanan dua operator pada versi draf yang sama. Build frontend dan verifikasi isolasi UAT lulus. Pembuat tetap tercatat, pembaruan per obat mengikuti pelaksana sebenarnya, dan versi lama tidak menimpa pekerjaan terbaru. Migrasi tambahan hanya diterapkan ke UAT lokal, tanpa reset data/matriks. [Laporan implementasi](Docs/30_implemented/2026-10-22-shared-daily-check/implementation_report.md).
+Dua kegagalan black box putaran awal adalah Audit Log yang menolak rentang tanggal terbalik tanpa pesan, dan reversal di Kartu Stok yang tidak menampilkan pesan sukses. Putaran itu juga mencatat pesan validasi umum yang masih berbahasa Inggris. Ketiganya diperbaiki di `07b4231`. [Cara kerja dan hasil black box](Docs/00_current/testing_strategy.md#black-box-run---10-november-2026).
 
-**Antarmuka pemeriksaan harian, 22 Oktober 2026:** daftar ringkas dengan Rincian, progres dan status simpan, tab tinjauan/ringkasan, serta layout desktop/tablet/HP. Tabel mengikuti lebar halaman tanpa batas 1360 px; pengujian UI mencakup Full HD, QHD, dan 4K. Pengujian ulang sebelum publikasi lulus **157 tes / 1621 assertions** dan **35 kasus browser** (12 UI, 7 kirim sebagian, 16 operasional), beserta build frontend. Tidak ada perubahan aturan stok atau hak akses. Hasil aktual tiap tahap dan batasan pengujian tercatat pada [laporan implementasi](Docs/30_implemented/2026-10-22-daily-check-workspace/implementation_report.md).
+Belum dilakukan: UAT manual oleh staf klinik, uji di HP fisik, uji beban, dan uji restore backup. Pengujian otomatis tidak menggantikan UAT manual.
 
-**Pemeriksaan sebagian, 22 Oktober 2026:** **157 tes / 1621 assertions**, **7 tes browser pemeriksaan sebagian**, **15 regresi harian**, dan **16 regresi operasional** lulus. Obat yang belum diperiksa tetap kosong pada isian, tidak dianggap stok 0, dan tidak disesuaikan saat persetujuan. Peringatan dikelompokkan dan mode lihat saja menjelaskan akun pembuat/status laporan. Semua transaksi uji memakai database sementara. [Laporan implementasi](Docs/30_implemented/2026-10-22-partial-daily-submission/implementation_report.md).
-
-**Audit widget dashboard, 22 Oktober 2026:** seluruh widget cocok dengan query pembanding read-only pada database UAT. Pengujian fokus **25 tes / 254 assertions** lulus. Tabel stok dashboard adalah pratinjau maksimal 12 baris; pencariannya bukan pencarian seluruh inventori. [Rincian audit](Docs/30_implemented/2026-10-22-dashboard-stock-monitoring/implementation_report.md#follow-up-audit-of-other-widgets).
-
-**Monitoring stok dashboard, 22 Oktober 2026:** pengujian ulang **147 tes / 1533 assertions** dan **16 pemeriksaan browser** lulus. Widget kosong/menipis kini memakai stok transaksi dan batas minimum yang sama dengan halaman Monitoring, tanpa menunggu pemeriksaan harian disetujui. Pengujian transaksi memakai database simulasi terpisah. [Laporan implementasi](Docs/30_implemented/2026-10-22-dashboard-stock-monitoring/implementation_report.md).
-
-**Laporan cetak pemeriksaan, 22 Oktober 2026:** pengujian tahap ini **140 tes / 1450 assertions** dan **15 pemeriksaan browser harian** lulus. PDF **A4 portrait** diuji langsung: laporan singkat satu halaman, laporan 70 obat delapan halaman, seluruh baris serta judul tabel terverifikasi dan semua hasil render diperiksa. Pengujian memakai database simulasi terpisah. [Laporan implementasi](Docs/30_implemented/2026-10-21-daily-check-print-report/implementation_report.md).
-
-**Tambah obat pada draf, 21 Oktober 2026:** pengujian tahap ini **133 tes / 1392 assertions** dan **12 pemeriksaan browser harian** lulus, termasuk penambahan sambil mempertahankan jumlah, satuan, rincian batch, permintaan, dan catatan. Build frontend, kompilasi Blade, serta isolasi UAT diverifikasi. [Laporan](Docs/30_implemented/2026-10-21-add-medicines-to-draft/implementation_report.md).
-
-**Pemeriksaan obat tertentu dan dropdown satuan, 21 Oktober 2026:** suite terbaru 124 tes / 1306 assertions lulus. Verifikasi fitur mencakup 8 pemeriksaan browser harian, 13 regresi browser operasional, dan 9 skenario MySQL bersamaan. Build frontend, kompilasi Blade, dan verifikasi pemisahan UAT berhasil. Semua fixture stok memakai database sementara. [Laporan implementasi](Docs/30_implemented/2026-10-21-selected-daily-check/implementation_report.md).
-
-**Transfer banyak obat, 21 Oktober 2026:** 112 tes / 1189 assertions, 9 skenario MySQL bersamaan, 9 pemeriksaan browser transfer, dan 13 regresi browser operasional lulus. Build frontend serta kompilasi Blade berhasil. Semua transaksi pengujian memakai database sementara, bukan database klinik atau UAT persisten.
-
-**Pembaruan domain UAT 21 Oktober 2026:** 100 tes / 1001 assertion lulus. Delapan pemeriksaan browser lewat domain HTTPS juga lulus, termasuk login Guest, dashboard transaksi kosong, pembatasan admin, dan logout. Database klinik tetap tidak berubah.
-
-**Eksekusi antarmuka sebelumnya, 21 Oktober 2026:** 97 tes / 986 assertion lulus pada SQLite terisolasi. Pengujian browser tambahan lulus untuk posisi panduan (9 pemeriksaan), halaman error (7 pemeriksaan), dan tombol mata login (3 pemeriksaan), serta build frontend berhasil. Hasil tiap tahap dan lokasi bukti lokal dicatat pada [strategi pengujian](Docs/00_current/testing_strategy.md). Pengujian ini tidak menggantikan UAT manual petugas.
-
-**Eksekusi UAT/Guest 21 Oktober 2026:** 90 tes / 931 assertion, 7 skenario MySQL paralel, 25 pemeriksaan browser UAT, dan build lulus. Database serta pengguna MySQL UAT sudah diverifikasi terpisah dari inventori klinik. [Laporan UAT dan Guest](Docs/30_implemented/2026-10-21-uat-guest/implementation_report.md) memuat hasil browser terbaru dan batasannya.
-
-**Eksekusi dashboard/panduan sebelumnya pada 21 Oktober 2026:** 81 tes / 795 assertion, 7 skenario MySQL, 13 kasus browser operasional, 8 pemeriksaan panduan, dan build frontend lulus pada database uji terpisah. [Laporan dashboard dan panduan](Docs/30_implemented/2026-10-21-dashboard-onboarding/implementation_report.md) mencatat cakupan serta batasannya; UAT petugas tetap belum dilakukan.
+Hasil sebelumnya tercatat di [strategi pengujian](Docs/00_current/testing_strategy.md) dan [riwayat implementasi](Docs/30_implemented/README.md). Bukti Capstone tersedia pada [paket screenshot 29 Oktober](Docs/Capstone_Screenshots/2026-10-29/README.md) dan [tabel pengujian fungsional 18 Oktober](Docs/Capstone_Testing_Final/Hasil_Pengujian_Fungsional.md).
 
 ### Regresi Terisolasi
 
@@ -143,16 +162,33 @@ php scripts/test-inventory.php
 
 Runner memakai SQLite `:memory:`, melewati cache konfigurasi lokal, dan tidak memakai database klinik. Jika ekstensi tersedia tetapi belum aktif, runner mencoba memuat `pdo_sqlite` untuk proses pengujian saja. Laporan JUnit tersimpan di `storage/app/qa/inventory/phpunit-results.xml` dan diabaikan Git.
 
-Untuk regresi browser antarmuka pemeriksaan harian, jalankan `php scripts/capstone-final-browser.php nightly-ui` setelah build frontend. Runner memerlukan Playwright/Chrome dan izin membuat/menghapus database MySQL sementara. Data simulasi 167 obat, akun, dan password dibuat untuk proses pengujian; bukan akun klinik/UAT persisten. Hasil JSON dan screenshot lokal disimpan di `storage/app/qa/nightly-workspace-browser/` dan diabaikan Git.
-
-Untuk menguji satu hari klinik dari awal sampai akhir lewat antarmuka, jalankan `php scripts/capstone-final-browser.php daily-cycle`. Alurnya: stok awal → penerimaan → transfer → retur → pengeluaran → hitung harian dan persetujuan → impor Neoklinik → opname → kartu stok dan reversal. Persyaratan dan database sementaranya sama dengan runner `nightly-ui`. Langkah berjudul "Perilaku saat ini" mencatat perilaku F03–F05 dari review 4 November sebagai `OBSERVASI`. Hasilnya disimpan di `storage/app/qa/daily-cycle-browser/`.
-
 Untuk komputer lambat, timeout dapat dinaikkan. Contoh PowerShell:
 
 ```powershell
 $env:INVENTORY_TEST_TIMEOUT = '900'
 php scripts/test-inventory.php
 ```
+
+### Pengujian Browser
+
+```bash
+php scripts/capstone-final-browser.php
+php scripts/capstone-final-browser.php daily-cycle
+php scripts/test-issue-import.php
+```
+
+Tanpa argumen, `capstone-final-browser.php` menjalankan regresi operasional. Fase lainnya adalah `onboarding`, `nightly-ui`, `partial-nightly`, `selected-nightly`, `transfer`, dan `daily-cycle`. `test-issue-import.php` menguji impor pengeluaran Excel.
+
+Kebutuhan:
+
+- build frontend sudah dijalankan;
+- Playwright dapat ditemukan lewat resolusi modul Node.js, misalnya melalui `NODE_PATH`;
+- Chrome terpasang di `C:/Program Files/Google/Chrome/Application/chrome.exe`;
+- akun MySQL di `.env` boleh membuat dan menghapus database.
+
+Setiap fase membuat database sementara bernama acak lalu menghapusnya. Data simulasi, akun, dan password dibuat hanya untuk proses itu, bukan akun klinik/UAT. Hasil JSON dan screenshot disimpan di bawah `storage/app/qa/` dan diabaikan Git.
+
+Fase `daily-cycle` menguji satu hari klinik dari awal sampai akhir lewat antarmuka: stok awal → penerimaan → transfer → retur → pengeluaran → hitung harian dan persetujuan → impor Neoklinik → opname → kartu stok dan reversal. Langkah berjudul "Perilaku saat ini" mencatat tiga aturan alur stok yang masih menunggu keputusan apoteker sebagai `OBSERVASI`.
 
 ### Transaksi Bersamaan Di MySQL
 
@@ -162,7 +198,7 @@ php scripts/test-inventory-mysql.php
 
 Runner membuat database sementara bernama acak `shifastock_qa_*`, menjalankan migrasi dan worker terpisah di sana, lalu menghapus database uji tersebut. Akun MySQL perlu izin membuat/menghapus database. Migrasi dan penulisan pengujian tidak dilakukan pada database klinik.
 
-Tujuh skenario mencakup pengeluaran FEFO bersamaan, reversal berulang, finalisasi opname berulang, persetujuan harian berulang, referensi ganda, perubahan satuan saat penerimaan pertama, dan dua penerimaan ke stok yang belum mempunyai baris persediaan.
+Skenario mencakup pengeluaran FEFO bersamaan, transfer banyak obat, referensi ganda, reversal berulang, pembuatan dan finalisasi opname, penyimpanan dan persetujuan harian, perubahan satuan saat penerimaan pertama, serta dua penerimaan ke stok yang belum mempunyai baris persediaan.
 
 ### Audit Stok Baca-Saja
 
@@ -190,25 +226,31 @@ node tests/browser-opname-recount.cjs
 
 Tes browser tersebut memakai fixture lokal dan mencegat permintaan tulis agar tidak mengubah stok klinik. Petunjuk lengkap ada di [strategi pengujian](Docs/00_current/testing_strategy.md).
 
-**Hasil eksekusi final 18 Oktober 2026:** 70 tes / 733 assertion lulus, tujuh skenario MySQL bersamaan lulus, 13 kasus browser Playwright pada HTTP lokal lulus, dan build frontend berhasil. [Tabel fungsional dan bukti aktual](Docs/Capstone_Testing_Final/Hasil_Pengujian_Fungsional.md) membedakan pengujian otomatis, browser, dan UAT manual yang belum dilakukan. [Paket screenshot awal](Docs/Capstone_Screenshots/README.md) tetap memuat hasil historis 58 tes / 610 assertion. Pembaruan dokumentasi 19 Oktober tidak dianggap eksekusi ulang. Cakupan ini bukan jaminan seluruh jadwal transaksi, beban produksi, atau keamanan aplikasi telah diuji.
-
 ## Demo Dan UAT Lokal
 
-Lingkungan UAT terpisah memakai database `shifastock_uat`, pengguna MySQL dengan grant khusus UAT, akun simulasi, serta sesi/cache sendiri. Data stok dan transaksi UAT tidak masuk ke database klinik. Pada workspace demo, [domain UAT](https://shifastock.nexspace.my.id) diteruskan ke loopback port `4002`; restart melalui runner UAT, bukan artisan biasa. Guest dapat melihat seluruh menu persediaan, termasuk Stok Awal dan Parameter Monitoring, tetapi izin tulis dan administrasinya dikunci di backend.
+Lingkungan UAT terpisah memakai database `shifastock_uat`, pengguna MySQL dengan grant khusus UAT, akun simulasi, serta sesi/cache sendiri. Data stok dan transaksi UAT tidak masuk ke database klinik. Guest dapat melihat seluruh menu persediaan, termasuk Stok Awal dan Parameter Monitoring, tetapi izin tulis dan administrasinya dikunci di backend.
+
+Untuk instalasi baru:
 
 ```bash
 php scripts/uat.php setup
 php scripts/uat.php serve
 ```
 
-`setup` hanya untuk penyiapan awal dan menolak menimpa UAT yang sudah ada. Instalasi baru memakai `http://127.0.0.1:8010` secara default; workspace demo ini memakai domain HTTPS dan port backend `4002` sesuai konfigurasi privat. Transaksi contoh workspace sudah dikosongkan atas permintaan pengguna, sedangkan akun dan master obat dipertahankan. Username: `petugas_uat`, `apoteker_uat`, dan `guest`. Akun `admin_uat` khusus pengelola internal. Password akun UAT tidak ditampilkan di README; kredensial disimpan privat lokal dan diabaikan Git.
+`setup` hanya untuk penyiapan awal dan menolak menimpa UAT yang sudah ada. Instalasi baru memakai `http://127.0.0.1:8010` secara default.
 
-Lihat [panduan UAT](Docs/00_current/uat_guide.md) untuk lokasi kredensial privat, verifikasi isolasi, pengujian browser, dan batasan akses lokal. Jangan mengganti `.env` utama atau mereset data klinik untuk demo.
+Pada workspace demo, UAT dilayani dari checkout terpisah yang dikunci ke tag Git `uat-*`, saat ini `uat-2026-11-10`. Perubahan yang belum di-commit di checkout utama tidak terlihat oleh tester, dan versi yang diuji selalu dapat ditunjuk lewat tag. Merilis versi baru berarti membuat tag, memindahkan checkout UAT ke tag itu, membangun ulang aset, dan menjalankan migrasi UAT bila ada. Langkah lengkap dan cara rollback ada di [panduan UAT](Docs/00_current/uat_guide.md#versi-uat-terkunci).
+
+Alamat UAT, akun, dan password disimpan privat dan diabaikan Git; jangan mencantumkannya di README.
+
+Tester mungkin sudah memasukkan transaksi, jadi jangan mereset, seed ulang, atau menjalankan `migrate:fresh` pada UAT. Jangan mengganti `.env` utama atau mereset data klinik untuk demo. Lihat [panduan UAT](Docs/00_current/uat_guide.md) untuk verifikasi isolasi dan batasan akses lokal.
 
 ## Deployment Dan Pembaruan
 
+Server production belum ditentukan. Isian host, HTTPS, backup, dan scheduler di [deployment, backup, dan restore](Docs/00_current/deployment_backup.md) masih perlu dilengkapi bersama pemilik server.
+
 1. Backup database serta konfigurasi sebelum memperbarui aplikasi.
-2. Hentikan sementara penulisan selama deployment. Arahkan web server hanya ke `public/` dan siapkan konfigurasi produksi, termasuk `APP_DEBUG=false`.
+2. Hentikan sementara penulisan selama deployment. Arahkan web server hanya ke `public/` dan siapkan konfigurasi produksi, termasuk `APP_ENV=production` dan `APP_DEBUG=false`.
 3. Pasang dependency dan jalankan migrasi **sebelum** menerima transaksi pada versi baru:
 
 ```bash
@@ -220,9 +262,11 @@ php artisan optimize
 php artisan inventory:reconcile
 ```
 
-Migrasi terbaru menambahkan snapshot opname dan pengunci transaksi stok; jangan menghapus baris pengunci secara manual. Draf opname lama tanpa snapshot harus memakai **Mulai Hitung Ulang** sebelum finalisasi. Selisih historis perlu ditinjau, bukan diperbaiki dengan menebak batch atau mereset database.
+4. Pasang cron yang menjalankan `php artisan schedule:run` setiap menit. Scheduler menghapus pratinjau impor pengeluaran yang sudah kedaluwarsa setiap hari.
 
-Jangan menjalankan `migrate:fresh` pada data klinik atau seeder demo di produksi. Lihat [deployment, backup, dan restore](Docs/00_current/deployment_backup.md) untuk checklist lebih lanjut.
+Skema mencakup snapshot opname dan pengunci transaksi stok; jangan menghapus baris pengunci secara manual. Draf opname lama tanpa snapshot harus memakai **Mulai Hitung Ulang** sebelum finalisasi. Selisih historis perlu ditinjau, bukan diperbaiki dengan menebak batch atau mereset database.
+
+Jangan menjalankan `migrate:fresh` pada data klinik atau seeder demo di produksi.
 
 ## Dokumentasi
 
@@ -232,15 +276,18 @@ Jangan menjalankan `migrate:fresh` pada data klinik atau seeder demo di produksi
 | [Kondisi terkini](Docs/00_current/current_state.md) | Implementasi yang tersedia dan batasannya |
 | [Arsitektur](Docs/00_current/architecture.md) | Struktur aplikasi dan alur data |
 | [Riwayat implementasi](Docs/30_implemented/README.md) | Plan serta laporan pekerjaan yang selesai |
-| [Strategi pengujian](Docs/00_current/testing_strategy.md) | Runner, fixture, dan cakupan tes |
+| [Strategi pengujian](Docs/00_current/testing_strategy.md) | Runner, fixture, cakupan tes, dan hasil tiap putaran |
+| [Panduan UAT](Docs/00_current/uat_guide.md) | Versi UAT terkunci, akun simulasi, dan batas pemisahan data |
+| [Deployment dan backup](Docs/00_current/deployment_backup.md) | Checklist production, backup, dan restore |
 | [Keamanan](Docs/00_current/security.md) | Pedoman akses dan keamanan |
+| [Privasi dan retensi](Docs/00_current/privacy_and_retention.md) | Data yang disimpan dan asumsi retensinya |
 
 ## 🔐 Catatan Keamanan
 
-- Jangan commit `.env`, kredensial database, password, atau hasil pengujian yang mengandung data internal.
-- Akun demo hanya untuk lokal; konfigurasi pengguna produksi dikelola terpisah.
+- Jangan commit `.env`, kredensial database, password, dump SQL, atau hasil pengujian yang mengandung data internal.
+- Akun demo hanya untuk lokal; konfigurasi pengguna produksi dikelola terpisah. Jangan memakai ulang password demo di production.
 - Tinjau matriks hak akses sebelum digunakan petugas. Panduan menu bukan pengganti pembatasan akses backend.
-- Pertahankan audit log dan riwayat mutasi sesuai kebijakan klinik. Log mencatat aktivitas akun, administrasi, dan tindakan persediaan yang telah diinstrumentasi.
+- Pertahankan audit log dan riwayat mutasi sesuai kebijakan klinik. Log mencatat aktivitas akun, administrasi, dan tindakan persediaan yang telah diinstrumentasi, termasuk alamat IP dan perangkat; kebijakan retensinya perlu disetujui klinik.
 - Penguncian aplikasi tidak melindungi perubahan melalui SQL langsung atau akses administrator database. Jangan menggunakannya untuk mengganti satuan atau mengoreksi stok tanpa prosedur terverifikasi.
 
 ## Penggunaan
